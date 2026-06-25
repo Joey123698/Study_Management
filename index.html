@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyOS ⚡ v5</title>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0C0F1A;--sur:#131729;--card:#1A2038;--ch:#1F2845;
+  --bdr:#252D4A;--acc:#7C6EF5;--acc2:rgba(124,110,245,.13);--acc3:rgba(124,110,245,.28);
+  --tx:#E4E8FA;--mu:#6B75A0;--dm:#353D60;
+  --cr:#E24B4A;--crb:rgba(226,75,74,.1);--crBdr:rgba(226,75,74,.25);
+  --wa:#BA7517;--wab:rgba(186,117,23,.1);--waBdr:rgba(186,117,23,.25);
+  --su:#1D9E75;--sub:rgba(29,158,117,.1);--suBdr:rgba(29,158,117,.25);
+  --in:#378ADD;--inb:rgba(55,138,221,.1);--inBdr:rgba(55,138,221,.25);
+  --go:#F5A623;
+}
+body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden;height:100vh}
+#root{height:100vh}
+.app{display:flex;height:100vh}
+.sb{width:215px;min-width:215px;background:var(--sur);border-right:1px solid var(--bdr);display:flex;flex-direction:column;height:100vh;overflow-y:auto}
+.sb-logo{padding:14px 14px 10px;border-bottom:1px solid var(--bdr)}
+.sb-title{font-size:15px;font-weight:700;color:var(--acc);display:flex;align-items:center;gap:7px}
+.xp-bar{height:5px;background:var(--dm);border-radius:3px;overflow:hidden;margin:5px 0 2px}
+.xp-fill{height:100%;border-radius:3px;transition:width .5s ease}
+.xp-info{display:flex;justify-content:space-between;font-size:9px;color:var(--dm)}
+.sb-sec{padding:12px 12px 3px;font-size:9px;font-weight:700;color:var(--dm);letter-spacing:.08em;text-transform:uppercase}
+.nav{display:flex;align-items:center;gap:8px;padding:7px 10px;margin:1px 5px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--mu);border:none;background:none;width:calc(100% - 10px);text-align:left;transition:all .12s}
+.nav:hover{background:var(--card);color:var(--tx)}
+.nav.on{background:var(--acc2);color:var(--acc);font-weight:500}
+.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.mhd{background:var(--sur);border-bottom:1px solid var(--bdr);padding:9px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.scroll{flex:1;overflow-y:auto;padding:20px 22px 60px}
+.content{max-width:920px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:12px;padding:14px}
+.card-sm{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:11px}
+.lbl{font-size:10px;font-weight:700;color:var(--dm);letter-spacing:.07em;margin-bottom:6px;text-transform:uppercase}
+.h1{font-size:20px;font-weight:500;margin-bottom:3px}
+.tx-mu{color:var(--mu);font-size:12px}
+.tx-dm{color:var(--dm);font-size:11px}
+.btn-p{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:7px 13px;cursor:pointer;font-size:12px;font-weight:500;display:inline-flex;align-items:center;gap:5px}
+.btn-p:hover{opacity:.88}
+.btn-g{background:var(--card);color:var(--mu);border:1px solid var(--bdr);border-radius:8px;padding:6px 11px;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:5px}
+.btn-g:hover{background:var(--ch);color:var(--tx)}
+.btn-sm{padding:4px 9px!important;font-size:11px!important;border-radius:6px!important}
+.inp{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:7px 10px;color:var(--tx);font-size:13px;outline:none;width:100%;font-family:inherit}
+.inp:focus{border-color:var(--acc3)}
+.sel{background:var(--sur);border:1px solid var(--bdr);border-radius:8px;padding:7px 10px;color:var(--tx);font-size:13px;outline:none;width:100%;font-family:inherit}
+.bar-w{background:var(--dm);border-radius:99px;overflow:hidden}
+.bar-f{height:100%;border-radius:99px;transition:width .4s ease}
+.badge{border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;letter-spacing:.06em;white-space:nowrap}
+.risk-cr{background:var(--crb);border-color:var(--crBdr)!important;color:var(--cr)}
+.risk-wa{background:var(--wab);border-color:var(--waBdr)!important;color:var(--wa)}
+.risk-in{background:var(--inb);border-color:var(--inBdr)!important;color:var(--in)}
+.risk-su{background:var(--sub);border-color:var(--suBdr)!important;color:var(--su)}
+.tick{width:17px;height:17px;border-radius:4px;border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .13s;flex-shrink:0}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.flex-sb{display:flex;align-items:center;justify-content:space-between}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-hd{font-size:10px;color:var(--mu);text-align:center;padding:3px 0;font-weight:600}
+.cal-cell{min-height:30px;padding:2px;border-radius:5px;cursor:pointer;text-align:center;font-size:11px;transition:background .1s}
+.cal-cell:hover{background:var(--ch)}
+.cal-cell.today{background:var(--acc2);color:var(--acc);font-weight:700;border:1px solid var(--acc3)}
+.cal-cell.other-month{opacity:.25}
+.cal-cell.selected{background:var(--acc3)}
+.cal-dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin:0 1px}
+.cal-dots{display:flex;justify-content:center;gap:1px;margin-top:1px}
+.tl2-row{display:flex;align-items:center;margin-bottom:8px}
+.tl2-label{width:155px;min-width:155px;font-size:11px;color:var(--tx);padding-right:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl2-track{flex:1;height:22px;position:relative;background:var(--sur);border-radius:4px}
+.tl2-bar{position:absolute;height:20px;top:1px;border-radius:4px;opacity:.8;display:flex;align-items:center;padding:0 5px;font-size:10px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.tl2-exam{position:absolute;top:2px;width:18px;height:18px;border-radius:50%;background:var(--cr);z-index:4;display:flex;align-items:center;justify-content:center;font-size:9px;transform:translateX(-9px);cursor:pointer;border:2px solid var(--bg)}
+.tl2-evt{position:absolute;top:2px;width:16px;height:16px;border-radius:4px;background:var(--acc);z-index:3;display:flex;align-items:center;justify-content:center;font-size:9px;transform:translateX(-8px);cursor:pointer;border:1px solid var(--bg)}
+.tl2-today{position:absolute;top:-3px;bottom:-3px;width:2px;background:rgba(124,110,245,.7);z-index:5}
+.tl2-wk{position:absolute;top:0;bottom:0;border-left:1px dashed rgba(37,45,74,.5)}
+.hab-cell{width:26px;height:26px;border-radius:5px;border:1.5px solid var(--bdr);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;margin:auto;transition:all .13s}
+.admin-item{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(37,45,74,.3)}
+.timer-big{font-size:64px;font-weight:200;color:var(--acc);letter-spacing:-2px;text-align:center;padding:16px 0;font-variant-numeric:tabular-nums}
+.t-btn{width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.xp-pop{position:fixed;top:70px;right:20px;background:var(--acc);color:#fff;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;z-index:9999;pointer-events:none;animation:xpF 2s ease forwards}
+@keyframes xpF{0%{opacity:0;transform:translateY(0)}20%{opacity:1;transform:translateY(-8px)}80%{opacity:1;transform:translateY(-16px)}100%{opacity:0;transform:translateY(-24px)}}
+.ach-pop{position:fixed;bottom:20px;right:20px;background:linear-gradient(135deg,#7C6EF5,#B06EF5);color:#fff;border-radius:12px;padding:14px 18px;z-index:9999;max-width:260px;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:achS .4s ease}
+@keyframes achS{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}
+.perf-star{font-size:22px;cursor:pointer;transition:transform .1s;display:inline-block}
+.perf-star:hover{transform:scale(1.2)}
+.link-strip{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:3px 0 0 3px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:20px;width:100%;max-height:85vh;overflow-y:auto}
+.chart-wrap{position:relative;height:160px}
+.log-entry{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--bdr)}
+.m-dot{width:10px;height:10px;border-radius:50%;background:var(--acc);flex-shrink:0;margin-top:3px}
+.m-dot.urg{background:var(--cr)}.m-dot.past{background:var(--su)}
+.phase-card{border:1px solid var(--bdr);border-radius:12px;padding:14px;position:relative;overflow:hidden;margin-bottom:12px}
+.phase-active{border-color:var(--acc3)!important}
+.signin-wrap{height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.g-btn{display:flex;align-items:center;gap:10px;background:#fff;color:#333;border:none;border-radius:10px;padding:12px 22px;cursor:pointer;font-size:14px;font-weight:500;margin:0 auto}
+.sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.pulsing{animation:pulse 1.2s infinite}
+.sub-indent{padding-left:20px;border-left:2px solid rgba(37,45,74,.5);margin-left:8px;margin-bottom:4px}
+.lang-cat{border-top:1px solid var(--bdr);padding-top:10px;margin-top:10px}
+.lang-cat-hd{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.sched-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(37,45,74,.3)}
+.cd-big{font-size:34px;font-weight:800;line-height:1}
+.cd-ring{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.note-post{background:var(--sur);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.note-comment{background:var(--bg);border-radius:7px;padding:6px 9px;margin-top:5px;font-size:11px}
+.gantt2-row{display:flex;align-items:center;margin-bottom:6px}
+.gantt2-label{width:130px;min-width:130px;font-size:11px;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px}
+.gantt2-track{flex:1;height:24px;position:relative;background:var(--sur);border-radius:4px;cursor:pointer}
+.gantt2-bar{position:absolute;height:18px;top:3px;border-radius:4px;opacity:.85;font-size:9px;color:#fff;display:flex;align-items:center;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.level-chip{font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;border:1px solid var(--bdr);color:var(--mu);cursor:pointer;background:var(--sur)}
+.level-chip.on{color:#fff}
+.vocab-box{text-align:center;padding:14px;background:var(--sur);border-radius:10px}
+.deadline-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(37,45,74,.3)}
+.grade-pill{border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.week-nav{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:8px}
+.archived-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sur);border-radius:8px;margin-bottom:6px;opacity:.75}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--dm);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="loading" style="position:fixed;inset:0;background:#0C0F1A;display:flex;align-items:center;justify-content:center;z-index:9999">
+  <div style="text-align:center"><div style="font-size:42px;margin-bottom:12px">⚡</div>
+  <div style="color:#7C6EF5;font-size:15px;font-family:system-ui">StudyOS v6 — Đang tải...</div>
+  <div style="color:#353D60;font-size:11px;margin-top:5px;font-family:system-ui">v6: GPA tự động · Notes & Gantt · Language revamp</div></div>
+</div>
+<div id="root"></div>
+<script>
+const FIREBASE_CONFIG={apiKey:"YOUR_API_KEY_HERE",authDomain:"YOUR_AUTH_DOMAIN_HERE",projectId:"YOUR_PROJECT_ID_HERE",storageBucket:"YOUR_STORAGE_BUCKET_HERE",messagingSenderId:"YOUR_MESSAGING_SENDER_ID_HERE",appId:"YOUR_APP_ID_HERE"};
+let _db=null,_auth=null;
+const FB_ON=FIREBASE_CONFIG.apiKey!=="YOUR_API_KEY_HERE";
+if(FB_ON){try{firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();_auth=firebase.auth();_db.enablePersistence({synchronizeTabs:true}).catch(()=>{});}catch(e){console.warn(e);}}
+</script>
+<script type="text/babel">
+const {useState,useEffect,useRef,useMemo,useCallback}=React;
+const T=()=>new Date().toISOString().split('T')[0];
+function daysTo(ds){if(!ds)return null;return Math.ceil((new Date(ds)-new Date())/86400000);}
+function fmt(ds){if(!ds)return'';return new Date(ds).toLocaleDateString('vi-VN',{day:'numeric',month:'short'});}
+function fmtL(ds){if(!ds)return'';return new Date(ds).toLocaleDateString('vi-VN',{weekday:'short',day:'numeric',month:'long'});}
+function pct(a){if(!a?.length)return 0;return Math.round(a.filter(t=>t.done).length/a.length*100);}
+function uid(){return'i'+Date.now()+Math.random().toString(36).slice(2,5);}
+function weekDates(){const d=new Date();d.setHours(0,0,0,0);const dow=d.getDay();const m=new Date(d);m.setDate(d.getDate()-(dow===0?6:dow-1));return Array.from({length:7},(_,i)=>{const dd=new Date(m);dd.setDate(m.getDate()+i);return dd.toISOString().split('T')[0];});}
+function hStreak(comp){const d=new Date();let s=0;while(true){const k=d.toISOString().split('T')[0];if(!comp[k])break;s++;d.setDate(d.getDate()-1);}return s;}
+function fmtS(s){const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const ss=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
+const TODAY=T();
+const DV=['CN','T2','T3','T4','T5','T6','T7'];
+const MV=['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'];
+const LEVELS=[{min:0,max:200,level:1,name:'Newbie',emoji:'🌱'},{min:200,max:500,level:2,name:'Student',emoji:'📖'},{min:500,max:1000,level:3,name:'Scholar',emoji:'🎓'},{min:1000,max:2000,level:4,name:'Analyst',emoji:'📊'},{min:2000,max:3500,level:5,name:'Expert',emoji:'⚡'},{min:3500,max:6000,level:6,name:'Master',emoji:'🏆'},{min:6000,max:99999,level:7,name:'Legend',emoji:'👑'}];
+function getLevel(xp){return LEVELS.find(l=>xp>=l.min&&xp<l.max)||LEVELS[0];}
+const ACH=[{id:'first_log',emoji:'📝',name:'First Log',desc:'Log buổi học đầu tiên'},{id:'streak3',emoji:'🔥',name:'On Fire',desc:'Habits 3 ngày liên tục'},{id:'topic10',emoji:'📚',name:'Scholar',desc:'Hoàn thành 10 topics'},{id:'exam_ready',emoji:'🎯',name:'Exam Ready',desc:'Hoàn thành tất cả topics môn thi'}];
+const XPR={habit:10,hour:15,topic:25,task:5,focus:10};
+const RISK={critical:{label:'KHẨN CẤP',cls:'risk-cr',c:'#E24B4A'},watch:{label:'CHÚ Ý',cls:'risk-wa',c:'#BA7517'},medium:{label:'TB',cls:'risk-in',c:'#378ADD'},good:{label:'ỔN',cls:'risk-su',c:'#1D9E75'}};
+const PAL=['#7C6EF5','#E24B4A','#BA7517','#378ADD','#1D9E75','#D4537E','#26C6DA','#F5A623'];
+const THEMES={
+  purple:{name:'Purple Night',emoji:'💜','--acc':'#7C6EF5','--acc2':'rgba(124,110,245,.13)','--acc3':'rgba(124,110,245,.28)','--bg':'#0C0F1A','--sur':'#131729','--card':'#1A2038','--ch':'#1F2845','--bdr':'#252D4A','--dm':'#353D60'},
+  blue:{name:'Ocean Blue',emoji:'🔵','--acc':'#3B82F6','--acc2':'rgba(59,130,246,.13)','--acc3':'rgba(59,130,246,.28)','--bg':'#0A0F1C','--sur':'#111827','--card':'#1A2440','--ch':'#1E2A4A','--bdr':'#243050','--dm':'#2D3A5E'},
+  green:{name:'Forest Green',emoji:'💚','--acc':'#10B981','--acc2':'rgba(16,185,129,.13)','--acc3':'rgba(16,185,129,.28)','--bg':'#091410','--sur':'#101D18','--card':'#172820','--ch':'#1C3028','--bdr':'#1E3828','--dm':'#254830'},
+  amber:{name:'Amber Dark',emoji:'🟡','--acc':'#F59E0B','--acc2':'rgba(245,158,11,.13)','--acc3':'rgba(245,158,11,.28)','--bg':'#17120A','--sur':'#211A0C','--card':'#2A2010','--ch':'#322814','--bdr':'#3A2E16','--dm':'#48381E'},
+  red:{name:'Red Energy',emoji:'🔴','--acc':'#EF4444','--acc2':'rgba(239,68,68,.13)','--acc3':'rgba(239,68,68,.28)','--bg':'#140A0A','--sur':'#1E1010','--card':'#281616','--ch':'#2E1A1A','--bdr':'#361E1E','--dm':'#442626'},
+};
+function applyTheme(settings){
+  if(!settings)return;
+  const t=THEMES[settings.theme||'purple']||THEMES.purple;
+  Object.entries(t).filter(([k])=>k.startsWith('--')).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+  let el=document.getElementById('br-override');
+  if(!el){el=document.createElement('style');el.id='br-override';document.head.appendChild(el);}
+  const br=settings.radius==='sharp'?'5px':settings.radius==='pill'?'20px':'12px';
+  el.textContent=`.card,.modal{border-radius:${br}!important}.btn-p,.btn-g{border-radius:calc(${br}*.65)!important}.inp,.sel{border-radius:calc(${br}*.65)!important}`;
+}
+const CAT_META=[['grammar','📖','Ngữ pháp','Điểm ngữ pháp mới...'],['vocabulary','📝','Từ vựng','(xem block riêng bên dưới)'],['speaking','🗣️','Nói','Topic đã luyện nói...'],['writing','✍️','Viết','Bài viết / essay...']];
+const CEFR_LEVELS=['A1','A2','B1','B2','C1'];
+const CEFR_VOCAB={A1:500,A2:1000,B1:2000,B2:4000,C1:8000};
+const GRADE_BANDS=[{max:1.5,label:'Sehr gut (Xuất sắc)',color:'#1D9E75'},{max:2.5,label:'Gut (Giỏi)',color:'#378ADD'},{max:3.5,label:'Befriedigend (Khá)',color:'#BA7517'},{max:4.0,label:'Ausreichend (Đạt)',color:'#E08F1A'},{max:6.0,label:'Nicht ausreichend',color:'#E24B4A'}];
+function gradeBand(g){if(g==null)return null;return GRADE_BANDS.find(b=>g<=b.max)||GRADE_BANDS[GRADE_BANDS.length-1];}
+function defCats(){return{grammar:{items:[]},vocabulary:{total:0,weeklyGoal:50,log:{}},speaking:{items:[]},writing:{items:[]}};}
+function migrateToV5(d){if(!d)return d;if(d.languages)d.languages=d.languages.map(l=>{if(!l.categories)l={...l,categories:defCats()};return l;});if(d.courses)d.courses=d.courses.map(c=>({...c,topics:(c.topics||[]).map(t=>t.subtasks?t:{...t,subtasks:[]})}));return d;}
+function migrateToV6(d){
+  if(!d)return d;
+  d=migrateToV5(d);
+  if(d.courses)d.courses=d.courses.map(c=>({
+    ...c,
+    archived:c.archived??false,
+    ects:c.ects??6,
+    grade:c.grade??null,
+    notes:c.notes||[],
+    phases:c.phases||[],
+    tasks:(c.tasks||[]).map(t=>({...t,dueDate:t.dueDate??'',dueTime:t.dueTime??''}))
+  }));
+  if(d.languages)d.languages=d.languages.map(l=>{
+    const cats=l.categories||defCats();
+    const g=cats.grammar||{items:[]};
+    const grammar={items:(g.items||[]).map(it=>({...it,level:it.level??''}))};
+    let vocab=cats.vocabulary;
+    if(!vocab||vocab.total===undefined){
+      const oldCount=vocab?.count||0;
+      vocab={total:oldCount,weeklyGoal:vocab?.weeklyGoal||50,log:{}};
+    }
+    const w=cats.writing||{items:[]};
+    const writing={items:(w.items||[]).map(it=>({...it,link:it.link??''}))};
+    return{...l,categories:{...cats,grammar,vocabulary:vocab,writing,speaking:cats.speaking||{items:[]}}};
+  });
+  if(!d.timerCategories)d.timerCategories=[];
+  if(!d.settings)d.settings={theme:'purple',radius:'rounded'};
+  if(d.phases)d.phases=d.phases.map(p=>({...p,goals:p.goals.map(g=>g.id==='g1'&&g.linkedTo==='course_completion'?{...g,type:'gpa',linkedTo:'gpa_auto'}:g)}));
+  return d;
+}
+
+function buildInit(){return{
+phases:[
+  {id:1,name:'Phase 1: Foundation & GPA',dateRange:'T4–T7/2026',endDate:'2026-07-31',color:'#7C6EF5',status:'active',
+    goals:[{id:'g1',text:'GPA trung bình các môn',icon:'🎓',type:'gpa',progress:0,linkedTo:'gpa_auto',hint:'Tự động: trung bình có trọng số ECTS từ điểm thi đã nhập (mục tiêu ≤1.5)'},{id:'g2',text:'German Recovery B2+',icon:'🇩🇪',progress:15,linkedTo:'german_hours',hint:'Tự động: giờ học tiếng Đức tuần này'},{id:'g3',text:'Networking & ngoại khóa',icon:'🤝',progress:10,linkedTo:'events_attended',hint:'Tự động: số events networking đã tham gia'}],
+    milestones:[{date:'2026-07-09',text:'IPE Day 1: Thuyết trình nhóm'},{date:'2026-07-10',text:'IPE Day 2: Simulation Game'},{date:'2026-07-20',text:'Metrics Tutorial kết thúc'},{date:'2026-07-22',text:'🎯 THI Microeconometrics'},{date:'2026-07-24',text:'GSE kết thúc'},{date:'2026-07-25',text:'Macro kết thúc'},{date:'2026-07-31',text:'🏁 Phase 1 kết thúc'}]},
+  {id:2,name:'Phase 2: Jobs & Language',dateRange:'T8–T12/2026',endDate:'2026-12-31',color:'#1D9E75',status:'upcoming',
+    goals:[{id:'g1',text:'Tìm Working Student / Internship',icon:'💼',progress:0,linkedTo:'manual',hint:'Cập nhật thủ công'},{id:'g2',text:'German → C1',icon:'🇩🇪',progress:0,linkedTo:'german_hours',hint:'Tự động: giờ học tích lũy'},{id:'g3',text:'Duy trì GPA kỳ 2',icon:'🎓',progress:0,linkedTo:'manual',hint:'Cập nhật thủ công'}],milestones:[]}
+],
+currentPhaseId:1,
+courses:[
+  {id:'micro',name:'Microeconometrics',emoji:'📊',color:'#E24B4A',risk:'critical',schedule:'Thứ 4, 8:00–12:00',examDate:'2026-07-22',endDate:'2026-07-20',nextAction:'Xem MLE từ đầu → Binary Models',note:'Thi 22/7 — HIGHEST PRIORITY. Kiến thức gần như trống. Crash study ngay!',archived:false,ects:6,grade:null,notes:[],phases:[],
+    topics:[{id:'a1',label:'Maximum-Likelihood Estimation',sec:'Part A',done:false,dueDate:'2026-06-25'},{id:'a2',label:'Binary Outcome Models',sec:'Part A',done:false,dueDate:'2026-07-01'},{id:'a3',label:'Multinomial & Count Data',sec:'Part A',done:false,dueDate:'2026-07-05'},{id:'a4',label:'Limited Dependent Variables',sec:'Part A',done:false,dueDate:'2026-07-08'},{id:'b1',label:'Causal Diagrams',sec:'Part B',done:false,dueDate:'2026-07-10'},{id:'b2',label:'Machine Learning',sec:'Part B',done:false,dueDate:'2026-07-12'},{id:'b3',label:'Propensity Score Matching',sec:'Part B',done:false,dueDate:'2026-07-14'},{id:'b4',label:'Instrumental Variables',sec:'Part B',done:false,dueDate:'2026-07-16'},{id:'b5',label:'DiD',sec:'Part B',done:false,dueDate:'2026-07-18'},{id:'b6',label:'Regression Discontinuity',sec:'Part B',done:false,dueDate:'2026-07-20'}],
+    tasks:[{id:'t1',text:'Ôn kiến thức Econometrics cơ bản',done:false,dueDate:'',dueTime:''},{id:'t2',text:'Tìm study group',done:false,dueDate:'',dueTime:''},{id:'t3',text:'Lập crash schedule đến 22/7',done:false,dueDate:'2026-06-22',dueTime:''}]},
+  {id:'ipe',name:"Int'l Political Economics",emoji:'🌍',color:'#BA7517',risk:'watch',schedule:'9–10/7',examDate:null,endDate:'2026-07-10',nextAction:'Hoàn thiện 2/3 slides còn lại',note:'Chỉ 2 ngày: 9/7 thuyết trình, 10/7 simulation.',archived:false,ects:5,grade:null,notes:[],phases:[],
+    topics:[{id:'d1',label:'Group Presentation slides',sec:'Day 1',done:false,dueDate:'2026-07-08'},{id:'d2',label:'Luyện thuyết trình với team',sec:'Day 1',done:false,dueDate:'2026-07-08'},{id:'d3',label:'Nghiên cứu luật simulation',sec:'Day 2',done:false,dueDate:'2026-07-09'},{id:'d4',label:'Chuẩn bị vai trong game',sec:'Day 2',done:false,dueDate:'2026-07-09'}],
+    tasks:[{id:'t1',text:'Họp team phân chia slides',done:false,dueDate:'',dueTime:''},{id:'t2',text:'Luyện thuyết trình trước 9/7',done:false,dueDate:'2026-07-08',dueTime:''}]},
+  {id:'gse',name:'Global Sustainability Econ',emoji:'🌱',color:'#1D9E75',risk:'medium',schedule:'Thứ 5, 16:00–18:00',examDate:null,endDate:'2026-07-24',nextAction:'Viết Skill Development Plan (nháp 1)',note:'2 phần: Skill Development + Presentation & debate.',archived:false,ects:6,grade:null,notes:[],phases:[],
+    topics:[{id:'l1',label:'Introduction',sec:'Lecture',done:true,dueDate:null},{id:'l2',label:'Concepts in sustainability',sec:'Lecture',done:true,dueDate:null},{id:'l3',label:'Complexity economics',sec:'Lecture',done:true,dueDate:null},{id:'l4',label:'SDGs',sec:'Lecture',done:true,dueDate:null},{id:'l5',label:'Sustainability ethics I',sec:'Lecture',done:false,dueDate:'2026-06-26'},{id:'l6',label:'Complexity cont.',sec:'Lecture',done:false,dueDate:'2026-07-03'},{id:'l7',label:'Reflections',sec:'Lecture',done:false,dueDate:'2026-07-10'},{id:'l8',label:'Sustainability ethics II',sec:'Lecture',done:false,dueDate:'2026-07-17'},{id:'l9',label:'Final reflections',sec:'Lecture',done:false,dueDate:'2026-07-24'},{id:'r1',label:'Skill Development Plan',sec:'Assessment',done:false,dueDate:'2026-07-01'},{id:'r2',label:'Self-reflection 1/2',sec:'Assessment',done:false,dueDate:'2026-07-10'},{id:'r3',label:'Self-reflection 2/2',sec:'Assessment',done:false,dueDate:'2026-07-20'},{id:'r4',label:'Group Presentation',sec:'Assessment',done:false,dueDate:'2026-07-24'},{id:'r5',label:'Debate',sec:'Assessment',done:false,dueDate:'2026-07-24'}],
+    tasks:[{id:'t1',text:'Viết nháp Skill Development Plan',done:false,dueDate:'2026-06-28',dueTime:''},{id:'t2',text:'Xem lịch deadline reflections',done:false,dueDate:'',dueTime:''}]},
+  {id:'macro',name:'Macroeconomics',emoji:'📈',color:'#7C6EF5',risk:'medium',schedule:'T2 16–18h | T3 12–14h',examDate:null,endDate:'2026-07-25',nextAction:'Ôn chắc Ramsey model',note:'Kiến thức thực tế mới đến nửa Ramsey. Catch up!',archived:false,ects:6,grade:null,notes:[],phases:[],
+    topics:[{id:'l1',label:'Introduction',sec:'Lecture',done:true,dueDate:null},{id:'l2',label:'Solow & Ramsey',sec:'Lecture',done:true,dueDate:null},{id:'l3',label:'Ramsey model',sec:'Lecture',done:true,dueDate:null},{id:'l4',label:'RBC/DSGE I',sec:'Lecture',done:true,dueDate:null},{id:'l5',label:'RBC/DSGE II',sec:'Lecture',done:true,dueDate:null},{id:'l6',label:'Discussion',sec:'Lecture',done:true,dueDate:null},{id:'l7',label:'System dynamics',sec:'Lecture',done:false,dueDate:'2026-06-23'},{id:'l8',label:'Smith model',sec:'Lecture',done:false,dueDate:'2026-06-30'},{id:'l9',label:'Ricardo model',sec:'Lecture',done:false,dueDate:'2026-07-07'},{id:'l10',label:'Goodwin-Minsky-Keen',sec:'Lecture',done:false,dueDate:'2026-07-14'},{id:'l11',label:'Business cycles',sec:'Lecture',done:false,dueDate:'2026-07-20'},{id:'l12',label:'Modeling process',sec:'Lecture',done:false,dueDate:'2026-07-25'},{id:'t1',label:'Math basics',sec:'Tutorial',done:true,dueDate:null},{id:'t2',label:'Solow model',sec:'Tutorial',done:true,dueDate:null},{id:'t3',label:'Ramsey model',sec:'Tutorial',done:false,dueDate:'2026-06-24'},{id:'t4',label:'RBC',sec:'Tutorial',done:false,dueDate:'2026-07-01'},{id:'t5',label:'System Dynamics/Vensim',sec:'Tutorial',done:false,dueDate:'2026-07-08'},{id:'t6',label:'Smith model',sec:'Tutorial',done:false,dueDate:'2026-07-15'},{id:'t7',label:'Goodwin-Minsky',sec:'Tutorial',done:false,dueDate:'2026-07-25'}],
+    tasks:[{id:'t1',text:'Ôn Ramsey model',done:false,dueDate:'',dueTime:''},{id:'t2',text:'Xem trước System Dynamics',done:false,dueDate:'',dueTime:''}]}
+],
+languages:[
+  {id:'de',name:'Tiếng Đức',emoji:'🇩🇪',color:'#FFD700',level:'B2 (đã quên nhiều)',target:'B2+ / C1',schedule:'T4 & T6, 12:00–13:30',classDOW:[3,5],selfMin:30,note:'Ưu tiên nói và nghe',resources:['Lớp học','Deutsche Welle','Duolingo'],log:{},
+    categories:{grammar:{items:[{id:'g1',text:'Adjektivdeklination',done:false,level:'B1'},{id:'g2',text:'Konjunktiv II',done:false,level:'B2'},{id:'g3',text:'Passiv (Passive voice)',done:false,level:'B1'}]},vocabulary:{total:0,weeklyGoal:50,log:{}},speaking:{items:[{id:'s1',text:'Über mich — Vorstellung',done:true},{id:'s2',text:'Uni Alltag — Tagesablauf',done:false}]},writing:{items:[{id:'w1',text:'Email an Professor (formell)',done:false,link:''}]}}},
+  {id:'en',name:'Tiếng Anh',emoji:'🇬🇧',color:'#4FA3FF',level:'C1 (academic yếu)',target:'C1+ Academic',schedule:'T2 & T5, 12:00–13:30',classDOW:[1,4],selfMin:20,note:'Focus academic writing & speaking',resources:['Lớp học','TED Talks','Writing practice'],log:{},
+    categories:{grammar:{items:[{id:'g1',text:'Academic hedging language',done:false,level:'C1'},{id:'g2',text:'Concession & contrast structures',done:false,level:'B2'}]},vocabulary:{total:0,weeklyGoal:30,log:{}},speaking:{items:[{id:'s1',text:'GSE Presentation — Sustainability',done:false},{id:'s2',text:'Academic debate structure',done:false}]},writing:{items:[{id:'w1',text:'Skill Development Plan',done:false,link:''},{id:'w2',text:'Reflection Essay (GSE)',done:false,link:''}]}}}
+],
+habits:[
+  {id:'h1',name:'Tự học Tiếng Đức 20 phút',emoji:'🇩🇪',color:'#FFD700',completions:{},archived:false},
+  {id:'h2',name:'Ôn Microeconometrics 1 tiếng',emoji:'📊',color:'#E24B4A',completions:{},archived:false},
+  {id:'h3',name:'Review 1 concept Macro',emoji:'📈',color:'#7C6EF5',completions:{},archived:false},
+  {id:'h4',name:'Ngủ trước 12h đêm',emoji:'😴',color:'#1D9E75',completions:{},archived:false},
+  {id:'h5',name:'Uống đủ 2L nước',emoji:'💧',color:'#4FA3FF',completions:{},archived:false}
+],
+studyLog:[],
+events:[
+  {id:'ev1',title:'SprachCafe',date:'2026-06-17',time:'18:00',emoji:'🗣️',type:'language',note:'Networking với người bản ngữ'},
+  {id:'ev2',title:'Swimming',date:'2026-06-17',time:'14:00',emoji:'🏊',type:'health',note:'Thứ 3 hàng tuần'},
+  {id:'ev3',title:'IPE Thuyết trình',date:'2026-07-09',time:'09:00',emoji:'🌍',type:'exam',note:''},
+  {id:'ev4',title:'IPE Simulation',date:'2026-07-10',time:'09:00',emoji:'🌍',type:'exam',note:''},
+  {id:'ev5',title:'🎯 Thi Microeconometrics',date:'2026-07-22',time:'10:00',emoji:'📊',type:'exam',note:'HZO 90'}
+],
+adminTasks:{
+  recurring:[
+    {id:'r1',title:'Nấu ăn',emoji:'🍳',dow:[2,6]},
+    {id:'r2',title:'Đi chợ',emoji:'🛒',dow:[5]},
+    {id:'r3',title:'Giặt đồ',emoji:'👕',dow:[0]}
+  ],
+  daily:{}
+},
+dailyPerf:{},
+gamification:{xp:0,achievements:[]},
+timerCategories:[],
+settings:{theme:'purple',radius:'rounded'},
+parkingLot:[{id:'p1',text:'Tìm công cụ AI hỗ trợ học Econometrics',date:TODAY},{id:'p2',text:'Cập nhật CV cho Phase 2',date:TODAY}],
+todayFocus:{date:TODAY,mustDo:'',top3:['','','']}
+};}
+
+const SK='studyos-v6';
+function saveLocal(d){try{localStorage.setItem(SK,JSON.stringify(d));}catch(e){}}
+function loadLocal(){try{const s=localStorage.getItem(SK)||localStorage.getItem('studyos-v5')||localStorage.getItem('studyos-v4');return s?JSON.parse(s):null;}catch(e){return null;}}
+
+function showXpPop(n){const el=document.createElement('div');el.className='xp-pop';el.textContent=`+${n} XP`;document.body.appendChild(el);setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},2000);}
+function showAch(a){const el=document.createElement('div');el.className='ach-pop';el.innerHTML=`<div style="font-size:10px;opacity:.8;margin-bottom:3px">🏆 THÀNH TÍCH MỚI!</div><div style="font-size:17px;margin-bottom:3px">${a.emoji} ${a.name}</div><div style="font-size:11px;opacity:.8">${a.desc}</div>`;document.body.appendChild(el);setTimeout(()=>{if(el.parentNode)el.parentNode.removeChild(el);},4000);}
+
+function Badge({risk}){const r=RISK[risk]||RISK.medium;return<span className={`badge ${r.cls}`}>{r.label}</span>;}
+function Bar({v,color,h=5}){return<div className="bar-w" style={{height:h}}><div className="bar-f" style={{width:`${Math.max(0,Math.min(100,v||0))}%`,height:'100%',background:color||'#7C6EF5'}}/></div>;}
+function Tick({done,color,onClick}){return<div className="tick" style={{borderColor:done?(color||'#7C6EF5'):'var(--bdr)',background:done?(color||'#7C6EF5'):'transparent'}} onClick={onClick}>{done&&<span style={{color:'#fff',fontSize:10,fontWeight:700}}>✓</span>}</div>;}
+
+function SignInPage({onSignIn}){return<div className="signin-wrap"><div style={{textAlign:'center',maxWidth:380,padding:'40px 32px',background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:20}}>
+  <div style={{fontSize:46,marginBottom:14}}>⚡</div>
+  <div style={{fontSize:21,fontWeight:700,color:'var(--acc)',marginBottom:6}}>StudyOS v5</div>
+  <p style={{color:'var(--mu)',marginBottom:22,lineHeight:1.7,fontSize:13}}>Language Categories · Course Editor · Subtasks<br/><strong style={{color:'var(--tx)'}}>Sync real-time tất cả thiết bị</strong></p>
+  <button className="g-btn" onClick={onSignIn}>
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+    Đăng nhập bằng Google
+  </button>
+</div></div>;}
+
+function AddEventModal({initDate,existing,onSave,onClose}){
+  const [f,setF]=useState(existing?{title:existing.title,date:existing.date,time:existing.time||'',emoji:existing.emoji,type:existing.type,note:existing.note||''}:{title:'',date:initDate||TODAY,time:'',emoji:'📅',type:'academic',note:''});
+  const s=(k,v)=>setF(p=>({...p,[k]:v}));
+  return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:380}} onClick={e=>e.stopPropagation()}>
+    <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>{existing?'✏️ Sửa Event':'Thêm Event'}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
+    <div style={{display:'grid',gridTemplateColumns:'50px 1fr',gap:8,marginBottom:8}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Icon</div><input className="inp" value={f.emoji} onChange={e=>s('emoji',e.target.value)} style={{textAlign:'center',fontSize:18,padding:'5px'}}/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Tiêu đề *</div><input className="inp" value={f.title} onChange={e=>s('title',e.target.value)} placeholder="Tên event..."/></div>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Ngày</div><input type="date" className="inp" value={f.date} onChange={e=>s('date',e.target.value)}/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Giờ</div><input type="time" className="inp" value={f.time} onChange={e=>s('time',e.target.value)}/></div>
+    </div>
+    <select className="sel" value={f.type} onChange={e=>s('type',e.target.value)} style={{marginBottom:8}}>
+      {[['academic','Học thuật'],['exam','Kỳ thi'],['language','Ngôn ngữ'],['health','Sức khỏe'],['networking','Networking'],['other','Khác']].map(([k,v])=><option key={k} value={k}>{v}</option>)}
+    </select>
+    <input className="inp" value={f.note} onChange={e=>s('note',e.target.value)} placeholder="Ghi chú..." style={{marginBottom:14}}/>
+    <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>f.title&&onSave(existing?{...existing,...f}:{...f,id:uid()})}>{existing?'Lưu':'Thêm'}</button><button className="btn-g" onClick={onClose}>Huỷ</button></div>
+  </div></div>;}
+
+function EditHabitModal({habit,onSave,onArchive,onClose}){
+  const [f,setF]=useState({name:habit.name,emoji:habit.emoji,color:habit.color});
+  return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+    <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>Chỉnh sửa Habit</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
+    <div style={{display:'grid',gridTemplateColumns:'50px 1fr',gap:8,marginBottom:10}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Icon</div><input className="inp" value={f.emoji} onChange={e=>setF(p=>({...p,emoji:e.target.value}))} style={{textAlign:'center',fontSize:18,padding:'4px'}}/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Tên</div><input className="inp" value={f.name} onChange={e=>setF(p=>({...p,name:e.target.value}))}/></div>
+    </div>
+    <div className="tx-dm" style={{marginBottom:5}}>Màu</div>
+    <div style={{display:'flex',gap:6,marginBottom:14,flexWrap:'wrap'}}>{PAL.map(c=><div key={c} onClick={()=>setF(p=>({...p,color:c}))} style={{width:22,height:22,borderRadius:'50%',background:c,cursor:'pointer',border:`3px solid ${f.color===c?'#fff':'transparent'}`}}/>)}</div>
+    <div style={{display:'flex',gap:8}}>
+      <button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>onSave({...habit,...f})}>Lưu</button>
+      <button className="btn-g" onClick={()=>onArchive(habit.id)} style={{color:'var(--wa)'}}>Archive</button>
+      <button className="btn-g" onClick={onClose}>Huỷ</button>
+    </div>
+  </div></div>;}
+
+/* ── V5 NEW: COURSE EDITOR MODAL ── */
+function CourseEditorModal({existing,onSave,onClose}){
+  const [f,setF]=useState(existing?{name:existing.name,emoji:existing.emoji,color:existing.color,risk:existing.risk,schedule:existing.schedule||'',examDate:existing.examDate||'',endDate:existing.endDate||'',nextAction:existing.nextAction||'',note:existing.note||'',ects:existing.ects??6,grade:existing.grade??''}:{name:'',emoji:'📚',color:'#7C6EF5',risk:'medium',schedule:'',examDate:'',endDate:'',nextAction:'',note:'',ects:6,grade:''});
+  const s=(k,v)=>setF(p=>({...p,[k]:v}));
+  const save=()=>{if(!f.name.trim())return;const base=existing||{id:uid(),topics:[],tasks:[],archived:false,notes:[],phases:[]};const grade=f.grade===''?null:parseFloat(f.grade);onSave({...base,...f,examDate:f.examDate||null,endDate:f.endDate||null,ects:parseFloat(f.ects)||6,grade});};
+  const band=f.grade!==''?gradeBand(parseFloat(f.grade)):null;
+  return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:440}} onClick={e=>e.stopPropagation()}>
+    <div className="flex-sb" style={{marginBottom:14}}><span style={{fontSize:15,fontWeight:500}}>{existing?'✏️ Sửa môn học':'📚 Thêm môn học mới'}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
+    <div style={{display:'grid',gridTemplateColumns:'52px 1fr',gap:8,marginBottom:10}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Icon</div><input className="inp" value={f.emoji} onChange={e=>s('emoji',e.target.value)} style={{textAlign:'center',fontSize:18,padding:'5px'}}/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Tên môn *</div><input className="inp" value={f.name} onChange={e=>s('name',e.target.value)} placeholder="VD: Microeconomics..."/></div>
+    </div>
+    <div className="tx-dm" style={{marginBottom:4}}>Mức độ ưu tiên</div>
+    <div style={{display:'flex',gap:5,marginBottom:10}}>
+      {Object.entries(RISK).map(([k,r])=><button key={k} onClick={()=>s('risk',k)} style={{flex:1,padding:'5px 3px',borderRadius:6,cursor:'pointer',fontSize:10,fontWeight:700,background:f.risk===k?(r.cls.includes('cr')?'var(--crb)':r.cls.includes('wa')?'var(--wab)':r.cls.includes('su')?'var(--sub)':'var(--inb)'):'var(--card)',border:`1.5px solid ${f.risk===k?r.c:'var(--bdr)'}`,color:f.risk===k?r.c:'var(--mu)'}}>{r.label}</button>)}
+    </div>
+    <div className="tx-dm" style={{marginBottom:4}}>Màu sắc</div>
+    <div style={{display:'flex',gap:7,marginBottom:10}}>{PAL.map(c=><div key={c} onClick={()=>s('color',c)} style={{width:24,height:24,borderRadius:'50%',background:c,cursor:'pointer',border:`3px solid ${f.color===c?'#fff':'transparent'}`}}/>)}</div>
+    <div className="tx-dm" style={{marginBottom:2}}>Lịch học</div>
+    <input className="inp" value={f.schedule} onChange={e=>s('schedule',e.target.value)} placeholder="VD: Thứ 2, 16:00–18:00" style={{marginBottom:8}}/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Ngày thi</div><input type="date" className="inp" value={f.examDate} onChange={e=>s('examDate',e.target.value)}/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Ngày kết thúc</div><input type="date" className="inp" value={f.endDate} onChange={e=>s('endDate',e.target.value)}/></div>
+    </div>
+    <div style={{background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:8,padding:'10px',marginBottom:10}}>
+      <div className="lbl" style={{marginBottom:7}}>🎓 ĐIỂM SỐ (cho GPA tự động)</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        <div><div className="tx-dm" style={{marginBottom:2}}>ECTS (tín chỉ)</div><input type="number" className="inp" value={f.ects} onChange={e=>s('ects',e.target.value)} min="1" max="30" step="1"/></div>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Điểm thi (1.0–5.0, để trống nếu chưa thi)</div><input type="number" className="inp" value={f.grade} onChange={e=>s('grade',e.target.value)} min="1.0" max="5.0" step="0.1" placeholder="VD: 1.7"/></div>
+      </div>
+      {band&&<div style={{marginTop:7,fontSize:11,color:band.color,fontWeight:600}}>● {band.label}</div>}
+    </div>
+    <div className="tx-dm" style={{marginBottom:2}}>Bước tiếp theo</div>
+    <input className="inp" value={f.nextAction} onChange={e=>s('nextAction',e.target.value)} placeholder="Việc cần làm ngay..." style={{marginBottom:8}}/>
+    <div className="tx-dm" style={{marginBottom:2}}>Ghi chú</div>
+    <textarea value={f.note} onChange={e=>s('note',e.target.value)} placeholder="Ghi chú quan trọng..." rows={2} style={{width:'100%',background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:8,padding:'7px 10px',color:'var(--tx)',fontSize:13,outline:'none',fontFamily:'inherit',resize:'vertical',marginBottom:14}}/>
+    <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={save}>{existing?'Lưu thay đổi':'Thêm môn học'}</button><button className="btn-g" onClick={onClose}>Huỷ</button></div>
+  </div></div>;}
+
+/* ── V5 NEW: ADMIN TASK MODAL ── */
+function AdminTaskModal({existing,existingMode,onSave,onClose}){
+  const isEdit=!!existing;
+  const [f,setF]=useState(isEdit?{title:existing.title,emoji:existing.emoji,type:existingMode||'recurring',dow:existing.dow||[]}:{title:'',emoji:'📌',type:'daily',dow:[]});
+  const s=(k,v)=>setF(p=>({...p,[k]:v}));
+  const tog=(d)=>setF(p=>({...p,dow:p.dow.includes(d)?p.dow.filter(x=>x!==d):[...p.dow,d]}));
+  return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:360}} onClick={e=>e.stopPropagation()}>
+    <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>{isEdit?'✏️ Sửa Admin Task':'Thêm Admin Task'}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
+    <div style={{display:'grid',gridTemplateColumns:'52px 1fr',gap:8,marginBottom:10}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Icon</div><input className="inp" value={f.emoji} onChange={e=>s('emoji',e.target.value)} style={{textAlign:'center',fontSize:18,padding:'5px'}}/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Tên task *</div><input className="inp" value={f.title} onChange={e=>s('title',e.target.value)} placeholder="VD: Nấu ăn..."/></div>
+    </div>
+    {!isEdit&&<div style={{display:'flex',gap:8,marginBottom:10}}>
+      {[['daily','Một lần hôm nay'],['recurring','Hàng tuần']].map(([k,v])=><button key={k} className={f.type===k?'btn-p btn-sm':'btn-g btn-sm'} onClick={()=>s('type',k)}>{v}</button>)}
+    </div>}
+    {f.type==='recurring'&&<div style={{marginBottom:10}}>
+      <div className="tx-dm" style={{marginBottom:5}}>Ngày trong tuần</div>
+      <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+        {DV.map((d,i)=><button key={i} onClick={()=>tog(i)} style={{width:34,height:34,borderRadius:6,border:`1.5px solid ${f.dow.includes(i)?'var(--acc)':'var(--bdr)'}`,background:f.dow.includes(i)?'var(--acc2)':'transparent',color:f.dow.includes(i)?'var(--acc)':'var(--mu)',cursor:'pointer',fontSize:11,fontWeight:600}}>{d}</button>)}
+      </div>
+    </div>}
+    <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>{if(!f.title.trim())return;onSave(f);}}>{isEdit?'Lưu':'Thêm'}</button><button className="btn-g" onClick={onClose}>Huỷ</button></div>
+  </div></div>;}
+
+/* ── V5 NEW: TOPIC ROW WITH SUBTASKS ── */
+function TopicRow({topic,courseColor,onToggle,onDelete,onEdit,onToggleSub,onAddSub,onDeleteSub}){
+  const [exp,setExp]=useState(false);const [newSub,setNewSub]=useState('');
+  const [editing,setEditing]=useState(false);
+  const [eLabel,setELabel]=useState(topic.label);const [eDue,setEDue]=useState(topic.dueDate||'');
+  const subs=topic.subtasks||[];const subsDone=subs.filter(s=>s.done).length;
+  const dd=topic.dueDate?daysTo(topic.dueDate):null;
+  const addSub=()=>{if(!newSub.trim())return;onAddSub(newSub.trim());setNewSub('');};
+  const saveEdit=()=>{if(!eLabel.trim())return;onEdit({label:eLabel.trim(),dueDate:eDue});setEditing(false);};
+  if(editing)return<div style={{padding:'6px 0',background:'var(--sur)',borderRadius:6,marginBottom:2}}>
+    <input className="inp" value={eLabel} onChange={e=>setELabel(e.target.value)} style={{marginBottom:5,fontSize:12}}/>
+    <div style={{display:'flex',gap:6,alignItems:'center'}}>
+      <input type="date" className="inp" value={eDue} onChange={e=>setEDue(e.target.value)} style={{fontSize:11,flex:1}}/>
+      <button className="btn-p btn-sm" onClick={saveEdit}>✓</button>
+      <button className="btn-g btn-sm" onClick={()=>setEditing(false)}>✕</button>
+    </div>
+  </div>;
+  return<div>
+    <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 0'}}>
+      <Tick done={topic.done} color={courseColor} onClick={onToggle}/>
+      <span style={{flex:1,fontSize:12,textDecoration:topic.done?'line-through':'none',opacity:topic.done?.5:1,cursor:'pointer'}} onClick={()=>setExp(e=>!e)}>
+        {topic.label}{subs.length>0&&<span style={{fontSize:9,color:'var(--mu)',marginLeft:5}}>({subsDone}/{subs.length})</span>}
+      </span>
+      {topic.dueDate&&!topic.done&&<span style={{fontSize:10,color:dd<=0?'var(--cr)':dd<=3?'var(--wa)':'var(--dm)',whiteSpace:'nowrap'}}>{dd<=0?'Quá hạn!':fmt(topic.dueDate)}</span>}
+      <button onClick={()=>setExp(e=>!e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,padding:'0 2px',opacity:.6}}>{exp?'▲':'▼'}</button>
+      <button onClick={()=>setEditing(true)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.45}}>✏️</button>
+      <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.35}} onClick={onDelete}>×</button>
+    </div>
+    {exp&&<div className="sub-indent">
+      {subs.map(sub=><div key={sub.id} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0',borderBottom:'1px solid rgba(37,45,74,.2)'}}>
+        <Tick done={sub.done} color={courseColor} onClick={()=>onToggleSub(sub.id)}/>
+        <span style={{flex:1,fontSize:11,textDecoration:sub.done?'line-through':'none',opacity:sub.done?.5:1}}>{sub.text}</span>
+        <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.4}} onClick={()=>onDeleteSub(sub.id)}>×</button>
+      </div>)}
+      <div style={{display:'flex',gap:5,marginTop:5}}>
+        <input className="inp" value={newSub} onChange={e=>setNewSub(e.target.value)} placeholder="+ Subtask (Enter)..." style={{flex:1,fontSize:11,padding:'4px 7px'}} onKeyDown={e=>e.key==='Enter'&&addSub()}/>
+        <button className="btn-p btn-sm" onClick={addSub}>+</button>
+      </div>
+    </div>}
+  </div>;}
+
+/* ── V5 NEW: COURSE SCHEDULE VIEW ── */
+function CourseScheduleView({course}){
+  const topicsWithDue=course.topics.filter(t=>t.dueDate).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  if(topicsWithDue.length===0)return<div className="card"><div className="tx-dm" style={{textAlign:'center',padding:'14px'}}>Chưa có topic nào có deadline. Thêm dueDate khi sửa môn để dùng tính năng này.</div></div>;
+  const start=new Date();start.setHours(0,0,0,0);
+  const endD=new Date(course.examDate||course.endDate||'2026-07-31');
+  const totalMs=endD-start;
+  return<div className="card" style={{marginBottom:10}}>
+    <div className="flex-sb" style={{marginBottom:10}}>
+      <div className="lbl" style={{margin:0}}>📅 LỊCH HỌC THEO TOPIC</div>
+      <div style={{display:'flex',gap:8,fontSize:10,color:'var(--mu)'}}><span style={{color:'var(--su)'}}>● Xong</span><span style={{color:course.color}}>● Đúng hạn</span><span style={{color:'var(--cr)'}}>● Quá hạn</span></div>
+    </div>
+    {topicsWithDue.map((t,i)=>{
+      const d=new Date(t.dueDate);d.setHours(0,0,0,0);
+      const pctPos=Math.max(0,Math.min(100,(d-start)/totalMs*100));
+      const days=daysTo(t.dueDate);
+      const dotColor=t.done?'var(--su)':days<=0?'var(--cr)':days<=3?'var(--wa)':course.color;
+      return<div key={t.id} className="sched-row">
+        <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${dotColor}`,background:t.done?dotColor:'transparent',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>{t.done&&<span style={{color:'#fff',fontSize:9,fontWeight:700}}>✓</span>}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:11,color:t.done?'var(--mu)':'var(--tx)',textDecoration:t.done?'line-through':'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.label}</div>
+          <div style={{position:'relative',height:3,background:'var(--dm)',borderRadius:2,marginTop:3}}>
+            <div style={{position:'absolute',left:0,width:`${pctPos}%`,height:'100%',background:'var(--bdr)',borderRadius:2}}/>
+            <div style={{position:'absolute',left:`${pctPos}%`,width:7,height:7,background:dotColor,borderRadius:'50%',top:-2,transform:'translateX(-3px)',border:'1px solid var(--bg)'}}/>
+          </div>
+        </div>
+        <div style={{fontSize:10,color:dotColor,fontWeight:600,whiteSpace:'nowrap',minWidth:60,textAlign:'right'}}>{t.done?'✓ Xong':days<=0?'Quá hạn!':days<=3?`${days}N ⚠️`:fmt(t.dueDate)}</div>
+      </div>;})}
+  </div>;}
+
+/* ── V6 NEW: COURSE NOTES & Q&A BLOCK ── */
+function CourseNotesBlock({course,onUpdate}){
+  const [text,setText]=useState('');
+  const [commentText,setCommentText]=useState({});
+  const notes=course.notes||[];
+  const addNote=()=>{if(!text.trim())return;onUpdate({notes:[{id:uid(),text:text.trim(),date:TODAY,comments:[]},...notes]});setText('');};
+  const delNote=(id)=>onUpdate({notes:notes.filter(n=>n.id!==id)});
+  const addComment=(noteId)=>{const t=commentText[noteId];if(!t?.trim())return;onUpdate({notes:notes.map(n=>n.id===noteId?{...n,comments:[...(n.comments||[]),{id:uid(),text:t.trim(),date:TODAY}]}:n)});setCommentText(p=>({...p,[noteId]:''}));};
+  const delComment=(noteId,cId)=>onUpdate({notes:notes.map(n=>n.id===noteId?{...n,comments:n.comments.filter(c=>c.id!==cId)}:n)});
+  return<div className="card" style={{marginBottom:10}}>
+    <div className="lbl" style={{marginBottom:8}}>💬 NOTES & Q&A ÔN THI</div>
+    <div style={{display:'flex',gap:6,marginBottom:10}}>
+      <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Ghi chú quan trọng hoặc câu hỏi có thể thi cho topic này..." rows={2}
+        style={{flex:1,background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:8,padding:'7px 10px',color:'var(--tx)',fontSize:12,outline:'none',fontFamily:'inherit',resize:'vertical'}}/>
+      <button className="btn-p btn-sm" onClick={addNote} style={{alignSelf:'flex-end'}}>Đăng</button>
+    </div>
+    {notes.length===0&&<div className="tx-dm" style={{textAlign:'center',padding:'10px'}}>Chưa có ghi chú nào</div>}
+    {notes.map(n=><div key={n.id} className="note-post">
+      <div className="flex-sb" style={{marginBottom:4}}>
+        <span className="tx-dm">{fmt(n.date)}</span>
+        <button onClick={()=>delNote(n.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.4}}>×</button>
+      </div>
+      <div style={{fontSize:12,lineHeight:1.5,whiteSpace:'pre-wrap'}}>{n.text}</div>
+      {(n.comments||[]).map(c=><div key={c.id} className="note-comment">
+        <div className="flex-sb"><span style={{flex:1}}>{c.text}</span><button onClick={()=>delComment(n.id,c.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.4,marginLeft:6}}>×</button></div>
+        <div className="tx-dm" style={{marginTop:2}}>{fmt(c.date)}</div>
+      </div>)}
+      <div style={{display:'flex',gap:5,marginTop:6}}>
+        <input className="inp" value={commentText[n.id]||''} onChange={e=>setCommentText(p=>({...p,[n.id]:e.target.value}))} placeholder="Bình luận thêm..." style={{flex:1,fontSize:11,padding:'4px 8px'}} onKeyDown={e=>e.key==='Enter'&&addComment(n.id)}/>
+        <button className="btn-g btn-sm" onClick={()=>addComment(n.id)}>+</button>
+      </div>
+    </div>)}
+  </div>;}
+
+/* ── V6 NEW: COURSE GANTT PHASES (interactive) ── */
+function CourseGanttPhases({course,onUpdate}){
+  const [showAdd,setShowAdd]=useState(false);
+  const [f,setF]=useState({title:'',startDate:TODAY,endDate:TODAY,note:''});
+  const phases=course.phases||[];
+  const start=new Date();start.setHours(0,0,0,0);
+  const end=new Date(course.examDate||course.endDate||'2026-07-31');
+  const totalMs=Math.max(1,end-start);
+  const pOf=(ds)=>{const d=new Date(ds);d.setHours(0,0,0,0);return Math.max(0,Math.min(100,(d-start)/totalMs*100));};
+  const wOf=(s,e)=>Math.max(2,pOf(e)-pOf(s));
+  const addPhase=()=>{if(!f.title.trim())return;onUpdate({phases:[...phases,{id:uid(),...f,color:PAL[phases.length%PAL.length]}]});setF({title:'',startDate:TODAY,endDate:TODAY,note:''});setShowAdd(false);};
+  const delPhase=(id)=>onUpdate({phases:phases.filter(p=>p.id!==id)});
+  return<div className="card" style={{marginBottom:10}}>
+    <div className="flex-sb" style={{marginBottom:8}}>
+      <div className="lbl" style={{margin:0}}>📊 GANTT — PHASE NHỎ TRONG MÔN</div>
+      <button className="btn-g btn-sm" onClick={()=>setShowAdd(s=>!s)}>+ Thêm phase</button>
+    </div>
+    {showAdd&&<div style={{background:'var(--sur)',borderRadius:8,padding:'10px',marginBottom:10}}>
+      <input className="inp" value={f.title} onChange={e=>setF(p=>({...p,title:e.target.value}))} placeholder="VD: Ôn Part A..." style={{marginBottom:6,fontSize:12}}/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:6}}>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Bắt đầu</div><input type="date" className="inp" value={f.startDate} onChange={e=>setF(p=>({...p,startDate:e.target.value}))} style={{fontSize:11}}/></div>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Kết thúc</div><input type="date" className="inp" value={f.endDate} onChange={e=>setF(p=>({...p,endDate:e.target.value}))} style={{fontSize:11}}/></div>
+      </div>
+      <input className="inp" value={f.note} onChange={e=>setF(p=>({...p,note:e.target.value}))} placeholder="Ghi chú (optional)..." style={{marginBottom:8,fontSize:11}}/>
+      <div style={{display:'flex',gap:6}}><button className="btn-p btn-sm" onClick={addPhase}>Thêm</button><button className="btn-g btn-sm" onClick={()=>setShowAdd(false)}>Huỷ</button></div>
+    </div>}
+    {phases.length===0&&!showAdd&&<div className="tx-dm" style={{textAlign:'center',padding:'10px'}}>Chưa có phase nào — bấm "+ Thêm phase" để tạo</div>}
+    {phases.map(p=><div key={p.id} className="gantt2-row">
+      <div className="gantt2-label" title={p.note}>{p.title}</div>
+      <div className="gantt2-track">
+        <div className="gantt2-bar" style={{left:`${pOf(p.startDate)}%`,width:`${wOf(p.startDate,p.endDate)}%`,background:p.color}} title={`${fmt(p.startDate)} → ${fmt(p.endDate)}${p.note?' · '+p.note:''}`}>{p.title}</div>
+      </div>
+      <button onClick={()=>delPhase(p.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.4,marginLeft:6}}>×</button>
+    </div>)}
+  </div>;}
+/* ── V6: QUICK LANG INPUT FOR DASHBOARD ── */
+function QuickLangInput({data,upd}){
+  const [selLang,setSelLang]=useState('de');const [selCat,setSelCat]=useState('vocabulary');const [text,setText]=useState('');const [vocabN,setVocabN]=useState(5);
+  const lang=data.languages.find(l=>l.id===selLang);
+  const add=()=>{
+    if(selCat==='vocabulary'){
+      // vocabulary: only increment total counter, never create list items
+      const langs=data.languages.map(l=>{
+        if(l.id!==selLang)return l;
+        const cats={...(l.categories||defCats())};
+        const vocab={...(cats.vocabulary||{total:0,weeklyGoal:50})};
+        vocab.total=(vocab.total||0)+vocabN;
+        cats.vocabulary=vocab;
+        return{...l,categories:cats};
+      });
+      upd({languages:langs});
+    } else {
+      if(!text.trim())return;
+      const langs=data.languages.map(l=>{
+        if(l.id!==selLang)return l;
+        const cats={...(l.categories||defCats())};
+        const catD={...(cats[selCat]||{items:[]})};
+        const ni={id:uid(),text:text.trim(),done:false};
+        if(selCat==='writing')ni.link='';
+        if(selCat==='grammar')ni.level='B1';
+        catD.items=[ni,...(catD.items||[])];
+        cats[selCat]=catD;
+        return{...l,categories:cats};
+      });
+      upd({languages:langs});setText('');
+    }
+  };
+  const vocab=lang?.categories?.vocabulary||{total:0};
+  return<div className="card">
+    <div className="lbl" style={{marginBottom:8}}>🌐 NGÔN NGỮ — QUICK LOG</div>
+    <div style={{display:'flex',gap:5,marginBottom:7}}>
+      {data.languages.map(l=><button key={l.id} className={selLang===l.id?'btn-p btn-sm':'btn-g btn-sm'} onClick={()=>setSelLang(l.id)}>{l.emoji} {l.name.split(' ')[1]}</button>)}
+    </div>
+    <div style={{display:'flex',gap:4,marginBottom:8,flexWrap:'wrap'}}>
+      {[['vocabulary','📝','Từ vựng'],['grammar','📖','Ngữ pháp'],['speaking','🗣️','Nói'],['writing','✍️','Viết']].map(([k,e,lb])=><button key={k} onClick={()=>setSelCat(k)} style={{padding:'3px 8px',borderRadius:5,border:`1px solid ${selCat===k?(lang?.color||'var(--acc)'):'var(--bdr)'}`,background:selCat===k?(lang?.color+'22'||'var(--acc2)'):'transparent',color:selCat===k?(lang?.color||'var(--acc)'):'var(--mu)',cursor:'pointer',fontSize:10,fontWeight:selCat===k?700:400}}>{e} {lb}</button>)}
+    </div>
+    {selCat==='vocabulary'?<div>
+      <div style={{display:'flex',alignItems:'center',gap:8,background:'var(--sur)',borderRadius:8,padding:'8px 12px',marginBottom:6}}>
+        <span className="tx-mu">Tổng từ:</span>
+        <span style={{fontSize:20,fontWeight:800,color:lang?.color||'var(--acc)'}}>{vocab.total||0}</span>
+        <span className="tx-mu">từ</span>
+        <div style={{marginLeft:'auto',display:'flex',gap:5}}>
+          {[1,5,10,25].map(n=><button key={n} className="btn-p btn-sm" onClick={()=>{const langs=data.languages.map(l=>{if(l.id!==selLang)return l;const cats={...(l.categories||defCats())};const v={...(cats.vocabulary||{total:0})};v.total=(v.total||0)+n;cats.vocabulary=v;return{...l,categories:cats};});upd({languages:langs});}}>{`+${n}`}</button>)}
+        </div>
+      </div>
+      <div style={{fontSize:10,color:'var(--dm)'}}>💡 Từ vựng được log theo số lượng, không theo từng từ cụ thể</div>
+    </div>:<div style={{display:'flex',gap:6}}>
+      <input className="inp" value={text} onChange={e=>setText(e.target.value)}
+        placeholder={selCat==='speaking'?'Topic đã luyện nói...':selCat==='writing'?'Tên bài viết đã làm...':'Điểm ngữ pháp mới...'}
+        onKeyDown={e=>e.key==='Enter'&&add()} style={{flex:1,fontSize:12}}/>
+      <button className="btn-p btn-sm" onClick={add}>Lưu</button>
+    </div>}
+    <div style={{marginTop:5,display:'flex',gap:12,flexWrap:'wrap'}}>
+      {data.languages.map(l=><span key={l.id} style={{fontSize:10,color:'var(--mu)'}}>{l.emoji} {l.categories?.vocabulary?.total||0} từ</span>)}
+    </div>
+  </div>;}
+
+function MiniCalendar({events,onDateSelect,selectedDate}){
+  const [vy,setVy]=useState(new Date().getFullYear());
+  const [vm,setVm]=useState(new Date().getMonth());
+  const sel=selectedDate||TODAY;
+  const firstDay=new Date(vy,vm,1).getDay();
+  const dim=new Date(vy,vm+1,0).getDate();
+  const dip=new Date(vy,vm,0).getDate();
+  const cells=[];
+  for(let i=firstDay-1;i>=0;i--)cells.push({day:dip-i,cur:false});
+  for(let i=1;i<=dim;i++)cells.push({day:i,cur:true});
+  while(cells.length%7!==0)cells.push({day:cells.length-dim-firstDay+1,cur:false});
+  const evByDate={};events.forEach(e=>{if(!evByDate[e.date])evByDate[e.date]=[];evByDate[e.date].push(e);});
+  const TC={academic:'#7C6EF5',exam:'#E24B4A',language:'#FFD700',health:'#1D9E75',networking:'#4FA3FF',other:'#6B75A0'};
+  const prev=()=>{if(vm===0){setVm(11);setVy(y=>y-1);}else setVm(m=>m-1);};
+  const next=()=>{if(vm===11){setVm(0);setVy(y=>y+1);}else setVm(m=>m+1);};
+  return<div>
+    <div className="flex-sb" style={{marginBottom:7}}>
+      <button className="btn-g btn-sm" onClick={prev}>‹</button>
+      <span style={{fontSize:12,fontWeight:600}}>{MV[vm]} {vy}</span>
+      <button className="btn-g btn-sm" onClick={next}>›</button>
+    </div>
+    <div className="cal-grid" style={{marginBottom:3}}>{['T2','T3','T4','T5','T6','T7','CN'].map(d=><div key={d} className="cal-hd">{d}</div>)}</div>
+    <div className="cal-grid">{cells.map((c,i)=>{
+      if(!c.cur)return<div key={i} className="cal-cell other-month"><span style={{fontSize:11,color:'var(--dm)'}}>{c.day}</span></div>;
+      const ds=`${vy}-${String(vm+1).padStart(2,'0')}-${String(c.day).padStart(2,'0')}`;
+      const evs=evByDate[ds]||[];const isT=ds===TODAY;const isS=ds===sel;
+      return<div key={i} className={`cal-cell ${isT?'today':''} ${isS&&!isT?'selected':''}`} onClick={()=>onDateSelect(ds)}>
+        <div style={{fontSize:11,lineHeight:1.3}}>{c.day}</div>
+        {evs.length>0&&<div className="cal-dots">{evs.slice(0,3).map((e,j)=><div key={j} className="cal-dot" style={{background:TC[e.type]||'#7C6EF5'}}/>)}</div>}
+      </div>;
+    })}</div>
+  </div>;}
+
+function DashboardPage({data,upd,nav,awardXP}){
+  const [editF,setEditF]=useState(false);
+  const [f,setF]=useState(data.todayFocus);
+  const [selDate,setSelDate]=useState(TODAY);
+  const [showAddEv,setShowAddEv]=useState(false);
+  const [editEv,setEditEv]=useState(null);
+  const [showAddAdmin,setShowAddAdmin]=useState(false);
+  const [editAdmin,setEditAdmin]=useState(null); // {src,item}
+  const [perfDate,setPerfDate]=useState(TODAY);
+  useEffect(()=>setF(data.todayFocus),[data.todayFocus]);
+  const phase=data.phases.find(p=>p.id===data.currentPhaseId);
+  const crits=data.courses.filter(c=>c.risk==='critical'&&!c.archived);
+  const stale=data.todayFocus.date!==TODAY;
+  const wd=weekDates();
+  const weekH=data.studyLog.filter(l=>wd.includes(l.date)).reduce((s,l)=>s+l.hours,0);
+  const selEvs=data.events.filter(e=>e.date===selDate).sort((a,b)=>a.time.localeCompare(b.time));
+  const todayDow=new Date().getDay();
+  const recToday=data.adminTasks.recurring.filter(r=>r.dow.includes(todayDow));
+  const dailyToday=data.adminTasks.daily[TODAY]||[];
+  const allAdmin=[...recToday.map(r=>({...r,src:'rec'})),...dailyToday.map(t=>({...t,src:'day'}))];
+  const perfD=(date)=>{const p=data.dailyPerf[date]||{};const h=data.studyLog.filter(l=>l.date===date).reduce((s,l)=>s+l.hours,0);const act=data.habits.filter(x=>!x.archived);return{...p,h,hd:act.filter(x=>x.completions[date]).length,ht:act.length};};
+  const perf=perfD(perfDate);
+  const saveF=()=>{const nf={...f,date:TODAY};upd({todayFocus:nf});if(nf.mustDo&&!data.todayFocus.mustDo)awardXP(XPR.focus,'Focus set!');setEditF(false);};
+  const isAdminDone=(item)=>{if(item.src==='rec'){const d=data.adminTasks.daily[TODAY]||[];return d.find(t=>t.id===`rec_${item.id}`)?.done||false;}return item.done||false;};
+  const togAdmin=(item)=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};const existing=at.daily[TODAY]||[];if(item.src==='rec'){const key=`rec_${item.id}`;const idx=existing.findIndex(t=>t.id===key);if(idx>=0)at.daily[TODAY]=existing.map(t=>t.id===key?{...t,done:!t.done}:t);else at.daily[TODAY]=[...existing,{id:key,title:item.title,done:true}];}else{at.daily[TODAY]=existing.map(t=>t.id===item.id?{...t,done:!t.done}:t);}upd({adminTasks:at});};
+  const saveRating=(r)=>{const dp={...data.dailyPerf,[perfDate]:{...(data.dailyPerf[perfDate]||{}),rating:r}};upd({dailyPerf:dp});};
+  const navPerf=(d)=>{const nd=new Date(perfDate);nd.setDate(nd.getDate()+d);const s=nd.toISOString().split('T')[0];if(s<=TODAY)setPerfDate(s);};
+  const sorted=[...data.courses].filter(c=>!c.archived).sort((a,b)=>{const o={critical:0,watch:1,medium:2,good:3};return(o[a.risk]??2)-(o[b.risk]??2);});
+
+  const saveAdminEdit=(f)=>{
+    if(!editAdmin)return;
+    if(editAdmin.src==='rec'){upd({adminTasks:{...data.adminTasks,recurring:data.adminTasks.recurring.map(r=>r.id===editAdmin.item.id?{...r,title:f.title,emoji:f.emoji,dow:f.dow}:r)}});}
+    else{const daily={...data.adminTasks.daily};daily[TODAY]=(daily[TODAY]||[]).map(t=>t.id===editAdmin.item.id?{...t,title:f.title,emoji:f.emoji}:t);upd({adminTasks:{...data.adminTasks,daily}});}
+    setEditAdmin(null);
+  };
+
+  // Deadlines widget: aggregate task/topic due dates across all non-archived courses
+  const allDeadlines=[];
+  data.courses.filter(c=>!c.archived).forEach(c=>{
+    (c.topics||[]).filter(t=>!t.done&&t.dueDate).forEach(t=>allDeadlines.push({type:'topic',courseId:c.id,courseEmoji:c.emoji,courseColor:c.color,courseName:c.name,label:t.label,date:t.dueDate}));
+    (c.tasks||[]).filter(t=>!t.done&&t.dueDate).forEach(t=>allDeadlines.push({type:'task',courseId:c.id,courseEmoji:c.emoji,courseColor:c.color,courseName:c.name,label:t.text,date:t.dueDate,time:t.dueTime}));
+  });
+  allDeadlines.sort((a,b)=>a.date.localeCompare(b.date));
+  const upcomingDeadlines=allDeadlines.filter(d=>d.date>=TODAY).slice(0,6);
+  const overdueDeadlines=allDeadlines.filter(d=>d.date<TODAY);
+
+  return<div>
+    <div style={{marginBottom:12}}>
+      <div className="tx-mu">{new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+      <div style={{fontSize:11,color:'#7C6EF5',marginTop:2}}>📍 {phase?.name} · còn {daysTo(phase?.endDate)} ngày</div>
+    </div>
+    {crits.map(c=><div key={c.id} style={{background:'var(--crb)',border:'1px solid var(--crBdr)',borderRadius:10,padding:'10px 13px',marginBottom:10,display:'flex',gap:10,alignItems:'center'}}>
+      <span style={{fontSize:18}}>🚨</span>
+      <div><div style={{fontSize:10,fontWeight:700,color:'var(--cr)',marginBottom:2}}>CẦN XỬ LÝ NGAY</div>
+        <div style={{fontSize:12}}>{c.emoji} <strong>{c.name}</strong>{c.examDate&&<span style={{color:'var(--cr)'}}> · còn <strong>{daysTo(c.examDate)}</strong> ngày đến thi</span>}</div>
+        <div style={{fontSize:11,color:'var(--mu)',marginTop:1}}>{c.nextAction}</div>
+      </div>
+    </div>)}
+    {overdueDeadlines.length>0&&<div style={{background:'var(--wab)',border:'1px solid var(--waBdr)',borderRadius:10,padding:'9px 13px',marginBottom:10,fontSize:11,color:'var(--wa)'}}>
+      ⚠️ {overdueDeadlines.length} deadline đã quá hạn — xem bên dưới
+    </div>}
+    <div className="g2" style={{marginBottom:10}}>
+      <div className="card" style={{borderColor:stale?'var(--waBdr)':'rgba(124,110,245,.3)'}}>
+        {stale&&<div style={{background:'var(--wab)',border:'1px solid var(--waBdr)',borderRadius:6,padding:'5px 9px',marginBottom:7,fontSize:11,color:'var(--wa)'}}>⚠️ Focus chưa cập nhật — <span style={{textDecoration:'underline',cursor:'pointer'}} onClick={()=>setEditF(true)}>set ngay</span></div>}
+        <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>⚡ FOCUS HÔM NAY</div><button className="btn-g btn-sm" onClick={()=>setEditF(true)}>Sửa</button></div>
+        {editF?<div>
+          <div className="tx-dm" style={{marginBottom:2}}>🎯 MUST DO</div>
+          <input className="inp" value={f.mustDo} onChange={e=>setF(p=>({...p,mustDo:e.target.value}))} placeholder="Việc quan trọng nhất hôm nay..." style={{marginBottom:6}}/>
+          <div className="tx-dm" style={{marginBottom:2}}>📌 TOP 3</div>
+          {f.top3.map((t,i)=><input key={i} className="inp" value={t} onChange={e=>{const a=[...f.top3];a[i]=e.target.value;setF(p=>({...p,top3:a}));}} placeholder={`Task ${i+1}...`} style={{marginBottom:4}}/>)}
+          <div style={{display:'flex',gap:5,marginTop:6}}><button className="btn-p btn-sm" onClick={saveF}>Lưu</button><button className="btn-g btn-sm" onClick={()=>setEditF(false)}>Huỷ</button></div>
+        </div>:<div>
+          {f.mustDo?<div style={{background:'var(--acc2)',border:'1px solid var(--acc3)',borderRadius:7,padding:'8px 10px',marginBottom:6}}><div style={{fontSize:9,color:'#7C6EF5',fontWeight:700,marginBottom:2}}>🎯 MUST DO</div><div style={{fontSize:13,fontWeight:500}}>{f.mustDo}</div></div>
+          :<div style={{border:'1px dashed var(--bdr)',borderRadius:7,padding:'8px',textAlign:'center',cursor:'pointer',marginBottom:6}} onClick={()=>setEditF(true)}><span className="tx-dm">+ Set must-do</span></div>}
+          {f.top3.some(t=>t)&&<div>{f.top3.filter(t=>t).map((t,i)=><div key={i} style={{display:'flex',gap:6,alignItems:'center',marginBottom:3}}><div style={{width:12,height:12,borderRadius:2,border:'1.5px solid var(--bdr)',flexShrink:0}}/><span style={{fontSize:11}}>{t}</span></div>)}</div>}
+        </div>}
+      </div>
+      <div className="card">
+        <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>🧹 ADMIN TASKS HÔM NAY</div><button className="btn-g btn-sm" onClick={()=>nav('admin')}>Quản lý</button></div>
+        {allAdmin.length===0&&<div className="tx-dm" style={{padding:'6px 0'}}>Không có admin task hôm nay 🎉</div>}
+        {allAdmin.map((item,i)=>{const done=isAdminDone(item);return<div key={i} className="admin-item">
+          <div style={{width:20,height:20,borderRadius:4,border:`1.5px solid ${done?'var(--su)':'var(--bdr)'}`,background:done?'var(--su)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,fontSize:10}}
+            onClick={()=>togAdmin(item)}>{done&&<span style={{color:'#fff',fontWeight:700}}>✓</span>}</div>
+          <span style={{fontSize:12,textDecoration:done?'line-through':'none',opacity:done?.6:1,flex:1}}>{item.emoji} {item.title}</span>
+          {item.src==='rec'&&<span style={{fontSize:9,color:'var(--dm)'}}>↻</span>}
+          <button onClick={()=>setEditAdmin({src:item.src,item})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.5}}>✏️</button>
+          {item.src==='day'&&<button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.5}} onClick={()=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};at.daily[TODAY]=(at.daily[TODAY]||[]).filter(t=>t.id!==item.id);upd({adminTasks:at});}}>×</button>}
+        </div>;})}
+        <button className="btn-g btn-sm" style={{marginTop:8,width:'100%',justifyContent:'center'}} onClick={()=>setShowAddAdmin(true)}>+ Thêm admin task</button>
+      </div>
+    </div>
+    <div style={{marginBottom:10}}><QuickLangInput data={data} upd={upd}/></div>
+    <div className="g2" style={{marginBottom:10}}>
+      <div className="card">
+        <div className="flex-sb" style={{marginBottom:8}}><div className="lbl" style={{margin:0}}>📅 LỊCH</div><button className="btn-g btn-sm" onClick={()=>setShowAddEv(true)}>+ Event</button></div>
+        <MiniCalendar events={data.events} onDateSelect={setSelDate} selectedDate={selDate}/>
+        <div style={{marginTop:8,paddingTop:8,borderTop:'1px solid var(--bdr)'}}>
+          <div style={{fontSize:11,fontWeight:600,color:'var(--mu)',marginBottom:5}}>{selDate===TODAY?'Hôm nay 📍':fmt(selDate)}</div>
+          {selEvs.length===0?<div className="tx-dm">Không có event — <span style={{color:'var(--acc)',cursor:'pointer'}} onClick={()=>setShowAddEv(true)}>thêm ngay</span></div>
+          :selEvs.map(e=><div key={e.id} style={{display:'flex',gap:7,alignItems:'center',marginBottom:4,padding:'4px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
+            <span style={{fontSize:14}}>{e.emoji}</span>
+            <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500}}>{e.title}</div>{e.time&&<div className="tx-dm">{e.time}</div>}</div>
+            <button onClick={()=>setEditEv(e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.5}}>✏️</button>
+            <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.5}} onClick={()=>upd({events:data.events.filter(x=>x.id!==e.id)})}>×</button>
+          </div>)}
+          <button className="btn-g btn-sm" style={{marginTop:5,width:'100%',justifyContent:'center'}} onClick={()=>setShowAddEv(true)}>+ Thêm event {fmt(selDate)}</button>
+        </div>
+      </div>
+      <div className="card">
+        <div className="lbl" style={{marginBottom:8}}>📊 HIỆU SUẤT</div>
+        <div className="flex-sb" style={{marginBottom:8}}>
+          <button className="btn-g btn-sm" onClick={()=>navPerf(-1)}>‹</button>
+          <span style={{fontSize:12,fontWeight:600,color:perfDate===TODAY?'var(--acc)':'var(--tx)'}}>{perfDate===TODAY?'Hôm nay':fmt(perfDate)}</span>
+          <button className="btn-g btn-sm" onClick={()=>navPerf(1)} style={{opacity:perfDate===TODAY?.3:1}} disabled={perfDate===TODAY}>›</button>
+        </div>
+        <div className="g3" style={{marginBottom:8}}>
+          <div style={{textAlign:'center',background:'var(--sur)',borderRadius:7,padding:'7px 4px'}}><div style={{fontSize:17,fontWeight:600,color:'#1D9E75'}}>{perf.ht>0?`${perf.hd}/${perf.ht}`:'-'}</div><div className="tx-dm">Habits</div></div>
+          <div style={{textAlign:'center',background:'var(--sur)',borderRadius:7,padding:'7px 4px'}}><div style={{fontSize:17,fontWeight:600,color:'#7C6EF5'}}>{perf.h>0?perf.h.toFixed(1):'-'}</div><div className="tx-dm">Giờ học</div></div>
+          <div style={{textAlign:'center',background:'var(--sur)',borderRadius:7,padding:'7px 4px'}}><div style={{fontSize:17,fontWeight:600,color:'var(--go)'}}>{data.gamification?.xp||0}</div><div className="tx-dm">Total XP</div></div>
+        </div>
+        <div className="tx-dm" style={{marginBottom:4}}>Đánh giá ngày này:</div>
+        <div style={{display:'flex',gap:4,justifyContent:'center'}}>
+          {[1,2,3,4,5].map(n=><span key={n} className="perf-star" style={{opacity:perf.rating>=n?1:.2}} onClick={()=>saveRating(n)}>⭐</span>)}
+        </div>
+        {perf.rating&&<div style={{textAlign:'center',fontSize:11,color:'var(--mu)',marginTop:3}}>{['','Cần cố gắng hơn 💪','Khá ổn 👍','Tốt! ✨','Rất tốt! 🎉','Xuất sắc! 🏆'][perf.rating]}</div>}
+        <div style={{marginTop:8,borderTop:'1px solid var(--bdr)',paddingTop:7}}>
+          <div className="flex-sb"><span className="tx-mu">Tuần này</span><span style={{fontSize:12,color:'#7C6EF5',fontWeight:600}}>{weekH.toFixed(1)}h học</span></div>
+        </div>
+      </div>
+    </div>
+    {(upcomingDeadlines.length>0||overdueDeadlines.length>0)&&<div className="card" style={{marginBottom:10}}>
+      <div className="flex-sb" style={{marginBottom:8}}><div className="lbl" style={{margin:0}}>⏰ DEADLINES (từ tất cả môn học)</div><button className="btn-g btn-sm" onClick={()=>nav('courses')}>Xem môn học →</button></div>
+      {overdueDeadlines.slice(0,3).map((d,i)=><div key={'o'+i} className="deadline-row">
+        <span style={{fontSize:14}}>{d.courseEmoji}</span>
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.label}</div><div className="tx-dm">{d.courseName}</div></div>
+        <span style={{fontSize:10,color:'var(--cr)',fontWeight:700,whiteSpace:'nowrap'}}>Quá hạn!</span>
+      </div>)}
+      {upcomingDeadlines.map((d,i)=>{const days=daysTo(d.date);return<div key={'u'+i} className="deadline-row">
+        <span style={{fontSize:14}}>{d.courseEmoji}</span>
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.label}</div><div className="tx-dm">{d.courseName} · {fmt(d.date)}{d.time?` ${d.time}`:''}</div></div>
+        <span style={{fontSize:10,color:days<=2?'var(--cr)':days<=5?'var(--wa)':'var(--mu)',fontWeight:700,whiteSpace:'nowrap'}}>{days}N</span>
+      </div>;})}
+    </div>}
+    <div className="lbl" style={{marginBottom:7}}>MÔN HỌC</div>
+    <div className="g2" style={{marginBottom:10}}>
+      {sorted.map(c=>{const p=pct(c.topics);const r=RISK[c.risk]||RISK.medium;const d=daysTo(c.examDate||c.endDate);
+      const ringColor=d!==null?(d<=7?'#E24B4A':d<=14?'#BA7517':d<=28?'#F5A623':c.color):c.color;
+      return<div key={c.id} className="card" style={{borderColor:r.cls.includes('cr')?'var(--crBdr)':r.cls.includes('wa')?'var(--waBdr)':'var(--bdr)',cursor:'pointer',position:'relative',overflow:'hidden',padding:'12px'}}
+        onClick={()=>nav('courses',{courseId:c.id})} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
+        <div className="link-strip" style={{background:c.color}}/>
+        <div style={{paddingLeft:7,display:'flex',gap:10}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="flex-sb" style={{marginBottom:5}}>
+              <div><div style={{fontSize:15}}>{c.emoji}</div><div style={{fontSize:12,fontWeight:500,marginTop:1}}>{c.name}</div></div>
+              <Badge risk={c.risk}/>
+            </div>
+            <div style={{marginBottom:5}}><div className="flex-sb" style={{marginBottom:2}}><span className="tx-dm">{c.topics.filter(t=>t.done).length}/{c.topics.length}</span><span style={{fontSize:10,color:c.color,fontWeight:600}}>{p}%</span></div><Bar v={p} color={c.color}/></div>
+            <div style={{background:'var(--sur)',borderRadius:4,padding:'4px 7px',fontSize:10,color:'var(--mu)'}}>→ {c.nextAction}</div>
+          </div>
+          {d!==null&&<div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <div className="cd-big" style={{color:ringColor}}>{d}</div>
+            <div style={{fontSize:9,color:'var(--dm)',fontWeight:600,marginTop:-2}}>NGÀY{c.examDate?' ĐẾN THI':''}</div>
+          </div>}
+        </div>
+      </div>;})}
+    </div>
+    <div className="card">
+      <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>✅ HABITS HÔM NAY</div>
+        <span style={{fontSize:11,color:'var(--su)'}}>{data.habits.filter(h=>!h.archived&&h.completions[TODAY]).length}/{data.habits.filter(h=>!h.archived).length}</span>
+      </div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
+        {data.habits.filter(h=>!h.archived).map(h=>{const done=h.completions[TODAY];
+        return<div key={h.id} style={{display:'flex',alignItems:'center',gap:6,background:done?h.color+'22':'var(--sur)',border:`1px solid ${done?h.color+'44':'var(--bdr)'}`,borderRadius:8,padding:'5px 9px',cursor:'pointer',transition:'all .15s'}}
+          onClick={()=>{const habits=data.habits.map(x=>x.id===h.id?{...x,completions:{...x.completions,[TODAY]:!x.completions[TODAY]}}:x);upd({habits});if(!done)awardXP(XPR.habit,`${h.emoji} Habit!`);}}>
+          <span style={{fontSize:13}}>{h.emoji}</span>
+          <span style={{fontSize:11,color:done?h.color:'var(--mu)',textDecoration:done?'line-through':'none'}}>{h.name}</span>
+          {done&&<span style={{fontSize:10,color:h.color,fontWeight:700}}>✓</span>}
+        </div>;})}
+      </div>
+    </div>
+    {showAddEv&&<AddEventModal initDate={selDate} onSave={e=>{upd({events:[...data.events,e]});setShowAddEv(false);}} onClose={()=>setShowAddEv(false)}/>}
+    {editEv&&<AddEventModal existing={editEv} onSave={e=>{upd({events:data.events.map(x=>x.id===e.id?e:x)});setEditEv(null);}} onClose={()=>setEditEv(null)}/>}
+    {showAddAdmin&&<AdminTaskModal onSave={item=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};if(item.type==='recurring'&&item.dow.length>0)at.recurring=[...at.recurring,{id:uid(),title:item.title,emoji:item.emoji,dow:item.dow}];else{at.daily[TODAY]=[...(at.daily[TODAY]||[]),{id:uid(),title:item.title,emoji:item.emoji,done:false,src:'day'}];}upd({adminTasks:at});setShowAddAdmin(false);}} onClose={()=>setShowAddAdmin(false)}/>}
+    {editAdmin&&<AdminTaskModal existing={editAdmin.item} existingMode={editAdmin.src==='rec'?'recurring':'daily'} onSave={saveAdminEdit} onClose={()=>setEditAdmin(null)}/>}
+  </div>;}
+
+function AdminPage({data,upd}){
+  const [showAdd,setShowAdd]=useState(false);
+  return<div>
+    <div className="h1">🧹 Admin Tasks</div>
+    <p className="tx-mu" style={{marginBottom:14}}>Recurring tasks xuất hiện tự động trên Dashboard theo ngày trong tuần.</p>
+    <div className="card">
+      <div className="flex-sb" style={{marginBottom:10}}>
+        <div className="lbl" style={{margin:0}}>RECURRING TASKS</div>
+        <button className="btn-p btn-sm" onClick={()=>setShowAdd(true)}>+ Thêm</button>
+      </div>
+      {data.adminTasks.recurring.map(r=><div key={r.id} className="admin-item">
+        <span style={{fontSize:14}}>{r.emoji}</span>
+        <div style={{flex:1}}><div style={{fontSize:12}}>{r.title}</div><div className="tx-dm">{r.dow.map(d=>DV[d]).join(', ')}</div></div>
+        <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--cr)',fontSize:13}} onClick={()=>upd({adminTasks:{...data.adminTasks,recurring:data.adminTasks.recurring.filter(x=>x.id!==r.id)}})}>✕</button>
+      </div>)}
+      {data.adminTasks.recurring.length===0&&<div className="tx-dm">Chưa có recurring task nào</div>}
+    </div>
+    {showAdd&&<AdminTaskModal onSave={item=>{if(item.type==='recurring'&&item.dow.length>0)upd({adminTasks:{...data.adminTasks,recurring:[...data.adminTasks.recurring,{id:uid(),title:item.title,emoji:item.emoji,dow:item.dow}]}});setShowAdd(false);}} onClose={()=>setShowAdd(false)}/>}
+  </div>;}
+
+function MilestoneModal({existing,onSave,onClose}){
+  const [text,setText]=useState(existing?.text||'');
+  const [date,setDate]=useState(existing?.date||TODAY);
+  return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+    <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>{existing?'✏️ Sửa Milestone':'+ Milestone mới'}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
+    <div className="tx-dm" style={{marginBottom:2}}>Nội dung *</div>
+    <input className="inp" value={text} onChange={e=>setText(e.target.value)} placeholder="VD: Thi Microeconometrics..." style={{marginBottom:8}}/>
+    <div className="tx-dm" style={{marginBottom:2}}>Ngày</div>
+    <input type="date" className="inp" value={date} onChange={e=>setDate(e.target.value)} style={{marginBottom:14}}/>
+    <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>{if(!text.trim())return;onSave({text:text.trim(),date});}}>{existing?'Lưu':'Thêm'}</button><button className="btn-g" onClick={onClose}>Huỷ</button></div>
+  </div></div>;}
+
+function PhasePage({data,upd}){
+  const [eg,setEg]=useState(null);
+  const [milestoneEdit,setMilestoneEdit]=useState(null); // {phId, index|null}
+  const updG=(phId,gId,v)=>upd({phases:data.phases.map(p=>p.id===phId?{...p,goals:p.goals.map(g=>g.id===gId?{...g,progress:v}:g)}:p)});
+
+  const computeGPA=()=>{
+    const graded=data.courses.filter(c=>c.grade!=null&&!isNaN(c.grade));
+    if(graded.length===0)return null;
+    const totalEcts=graded.reduce((s,c)=>s+(c.ects||6),0);
+    const weighted=graded.reduce((s,c)=>s+c.grade*(c.ects||6),0);
+    return{avg:weighted/totalEcts,gradedCount:graded.length,totalCount:data.courses.filter(c=>!c.archived).length};
+  };
+
+  const computeGermanProgress=(data)=>{
+    const de=data.languages.find(l=>l.id==='de');if(!de)return{pct:0,detail:[]};
+    const cats=de.categories||defCats();
+    const vocab=cats.vocabulary?.total||0;
+    const grammarItems=cats.grammar?.items||[];
+    const speakingItems=cats.speaking?.items||[];
+    const writingItems=cats.writing?.items||[];
+    // Score: vocab vs B2 (4000 words) + grammar completion + speaking + writing
+    const vocabPct=Math.min(100,Math.round(vocab/4000*100));
+    const grTotal=grammarItems.length||1;const grDone=grammarItems.filter(g=>g.done).length;
+    const grPct=Math.round(grDone/grTotal*100);
+    const spTotal=speakingItems.length||1;const spDone=speakingItems.filter(s=>s.done).length;
+    const spPct=Math.round(spDone/spTotal*100);
+    const wrTotal=writingItems.length||1;const wrDone=writingItems.filter(w=>w.done).length;
+    const wrPct=Math.round(wrDone/wrTotal*100);
+    const overall=Math.round((vocabPct*0.4+grPct*0.3+spPct*0.2+wrPct*0.1));
+    // Grammar by CEFR level
+    const byLevel={};
+    grammarItems.forEach(g=>{const lv=g.level||'?';if(!byLevel[lv])byLevel[lv]={total:0,done:0};byLevel[lv].total++;if(g.done)byLevel[lv].done++;});
+    return{pct:overall,vocab,vocabPct,grDone,grTotal,grPct,spDone,spTotal,spPct,wrDone,wrTotal,wrPct,byLevel};
+  };
+
+  const autoP=(goal,data)=>{
+    if(goal.linkedTo==='german_hours'||goal.linkedTo==='german_cefr'){return computeGermanProgress(data).pct;}
+    if(goal.linkedTo==='events_attended'){return Math.min(100,data.events.filter(e=>e.date<TODAY&&e.type==='networking').length*20);}
+    return null;
+  };
+
+  const saveMilestone=(phId,idx,m)=>{
+    const phases=data.phases.map(p=>{
+      if(p.id!==phId)return p;
+      const ms=[...p.milestones];
+      if(idx===null||idx===undefined)ms.push(m);else ms[idx]=m;
+      ms.sort((a,b)=>a.date.localeCompare(b.date));
+      return{...p,milestones:ms};
+    });
+    upd({phases});setMilestoneEdit(null);
+  };
+  const delMilestone=(phId,idx)=>{
+    const phases=data.phases.map(p=>p.id!==phId?p:{...p,milestones:p.milestones.filter((_,i)=>i!==idx)});
+    upd({phases});
+  };
+
+  const gpa=computeGPA();
+
+  return<div>
+    <div className="h1">🗺️ Phase Plan</div>
+    <p className="tx-mu" style={{marginBottom:16}}>Chiến lược tổng thể. GPA tự tính từ điểm thi thực tế (nhập ở tab Môn học).</p>
+    {data.phases.map(ph=>{const isA=ph.status==='active';const phD=daysTo(ph.endDate);
+    return<div key={ph.id} className={`phase-card ${isA?'phase-active':''}`} style={{background:isA?'var(--card)':'var(--sur)',opacity:isA?1:.7}}>
+      <div style={{position:'absolute',left:0,top:0,bottom:0,width:4,background:ph.color,borderRadius:'4px 0 0 4px'}}/>
+      <div style={{paddingLeft:12}}>
+        <div className="flex-sb" style={{marginBottom:10}}>
+          <div><div style={{display:'flex',alignItems:'center',gap:7,marginBottom:1}}><div style={{fontSize:13,fontWeight:600}}>{ph.name}</div>
+            {isA&&<span style={{background:'var(--acc2)',color:'#7C6EF5',border:'1px solid var(--acc3)',borderRadius:4,padding:'1px 5px',fontSize:9,fontWeight:700}}>ACTIVE</span>}
+            {!isA&&<span style={{background:'var(--sub)',color:'var(--su)',border:'1px solid var(--suBdr)',borderRadius:4,padding:'1px 5px',fontSize:9,fontWeight:700}}>SẮP TỚI</span>}
+          </div><div className="tx-dm">{ph.dateRange}</div></div>
+          {phD!==null&&phD>0&&<div style={{textAlign:'right'}}><span style={{fontSize:22,fontWeight:500,color:ph.color}}>{phD}</span><span className="tx-dm" style={{marginLeft:3}}>ngày còn lại</span></div>}
+        </div>
+        <div className="lbl" style={{marginBottom:7}}>MỤC TIÊU CHÍNH</div>
+        {ph.goals.map(g=>{
+          if(g.type==='gpa'){
+            const band=gpa?gradeBand(gpa.avg):null;
+            return<div key={g.id} style={{marginBottom:10,background:'var(--sur)',borderRadius:8,padding:'9px'}}>
+              <div className="flex-sb" style={{marginBottom:6}}>
+                <div style={{fontSize:12,fontWeight:500}}><span style={{marginRight:5}}>{g.icon}</span>{g.text}</div>
+                <span style={{fontSize:11,color:'var(--mu)'}}>Mục tiêu: ≤1.5</span>
+              </div>
+              {gpa?<div className="grade-pill" style={{background:band.color+'22',color:band.color,border:`1px solid ${band.color}55`}}>
+                <span style={{fontSize:18}}>{gpa.avg.toFixed(2)}</span><span style={{fontWeight:500,fontSize:11}}>{band.label}</span>
+              </div>:<div style={{fontSize:12,color:'var(--dm)'}}>Chưa có điểm nào — 0/{gpa?.totalCount||data.courses.filter(c=>!c.archived).length} môn đã thi</div>}
+              {gpa&&<div className="tx-dm" style={{marginTop:6}}>Tính từ {gpa.gradedCount}/{gpa.totalCount} môn đã có điểm (trọng số ECTS)</div>}
+              <div style={{fontSize:10,color:'var(--dm)',marginTop:4}}>📊 Nhập điểm thi ở tab Môn học → Sửa môn → ô "Điểm thi"</div>
+            </div>;
+          }
+          const auto=isA?autoP(g,data):null;
+          const isGerman=g.linkedTo==='german_hours'||g.linkedTo==='german_cefr';
+          const deDetail=isA&&isGerman?computeGermanProgress(data):null;
+          return<div key={g.id} style={{marginBottom:10,background:'var(--sur)',borderRadius:8,padding:'9px'}}>
+            <div className="flex-sb" style={{marginBottom:4}}><div style={{fontSize:12,fontWeight:500}}><span style={{marginRight:5}}>{g.icon}</span>{g.text}</div>
+              <div style={{display:'flex',alignItems:'center',gap:5}}>
+                <span style={{fontSize:12,color:ph.color,fontWeight:600}}>{isGerman&&deDetail?deDetail.pct:g.progress}%</span>
+                {isA&&!isGerman&&<button className="btn-g btn-sm" onClick={()=>setEg({phId:ph.id,gId:g.id,v:g.progress})}>Sửa</button>}
+              </div>
+            </div>
+            <Bar v={isGerman&&deDetail?deDetail.pct:g.progress} color={ph.color} h={6}/>
+            {/* German B2+ sub-goals breakdown */}
+            {deDetail&&<div style={{marginTop:8,display:'grid',gridTemplateColumns:'1fr 1fr',gap:6}}>
+              <div style={{background:'var(--card)',borderRadius:6,padding:'7px 9px'}}>
+                <div style={{fontSize:10,color:'var(--mu)',marginBottom:4,fontWeight:700}}>📝 TỪ VỰNG</div>
+                <div style={{fontSize:16,fontWeight:700,color:ph.color}}>{deDetail.vocab}</div>
+                <div className="tx-dm" style={{marginBottom:4}}>từ đã học</div>
+                <Bar v={deDetail.vocabPct} color={ph.color} h={4}/>
+                <div style={{display:'flex',justifyContent:'space-between',marginTop:3}}>
+                  {Object.entries(CEFR_VOCAB).slice(0,4).map(([lv,min])=><span key={lv} style={{fontSize:9,color:deDetail.vocab>=min?ph.color:'var(--dm)',fontWeight:deDetail.vocab>=min?700:400}}>{lv}{deDetail.vocab>=min?'✓':''}</span>)}
+                </div>
+              </div>
+              <div style={{background:'var(--card)',borderRadius:6,padding:'7px 9px'}}>
+                <div style={{fontSize:10,color:'var(--mu)',marginBottom:4,fontWeight:700}}>📖 NGỮ PHÁP</div>
+                <div style={{fontSize:16,fontWeight:700,color:ph.color}}>{deDetail.grDone}/{deDetail.grTotal}</div>
+                <div className="tx-dm" style={{marginBottom:4}}>điểm ngữ pháp ✓</div>
+                <Bar v={deDetail.grPct} color={ph.color} h={4}/>
+                {Object.entries(deDetail.byLevel).length>0&&<div style={{marginTop:4,display:'flex',gap:4,flexWrap:'wrap'}}>
+                  {Object.entries(deDetail.byLevel).map(([lv,d])=><span key={lv} style={{fontSize:9,padding:'1px 5px',borderRadius:8,background:d.done===d.total?ph.color+'33':'var(--sur)',color:d.done===d.total?ph.color:'var(--dm)',border:`1px solid ${d.done===d.total?ph.color+'55':'var(--bdr)'}`}}>{lv}: {d.done}/{d.total}</span>)}
+                </div>}
+              </div>
+              <div style={{background:'var(--card)',borderRadius:6,padding:'7px 9px'}}>
+                <div style={{fontSize:10,color:'var(--mu)',marginBottom:4,fontWeight:700}}>🗣️ NÓI</div>
+                <div style={{fontSize:16,fontWeight:700,color:ph.color}}>{deDetail.spDone}/{deDetail.spTotal}</div>
+                <div className="tx-dm" style={{marginBottom:4}}>topics đã luyện</div>
+                <Bar v={deDetail.spPct} color={ph.color} h={4}/>
+              </div>
+              <div style={{background:'var(--card)',borderRadius:6,padding:'7px 9px'}}>
+                <div style={{fontSize:10,color:'var(--mu)',marginBottom:4,fontWeight:700}}>✍️ VIẾT</div>
+                <div style={{fontSize:16,fontWeight:700,color:ph.color}}>{deDetail.wrDone}/{deDetail.wrTotal}</div>
+                <div className="tx-dm" style={{marginBottom:4}}>bài viết hoàn thành</div>
+                <Bar v={deDetail.wrPct} color={ph.color} h={4}/>
+              </div>
+            </div>}
+            {auto!==null&&!isGerman&&<div style={{marginTop:5,display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+              <span style={{fontSize:10,color:'var(--mu)'}}>💡 Gợi ý: <strong style={{color:ph.color}}>{auto}%</strong></span>
+              {auto!==g.progress&&<button className="btn-p" style={{padding:'2px 8px',fontSize:10,borderRadius:5}} onClick={()=>updG(ph.id,g.id,auto)}>Áp dụng</button>}
+            </div>}
+            {isGerman&&<div style={{fontSize:10,color:'var(--dm)',marginTop:4}}>📊 Tự tính từ Language tab · 40% vocab + 30% ngữ pháp + 20% nói + 10% viết</div>}
+            {!isGerman&&<div style={{fontSize:10,color:'var(--dm)',marginTop:3}}>📊 {g.hint}</div>}
+            {eg?.gId===g.id&&<div style={{marginTop:7,display:'flex',gap:5,alignItems:'center'}}>
+              <input type="range" min={0} max={100} step={5} value={eg.v} onChange={e=>setEg(p=>({...p,v:+e.target.value}))} style={{flex:1}}/>
+              <span style={{fontSize:12,color:'var(--acc)',fontWeight:600,minWidth:30}}>{eg.v}%</span>
+              <button className="btn-p btn-sm" onClick={()=>{updG(eg.phId,eg.gId,eg.v);setEg(null);}}>OK</button>
+              <button className="btn-g btn-sm" onClick={()=>setEg(null)}>✕</button>
+            </div>}
+          </div>;
+        })}
+        <div className="flex-sb" style={{marginTop:10,marginBottom:7}}>
+          <div className="lbl" style={{margin:0}}>MILESTONES</div>
+          <button className="btn-g btn-sm" onClick={()=>setMilestoneEdit({phId:ph.id,index:null})}>+ Thêm</button>
+        </div>
+        {ph.milestones.length===0&&<div className="tx-dm" style={{marginBottom:6}}>Chưa có milestone nào</div>}
+        {ph.milestones.map((m,i)=>{const past=m.date<TODAY;const days=daysTo(m.date);
+        return<div key={i} style={{display:'flex',gap:8,marginBottom:5,alignItems:'flex-start'}}>
+          <div className={`m-dot ${past?'past':days&&days<=7?'urg':''}`} style={{marginTop:4,flexShrink:0}}/>
+          <div style={{flex:1}}><div style={{fontSize:12,color:past?'var(--mu)':'var(--tx)',textDecoration:past?'line-through':'none'}}>{m.text}</div>
+          <div className="tx-dm">{fmt(m.date)}{days!==null&&!past&&<span style={{color:days<=7?'var(--cr)':days<=14?'var(--wa)':'var(--mu)'}}> · {days} ngày nữa</span>}{past&&' · Đã qua'}</div></div>
+          <button onClick={()=>setMilestoneEdit({phId:ph.id,index:i})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.6}}>✏️</button>
+          <button onClick={()=>delMilestone(ph.id,i)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.5}}>×</button>
+        </div>;})}
+      </div>
+    </div>;})}
+    {milestoneEdit&&<MilestoneModal
+      existing={milestoneEdit.index!==null?data.phases.find(p=>p.id===milestoneEdit.phId)?.milestones[milestoneEdit.index]:null}
+      onSave={m=>saveMilestone(milestoneEdit.phId,milestoneEdit.index,m)}
+      onClose={()=>setMilestoneEdit(null)}/>}
+  </div>;}
+
+function TimelinePage({data}){
+  const start=new Date();start.setHours(0,0,0,0);
+  const end=new Date('2026-07-31');const totalMs=end-start;
+  function pOf(ds){if(!ds)return 0;const d=new Date(ds);d.setHours(0,0,0,0);return Math.max(0,Math.min(100,(d-start)/totalMs*100));}
+  function wOf(s,e){return Math.max(0,pOf(e)-pOf(s));}
+  const phase=data.phases.find(p=>p.id===data.currentPhaseId);
+  const milestones=(phase?.milestones||[]).filter(m=>m.date>=TODAY&&m.date<='2026-07-31');
+  const wks=[];let cw=new Date(start);while(cw<=end){wks.push({p:(cw-start)/totalMs*100,l:cw.toLocaleDateString('vi-VN',{day:'numeric',month:'numeric'})});cw=new Date(cw);cw.setDate(cw.getDate()+7);}
+  const rows=[...data.courses.map(c=>({type:'c',id:c.id,label:`${c.emoji} ${c.name}`,color:c.color,sd:TODAY,ed:c.endDate||c.examDate||'2026-07-25',exam:c.examDate})),{type:'l',id:'de',label:'🇩🇪 Tiếng Đức',color:'#FFD700',sd:TODAY,ed:'2026-07-31'},{type:'l',id:'en',label:'🇬🇧 Tiếng Anh',color:'#4FA3FF',sd:TODAY,ed:'2026-07-31'}];
+  const upEvs=data.events.filter(e=>e.date>=TODAY&&e.date<='2026-07-31').sort((a,b)=>a.date.localeCompare(b.date));
+  return<div>
+    <div className="h1">📅 Timeline</div>
+    <p className="tx-mu" style={{marginBottom:12}}>Phase 1 · {fmt(TODAY)} → 31/7/2026 · Kéo ngang để xem đầy đủ</p>
+    <div className="card" style={{padding:'14px'}}>
+      <div style={{position:'relative',height:18,marginLeft:155,marginBottom:3,overflow:'hidden'}}>
+        {wks.map((w,i)=><div key={i} style={{position:'absolute',left:`${w.p}%`,fontSize:9,color:'var(--dm)',transform:'translateX(-50%)',whiteSpace:'nowrap'}}>{w.l}</div>)}
+      </div>
+      {rows.map(row=><div key={row.id} className="tl2-row">
+        <div className="tl2-label" title={row.label}>{row.label}</div>
+        <div className="tl2-track">
+          {wks.map((w,i)=><div key={i} className="tl2-wk" style={{left:`${w.p}%`}}/>)}
+          <div className="tl2-today" style={{left:`${pOf(TODAY)}%`}} title="Hôm nay"/>
+          <div className="tl2-bar" style={{left:`${pOf(row.sd)}%`,width:`${wOf(row.sd,row.ed)}%`,background:row.color}}>
+            {row.label.replace(/[🇩🇪🇬🇧📊🌍🌱📈]/g,'').trim().slice(0,20)}
+          </div>
+          {row.exam&&<div className="tl2-exam" style={{left:`${pOf(row.exam)}%`}} title={`Thi: ${fmt(row.exam)}`}>🎯</div>}
+        </div>
+      </div>)}
+      <div className="tl2-row">
+        <div className="tl2-label">📌 Events</div>
+        <div className="tl2-track" style={{height:26}}>
+          {wks.map((w,i)=><div key={i} className="tl2-wk" style={{left:`${w.p}%`}}/>)}
+          <div className="tl2-today" style={{left:`${pOf(TODAY)}%`}}/>
+          {upEvs.map((e,i)=><div key={i} className="tl2-evt" style={{left:`${pOf(e.date)}%`,zIndex:i+1,background:'#7C6EF5'}} title={`${e.title} · ${fmt(e.date)}`}>{e.emoji}</div>)}
+          {milestones.map((m,i)=><div key={i} className="tl2-exam" style={{left:`${pOf(m.date)}%`,background:'#E24B4A'}} title={m.text}>🏁</div>)}
+        </div>
+      </div>
+    </div>
+    <div className="card" style={{marginTop:10}}>
+      <div className="lbl" style={{marginBottom:8}}>EVENTS SẮP TỚI (chi tiết)</div>
+      {upEvs.map(e=>{const d=daysTo(e.date);return<div key={e.id} style={{display:'flex',gap:10,alignItems:'center',padding:'5px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
+        <span style={{fontSize:16}}>{e.emoji}</span>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500}}>{e.title}</div><div className="tx-dm">{fmtL(e.date)}{e.time&&` · ${e.time}`}{e.note&&` — ${e.note}`}</div></div>
+        <div style={{fontSize:11,fontWeight:700,color:d<=7?'var(--cr)':d<=21?'var(--wa)':'var(--mu)',whiteSpace:'nowrap'}}>{d}N</div>
+      </div>;})}
+      {milestones.map((m,i)=>{const d=daysTo(m.date);return<div key={i} style={{display:'flex',gap:10,alignItems:'center',padding:'5px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
+        <span style={{fontSize:16}}>🏁</span>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500}}>{m.text}</div><div className="tx-dm">{fmtL(m.date)}</div></div>
+        <div style={{fontSize:11,fontWeight:700,color:d<=7?'var(--cr)':d<=21?'var(--wa)':'var(--mu)',whiteSpace:'nowrap'}}>{d}N</div>
+      </div>;})}
+    </div>
+  </div>;}
+
+function TimerPage({data,upd,awardXP}){
+  const [mode,setMode]=useState('stopwatch');
+  const [running,setRunning]=useState(false);
+  const [elapsed,setElapsed]=useState(0);
+  const [subj,setSubj]=useState(data.courses[0]?.id||'micro');
+  const [pomoDur,setPomoDur]=useState(25*60);
+  const [pomoLeft,setPomoLeft]=useState(25*60);
+  const [isBreak,setIsBreak]=useState(false);
+  const [sessions,setSessions]=useState([]);
+  const [showAddCat,setShowAddCat]=useState(false);
+  const [newCatName,setNewCatName]=useState('');const [newCatEmoji,setNewCatEmoji]=useState('📌');
+  const intRef=useRef(null);
+  const customCats=(data.timerCategories||[]).map(c=>({id:`custom_${c.id}`,name:c.name,emoji:c.emoji}));
+  const allS=[...data.courses.filter(c=>!c.archived).map(c=>({id:c.id,name:c.name,emoji:c.emoji})),{id:'de',name:'Tiếng Đức',emoji:'🇩🇪'},{id:'en',name:'Tiếng Anh',emoji:'🇬🇧'},...customCats,{id:'other',name:'Khác',emoji:'📌'}];
+  const addCat=()=>{if(!newCatName.trim())return;upd({timerCategories:[...(data.timerCategories||[]),{id:uid(),name:newCatName.trim(),emoji:newCatEmoji}]});setNewCatName('');setNewCatEmoji('📌');setShowAddCat(false);};
+  const delCat=(id)=>upd({timerCategories:(data.timerCategories||[]).filter(c=>c.id!==id)});
+  useEffect(()=>{return()=>{if(intRef.current)clearInterval(intRef.current);};},[]);
+  const startStop=()=>{
+    if(running){clearInterval(intRef.current);intRef.current=null;setRunning(false);}
+    else{setRunning(true);intRef.current=setInterval(()=>{
+      if(mode==='stopwatch')setElapsed(e=>e+1);
+      else setPomoLeft(p=>{if(p<=1){clearInterval(intRef.current);intRef.current=null;setRunning(false);if(!isBreak)setIsBreak(true);return isBreak?pomoDur:5*60;}return p-1;});
+    },1000);}
+  };
+  const reset=()=>{if(intRef.current)clearInterval(intRef.current);intRef.current=null;setRunning(false);setElapsed(0);setPomoLeft(pomoDur);setIsBreak(false);};
+  const logSession=()=>{
+    const secs=mode==='stopwatch'?elapsed:(pomoDur-pomoLeft);
+    const h=Math.round(secs/3600*4)/4;
+    if(h<0.08){reset();return;}
+    const s=allS.find(x=>x.id===subj);
+    const entry={id:uid(),date:TODAY,subjectId:subj,hours:h,subjectName:s?.name||'',note:`⏱️ ${fmtS(secs)} (${mode})`};
+    upd({studyLog:[entry,...data.studyLog]});
+    awardXP(Math.round(h*XPR.hour),`⏱️ ${h}h ${s?.name||''}`);
+    setSessions(prev=>[...prev,entry]);reset();
+  };
+  const display=mode==='stopwatch'?fmtS(elapsed):fmtS(pomoLeft);
+  return<div>
+    <div className="h1">⏱️ Timer / Pomodoro</div>
+    <p className="tx-mu" style={{marginBottom:16}}>Đếm giờ học và tự động log. Nhấn ✓ để lưu session.</p>
+    <div className="card" style={{marginBottom:12,textAlign:'center',padding:'20px'}}>
+      <div style={{display:'flex',gap:8,justifyContent:'center',marginBottom:16}}>
+        {[['stopwatch','⏱️ Stopwatch'],['pomodoro','🍅 Pomodoro']].map(([k,v])=><button key={k} className={mode===k?'btn-p':'btn-g'} style={{padding:'6px 16px'}} onClick={()=>{if(!running){setMode(k);reset();setPomoLeft(pomoDur);}}}>{v}</button>)}
+      </div>
+      {mode==='pomodoro'&&<div style={{marginBottom:8}}>
+        <div style={{fontSize:11,color:isBreak?'var(--su)':'var(--acc)',fontWeight:600,marginBottom:5}}>{isBreak?'☕ Nghỉ giải lao (5 phút)':'🎯 Thời gian học tập'}</div>
+        <div style={{height:5,background:'var(--dm)',borderRadius:3,overflow:'hidden',margin:'0 auto 10px',maxWidth:280}}>
+          <div style={{width:`${Math.round((pomoDur-pomoLeft)/pomoDur*100)}%`,height:'100%',background:isBreak?'var(--su)':'var(--acc)',borderRadius:3,transition:'width .5s'}}/>
+        </div>
+      </div>}
+      <div className="timer-big" style={{color:isBreak?'var(--su)':'var(--acc)'}}>{display}</div>
+      <select className="sel" value={subj} onChange={e=>setSubj(e.target.value)} style={{maxWidth:240,margin:'0 auto 14px',display:'block'}}>
+        {allS.map(s=><option key={s.id} value={s.id}>{s.emoji} {s.name}</option>)}
+      </select>
+      {mode==='pomodoro'&&!running&&<div style={{marginBottom:12}}>
+        <div className="tx-dm" style={{marginBottom:5}}>Thời gian mỗi phiên:</div>
+        <div style={{display:'flex',gap:5,justifyContent:'center'}}>
+          {[15,20,25,30,45].map(m=><button key={m} className={pomoDur===m*60?'btn-p btn-sm':'btn-g btn-sm'} onClick={()=>{setPomoDur(m*60);setPomoLeft(m*60);}}>{m}m</button>)}
+        </div>
+      </div>}
+      <div style={{display:'flex',gap:10,justifyContent:'center',alignItems:'center'}}>
+        <button className="t-btn" onClick={reset} style={{background:'var(--sur)',color:'var(--mu)',fontSize:18}}>↺</button>
+        <button className="t-btn" onClick={startStop} style={{width:60,height:60,fontSize:22,background:running?'var(--cr)':'var(--acc)',color:'#fff'}}>{running?'⏸':'▶'}</button>
+        <button className="t-btn" onClick={logSession} style={{background:'var(--su)',color:'#fff',fontSize:18}} title="Lưu & reset">✓</button>
+      </div>
+      <div className="tx-dm" style={{marginTop:8}}>▶ bắt đầu · ⏸ tạm dừng · ✓ lưu session & reset</div>
+    </div>
+    {sessions.length>0&&<div className="card">
+      <div className="lbl" style={{marginBottom:7}}>PHIÊN HÔM NAY</div>
+      {sessions.map((s,i)=><div key={i} style={{display:'flex',gap:8,alignItems:'center',padding:'4px 0',borderBottom:'1px solid var(--bdr)'}}>
+        <span style={{fontSize:14}}>{allS.find(x=>x.id===s.subjectId)?.emoji||'📚'}</span>
+        <div style={{flex:1}}><div style={{fontSize:12}}>{s.subjectName}</div><div className="tx-dm">{s.note}</div></div>
+        <span style={{fontSize:13,fontWeight:600,color:'var(--acc)'}}>{s.hours.toFixed(2)}h</span>
+      </div>)}
+      <div style={{paddingTop:7,display:'flex',justifyContent:'space-between'}}>
+        <span className="tx-mu">Tổng hôm nay</span>
+        <span style={{fontWeight:600,color:'var(--acc)'}}>{sessions.reduce((s,x)=>s+x.hours,0).toFixed(2)}h</span>
+      </div>
+    </div>}
+    <div className="card" style={{marginTop:10}}>
+      <div className="flex-sb" style={{marginBottom:8}}><div className="lbl" style={{margin:0}}>⚙️ DANH MỤC TÙY CHỈNH</div><button className="btn-g btn-sm" onClick={()=>setShowAddCat(s=>!s)}>+ Thêm</button></div>
+      <div className="tx-dm" style={{marginBottom:8}}>Thêm danh mục theo dõi giờ học ngoài môn học (VD: Tìm việc, Volunteer...)</div>
+      <div className="tx-dm" style={{marginBottom:6}}>💡 Các môn học sẽ tự động xuất hiện ở trên khi thêm ở tab Môn học</div>
+      {(data.timerCategories||[]).map(c=><div key={c.id} style={{display:'flex',alignItems:'center',gap:8,padding:'5px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
+        <span style={{fontSize:14}}>{c.emoji}</span><span style={{flex:1,fontSize:12}}>{c.name}</span>
+        <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--cr)',fontSize:13,opacity:.6}} onClick={()=>delCat(c.id)}>✕</button>
+      </div>)}
+      {(data.timerCategories||[]).length===0&&!showAddCat&&<div className="tx-dm">Chưa có danh mục tùy chỉnh</div>}
+      {showAddCat&&<div style={{display:'flex',gap:5,marginTop:8,flexWrap:'wrap'}}>
+        <input className="inp" value={newCatEmoji} onChange={e=>setNewCatEmoji(e.target.value)} style={{width:44,textAlign:'center',fontSize:16,padding:'5px'}}/>
+        <input className="inp" value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="Tên danh mục..." onKeyDown={e=>e.key==='Enter'&&addCat()} style={{flex:1}}/>
+        <button className="btn-p btn-sm" onClick={addCat}>Thêm</button>
+        <button className="btn-g btn-sm" onClick={()=>setShowAddCat(false)}>Huỷ</button>
+      </div>}
+    </div>
+  </div>;}
+
+function CoursesPage({data,upd,initCourseId}){
+  const [sel,setSel]=useState(initCourseId||null);
+  const [showEditor,setShowEditor]=useState(false);
+  const [showArchived,setShowArchived]=useState(false);
+  const selC=sel?data.courses.find(c=>c.id===sel):null;
+  const updC=c=>upd({courses:data.courses.map(x=>x.id===c.id?c:x)});
+  if(selC)return<CourseDetail course={selC} onBack={()=>setSel(null)} onUpdate={updC} onDelete={id=>{upd({courses:data.courses.filter(c=>c.id!==id)});setSel(null);}}/>;
+  const active=[...data.courses.filter(c=>!c.archived)].sort((a,b)=>{const o={critical:0,watch:1,medium:2,good:3};return(o[a.risk]??2)-(o[b.risk]??2);});
+  const archived=data.courses.filter(c=>c.archived);
+  const CourseCard=({c})=>{const p=pct(c.topics);const r=RISK[c.risk]||RISK.medium;const d=daysTo(c.examDate||c.endDate);
+    const nextDue=c.topics.filter(t=>!t.done&&t.dueDate).sort((a,b)=>a.dueDate.localeCompare(b.dueDate))[0];
+    return<div className="card" style={{marginBottom:9,borderColor:r.cls.includes('cr')?'var(--crBdr)':r.cls.includes('wa')?'var(--waBdr)':'var(--bdr)',cursor:'pointer',position:'relative',overflow:'hidden',padding:'12px'}}
+      onClick={()=>setSel(c.id)} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
+      <div className="link-strip" style={{background:c.color}}/>
+      <div style={{paddingLeft:8}}>
+        <div className="flex-sb" style={{marginBottom:5}}>
+          <div><div style={{display:'flex',alignItems:'center',gap:7}}><span style={{fontSize:18}}>{c.emoji}</span><div><div style={{fontSize:13,fontWeight:500}}>{c.name}</div><div className="tx-dm">{c.schedule}</div></div></div></div>
+          <div style={{textAlign:'right',display:'flex',flexDirection:'column',gap:3,alignItems:'flex-end'}}>
+            <Badge risk={c.risk}/>
+            {d!==null&&<div><span style={{fontSize:18,fontWeight:600,color:d<=14?'var(--cr)':d<=28?'var(--wa)':'var(--mu)'}}>{d}</span><span className="tx-dm" style={{marginLeft:1}}>ngày{c.examDate?' đến thi':''}</span></div>}
+            {c.grade!=null&&<span style={{fontSize:11,color:gradeBand(c.grade)?.color||'var(--su)',fontWeight:700}}>{c.grade} ({gradeBand(c.grade)?.label.split(' ')[0]})</span>}
+          </div>
+        </div>
+        <div style={{marginBottom:5}}><div className="flex-sb" style={{marginBottom:2}}><span className="tx-dm">{c.topics.filter(t=>t.done).length}/{c.topics.length} topics</span><span style={{fontSize:10,color:c.color,fontWeight:600}}>{p}%</span></div><Bar v={p} color={c.color} h={5}/></div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <div style={{background:'var(--sur)',borderRadius:4,padding:'4px 7px',fontSize:10,color:'var(--mu)',flex:1}}>→ {c.nextAction}</div>
+          {nextDue&&<div style={{fontSize:9,color:daysTo(nextDue.dueDate)<=3?'var(--cr)':'var(--wa)',whiteSpace:'nowrap'}}>⏰ {fmt(nextDue.dueDate)}</div>}
+        </div>
+      </div>
+    </div>;};
+  return<div>
+    <div className="flex-sb" style={{marginBottom:3}}><div className="h1">📚 Môn học</div><button className="btn-p btn-sm" onClick={()=>setShowEditor(true)}>+ Thêm môn</button></div>
+    <p className="tx-mu" style={{marginBottom:14}}>Click vào môn để xem topics, subtasks và lịch học.</p>
+    {active.map(c=><CourseCard key={c.id} c={c}/>)}
+    {archived.length>0&&<div style={{marginTop:12}}>
+      <button className="btn-g btn-sm" onClick={()=>setShowArchived(s=>!s)} style={{marginBottom:8}}>📦 Archived ({archived.length}) {showArchived?'▲':'▼'}</button>
+      {showArchived&&archived.map(c=><div key={c.id} className="archived-row" onClick={()=>setSel(c.id)} style={{cursor:'pointer'}}>
+        <span style={{fontSize:16}}>{c.emoji}</span>
+        <div style={{flex:1}}><div style={{fontSize:12,color:'var(--mu)'}}>{c.name}</div><div className="tx-dm">{c.ects} ECTS{c.grade!=null?` · Điểm: ${c.grade}`:' · Chưa có điểm'}</div></div>
+        <span style={{fontSize:10,color:'var(--dm)'}}>→</span>
+      </div>)}
+    </div>}
+    {showEditor&&<CourseEditorModal onSave={c=>{upd({courses:[...data.courses,c]});setShowEditor(false);}} onClose={()=>setShowEditor(false)}/>}
+  </div>;}
+
+function CourseDetail({course,onBack,onUpdate,onDelete}){
+  const [editNA,setEditNA]=useState(false);const [na,setNa]=useState(course.nextAction||'');
+  const [showEdit,setShowEdit]=useState(false);const [showDel,setShowDel]=useState(false);
+  const [newTask,setNewTask]=useState('');const [newTaskDue,setNewTaskDue]=useState('');const [newTaskTime,setNewTaskTime]=useState('');
+  const [editTask,setEditTask]=useState(null); // {id,text,dueDate,dueTime}
+  useEffect(()=>setNa(course.nextAction||''),[course.nextAction]);
+  const secs=[...new Set(course.topics.map(t=>t.sec))];const p=pct(course.topics);
+  const upd=ch=>onUpdate({...course,...ch});
+  const updTopic=(id,changes)=>upd({topics:course.topics.map(t=>t.id===id?{...t,...changes}:t)});
+  const addSubtask=(topicId,text)=>updTopic(topicId,{subtasks:[...(course.topics.find(t=>t.id===topicId)?.subtasks||[]),{id:uid(),text,done:false}]});
+  const togSubtask=(topicId,subId)=>updTopic(topicId,{subtasks:(course.topics.find(t=>t.id===topicId)?.subtasks||[]).map(s=>s.id===subId?{...s,done:!s.done}:s)});
+  const delSubtask=(topicId,subId)=>updTopic(topicId,{subtasks:(course.topics.find(t=>t.id===topicId)?.subtasks||[]).filter(s=>s.id!==subId)});
+  const band=course.grade!=null?gradeBand(course.grade):null;
+  const addTask=()=>{if(!newTask.trim())return;upd({tasks:[...course.tasks,{id:uid(),text:newTask.trim(),done:false,dueDate:newTaskDue,dueTime:newTaskTime}]});setNewTask('');setNewTaskDue('');setNewTaskTime('');};
+  const saveTask=()=>{if(!editTask)return;upd({tasks:course.tasks.map(t=>t.id===editTask.id?{...t,...editTask}:t)});setEditTask(null);};
+
+  return<div>
+    <div className="flex-sb" style={{marginBottom:11}}>
+      <button className="btn-g btn-sm" onClick={onBack}>← Quay lại</button>
+      <div style={{display:'flex',gap:5}}>
+        {!course.archived&&<button className="btn-g btn-sm" style={{color:'var(--mu)'}} onClick={()=>upd({archived:true})}>📦 Archive</button>}
+        {course.archived&&<button className="btn-g btn-sm" style={{color:'var(--su)'}} onClick={()=>upd({archived:false})}>♻️ Khôi phục</button>}
+        <button className="btn-g btn-sm" onClick={()=>setShowEdit(true)}>✏️ Sửa</button>
+        <button className="btn-g btn-sm" style={{color:'var(--cr)'}} onClick={()=>setShowDel(true)}>🗑️</button>
+      </div>
+    </div>
+    <div className="flex-sb" style={{marginBottom:9}}>
+      <div>
+        <div style={{fontSize:22}}>{course.emoji}</div>
+        <div className="h1" style={{margin:'2px 0 0'}}>{course.name}</div>
+        <div className="tx-dm">{course.schedule}</div>
+        {course.examDate&&<div style={{fontSize:11,color:'var(--cr)',marginTop:2}}>📅 Thi: {fmtL(course.examDate)} · còn {daysTo(course.examDate)} ngày</div>}
+        {!course.examDate&&course.endDate&&<div style={{fontSize:11,color:'var(--mu)',marginTop:2}}>🏁 Kết thúc: {fmtL(course.endDate)}</div>}
+        {course.ects&&<div style={{fontSize:10,color:'var(--dm)',marginTop:2}}>{course.ects} ECTS</div>}
+      </div>
+      <div style={{textAlign:'right',display:'flex',flexDirection:'column',gap:6,alignItems:'flex-end'}}>
+        <Badge risk={course.risk}/>
+        {band?<div className="grade-pill" style={{background:band.color+'22',color:band.color,border:`1px solid ${band.color}44`,fontSize:11}}>
+          <span style={{fontSize:16,fontWeight:800}}>{course.grade}</span><span style={{fontSize:10}}>{band.label}</span>
+        </div>:<div style={{fontSize:10,color:'var(--dm)',textAlign:'right'}}>Chưa có điểm</div>}
+      </div>
+    </div>
+    {course.archived&&<div style={{background:'var(--wab)',border:'1px solid var(--waBdr)',borderRadius:8,padding:'7px 11px',marginBottom:9,fontSize:11,color:'var(--wa)'}}>📦 Môn đã được archive</div>}
+    {course.note&&<div style={{background:'var(--crb)',border:'1px solid var(--crBdr)',borderRadius:8,padding:'8px 11px',marginBottom:9,fontSize:12,lineHeight:1.5}}>{course.note}</div>}
+    <div className="card" style={{marginBottom:9}}>
+      <div className="flex-sb" style={{marginBottom:5}}><span style={{fontSize:13,fontWeight:500}}>Tiến độ tổng thể</span><span style={{fontSize:19,fontWeight:600,color:course.color||'#7C6EF5'}}>{p}%</span></div>
+      <Bar v={p} color={course.color} h={8}/>
+      <div className="tx-dm" style={{marginTop:4}}>{course.topics.filter(t=>t.done).length}/{course.topics.length} topics hoàn thành</div>
+    </div>
+    <div className="card" style={{marginBottom:9}}>
+      <div className="flex-sb" style={{marginBottom:4}}><div className="lbl" style={{margin:0}}>→ BƯỚC TIẾP THEO</div>{!editNA&&<button className="btn-g btn-sm" onClick={()=>setEditNA(true)}>Sửa</button>}</div>
+      {editNA?<div style={{display:'flex',gap:5}}><input className="inp" value={na} onChange={e=>setNa(e.target.value)} onKeyDown={e=>e.key==='Enter'&&(upd({nextAction:na}),setEditNA(false))}/><button className="btn-p btn-sm" onClick={()=>{upd({nextAction:na});setEditNA(false);}}>✓</button></div>
+      :<div style={{fontSize:13,lineHeight:1.5}}>{course.nextAction||'—'}</div>}
+    </div>
+
+    {/* BLOCK 1: TOPICS */}
+    {secs.map(sec=>{const st=course.topics.filter(t=>t.sec===sec);const sd=st.filter(t=>t.done).length;
+    const nd=st.filter(t=>!t.done&&t.dueDate).sort((a,b)=>a.dueDate.localeCompare(b.dueDate))[0];
+    return<div key={sec} className="card" style={{marginBottom:9}}>
+      <div className="flex-sb" style={{marginBottom:7}}>
+        <div className="lbl" style={{margin:0}}>📚 {sec.toUpperCase()}</div>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          {nd&&<span style={{fontSize:10,color:daysTo(nd.dueDate)<=3?'var(--cr)':'var(--wa)'}}>⏰ next: {fmt(nd.dueDate)}</span>}
+          <span style={{fontSize:10,color:sd===st.length?'var(--su)':'var(--mu)'}}>{sd}/{st.length} ✓</span>
+        </div>
+      </div>
+      {st.map((tp,i)=><div key={tp.id} style={{borderBottom:i<st.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
+        <TopicRow topic={tp} courseColor={course.color}
+          onToggle={()=>updTopic(tp.id,{done:!tp.done})}
+          onDelete={()=>upd({topics:course.topics.filter(t=>t.id!==tp.id)})}
+          onEdit={(changes)=>updTopic(tp.id,changes)}
+          onToggleSub={(subId)=>togSubtask(tp.id,subId)}
+          onAddSub={(text)=>addSubtask(tp.id,text)}
+          onDeleteSub={(subId)=>delSubtask(tp.id,subId)}/>
+      </div>)}
+      <input className="inp" placeholder={`+ Topic mới vào ${sec} (Enter)...`} style={{marginTop:6,fontSize:11,padding:'5px 8px'}}
+        onKeyDown={e=>{if(e.key==='Enter'&&e.target.value.trim()){upd({topics:[...course.topics,{id:uid(),label:e.target.value.trim(),sec,done:false,dueDate:'',subtasks:[]}]});e.target.value='';}}}/>
+    </div>;})}
+
+    {/* BLOCK 2: LỊCH HỌC (schedule) */}
+    <CourseScheduleView course={course}/>
+
+    {/* BLOCK 3: TASKS with dueDate/time */}
+    <div className="card" style={{marginBottom:9}}>
+      <div className="lbl" style={{marginBottom:8}}>✅ TASKS</div>
+      {course.tasks.map((task,i)=>{
+        const isEditing=editTask?.id===task.id;
+        const dd=task.dueDate?daysTo(task.dueDate):null;
+        if(isEditing)return<div key={task.id} style={{padding:'6px 0',borderBottom:i<course.tasks.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
+          <input className="inp" value={editTask.text} onChange={e=>setEditTask(p=>({...p,text:e.target.value}))} style={{marginBottom:5,fontSize:12}}/>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto auto',gap:5,alignItems:'center'}}>
+            <input type="date" className="inp" value={editTask.dueDate||''} onChange={e=>setEditTask(p=>({...p,dueDate:e.target.value}))} style={{fontSize:11}}/>
+            <input type="time" className="inp" value={editTask.dueTime||''} onChange={e=>setEditTask(p=>({...p,dueTime:e.target.value}))} style={{fontSize:11}}/>
+            <button className="btn-p btn-sm" onClick={saveTask}>✓</button>
+            <button className="btn-g btn-sm" onClick={()=>setEditTask(null)}>✕</button>
+          </div>
+        </div>;
+        return<div key={task.id} style={{display:'flex',alignItems:'center',gap:7,padding:'5px 0',borderBottom:i<course.tasks.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
+          <Tick done={task.done} color="#1D9E75" onClick={()=>upd({tasks:course.tasks.map(t=>t.id===task.id?{...t,done:!t.done}:t)})}/>
+          <span style={{flex:1,fontSize:12,textDecoration:task.done?'line-through':'none',opacity:task.done?.5:1}}>{task.text}</span>
+          {task.dueDate&&!task.done&&<span style={{fontSize:10,color:dd<=0?'var(--cr)':dd<=2?'var(--wa)':'var(--dm)',whiteSpace:'nowrap'}}>{task.dueTime?task.dueTime+' ':''}{dd<=0?'Quá hạn!':fmt(task.dueDate)}</span>}
+          <button onClick={()=>setEditTask({id:task.id,text:task.text,dueDate:task.dueDate||'',dueTime:task.dueTime||''})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.45}}>✏️</button>
+          <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.4}} onClick={()=>upd({tasks:course.tasks.filter(t=>t.id!==task.id)})}>×</button>
+        </div>;})}
+      {/* Add new task */}
+      <div style={{borderTop:'1px solid var(--bdr)',marginTop:7,paddingTop:7}}>
+        <input className="inp" value={newTask} onChange={e=>setNewTask(e.target.value)} placeholder="Thêm task mới..." onKeyDown={e=>e.key==='Enter'&&addTask()} style={{marginBottom:5}}/>
+        <div style={{display:'flex',gap:5}}>
+          <input type="date" className="inp" value={newTaskDue} onChange={e=>setNewTaskDue(e.target.value)} style={{flex:1,fontSize:11}} placeholder="Deadline (optional)"/>
+          <input type="time" className="inp" value={newTaskTime} onChange={e=>setNewTaskTime(e.target.value)} style={{width:80,fontSize:11}}/>
+          <button className="btn-p btn-sm" onClick={addTask}>+ Thêm</button>
+        </div>
+      </div>
+    </div>
+
+    {/* BLOCK 4: GANTT PHASES */}
+    <CourseGanttPhases course={course} onUpdate={upd}/>
+
+    {/* BLOCK 5: NOTES & Q&A */}
+    <CourseNotesBlock course={course} onUpdate={upd}/>
+
+    {showEdit&&<CourseEditorModal existing={course} onSave={c=>{onUpdate(c);setShowEdit(false);}} onClose={()=>setShowEdit(false)}/>}
+    {showDel&&<div className="ov" onClick={()=>setShowDel(false)}><div className="modal" style={{maxWidth:340,textAlign:'center'}} onClick={e=>e.stopPropagation()}>
+      <div style={{fontSize:32,marginBottom:10}}>🗑️</div>
+      <div style={{fontSize:14,fontWeight:500,marginBottom:6}}>Xoá môn học?</div>
+      <div className="tx-mu" style={{marginBottom:18}}>Xoá <strong>{course.name}</strong>? Thao tác không thể hoàn tác.</div>
+      <div style={{display:'flex',gap:8,justifyContent:'center'}}>
+        <button style={{background:'var(--crb)',color:'var(--cr)',border:'1px solid var(--crBdr)',borderRadius:8,padding:'7px 18px',cursor:'pointer',fontWeight:600}} onClick={()=>onDelete(course.id)}>Xoá</button>
+        <button className="btn-g" onClick={()=>setShowDel(false)}>Huỷ</button>
+      </div>
+    </div></div>}
+  </div>;}
+
+function LanguagePage({data,upd}){
+  const [weekOffset,setWeekOffset]=useState(0);
+  const updateLang=(lid,changes)=>upd({languages:data.languages.map(l=>l.id!==lid?l:{...l,...changes})});
+
+  const getWeekDates=(offset)=>{
+    const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()+offset*7);
+    const dow=d.getDay();const m=new Date(d);m.setDate(d.getDate()-(dow===0?6:dow-1));
+    return Array.from({length:7},(_,i)=>{const dd=new Date(m);dd.setDate(m.getDate()+i);return dd;});
+  };
+
+  const weekObjs=getWeekDates(weekOffset);
+  const wd=weekObjs.map(d=>d.toISOString().split('T')[0]);
+  const weekLabel=`${weekObjs[0].toLocaleDateString('vi-VN',{day:'numeric',month:'numeric'})} – ${weekObjs[6].toLocaleDateString('vi-VN',{day:'numeric',month:'numeric',year:'numeric'})}`;
+
+  const tog=(lid,date,type)=>upd({languages:data.languages.map(l=>l.id!==lid?l:{...l,log:{...l.log,[`${date}_${type}`]:!l.log[`${date}_${type}`]}})});
+  const setMin=(lid,date,v)=>upd({languages:data.languages.map(l=>l.id!==lid?l:{...l,log:{...l.log,[`${date}_self_min`]:v}})});
+
+  return<div>
+    <div className="h1">🌐 Ngôn ngữ</div>
+    <p className="tx-mu" style={{marginBottom:14}}>Theo dõi học tập theo 4 kỹ năng: Ngữ pháp · Từ vựng · Nói · Viết</p>
+    {data.languages.map(lang=>{
+      const cats=lang.categories||defCats();
+      const cd=wd.filter(d=>lang.log[`${d}_class`]).length;
+      const st=wd.reduce((s,d)=>s+(lang.log[`${d}_self_min`]||0),0);
+      const goal=lang.classDOW.length*90+lang.selfMin*7;
+      const pv=Math.min(100,Math.round((st+cd*90)/goal*100));
+      const vocab=cats.vocabulary||{total:0,weeklyGoal:50};
+      const totalVocab=vocab.total||0;
+      const grammarDone=cats.grammar?.items?.filter(i=>i.done).length||0;
+      const speakingDone=cats.speaking?.items?.filter(i=>i.done).length||0;
+      const writingDone=cats.writing?.items?.filter(i=>i.done).length||0;
+      const cefrEntry=Object.entries(CEFR_VOCAB).find(([,v])=>totalVocab<v);
+      const cefrNext=cefrEntry?cefrEntry:[null,null];
+      return<div key={lang.id} className="card" style={{marginBottom:14}}>
+        <div className="flex-sb" style={{marginBottom:10}}>
+          <div style={{display:'flex',gap:9,alignItems:'center'}}><span style={{fontSize:24}}>{lang.emoji}</span><div><div style={{fontSize:14,fontWeight:600}}>{lang.name}</div><div className="tx-dm">{lang.level} → {lang.target}</div></div></div>
+          <div style={{textAlign:'right'}}><div style={{fontSize:15,fontWeight:600,color:lang.color}}>{pv}%</div><div className="tx-dm">tuần {weekOffset===0?'này':weekOffset===-1?'trước':weekOffset<0?`${-weekOffset} tuần trước`:''}</div></div>
+        </div>
+        {/* Stats row */}
+        <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap'}}>
+          <div style={{background:'var(--sur)',borderRadius:6,padding:'5px 10px',textAlign:'center',flex:1}}>
+            <div style={{fontSize:16,fontWeight:700,color:lang.color}}>{totalVocab}</div>
+            <div className="tx-dm">từ vựng</div>
+            {cefrNext[0]&&<div style={{fontSize:9,color:'var(--dm)'}}>→ {cefrNext[1]-totalVocab} đến {cefrNext[0]}</div>}
+          </div>
+          <div style={{background:'var(--sur)',borderRadius:6,padding:'5px 10px',textAlign:'center',flex:1}}><div style={{fontSize:16,fontWeight:600,color:lang.color}}>{grammarDone}</div><div className="tx-dm">ngữ pháp ✓</div></div>
+          <div style={{background:'var(--sur)',borderRadius:6,padding:'5px 10px',textAlign:'center',flex:1}}><div style={{fontSize:16,fontWeight:600,color:lang.color}}>{speakingDone}</div><div className="tx-dm">topics nói ✓</div></div>
+          <div style={{background:'var(--sur)',borderRadius:6,padding:'5px 10px',textAlign:'center',flex:1}}><div style={{fontSize:16,fontWeight:600,color:lang.color}}>{writingDone}</div><div className="tx-dm">bài viết ✓</div></div>
+        </div>
+        {/* Week navigation + attendance */}
+        <div style={{background:'var(--sur)',borderRadius:8,padding:'9px',marginBottom:10}}>
+          <div className="week-nav">
+            <button className="btn-g btn-sm" onClick={()=>setWeekOffset(w=>w-1)}>‹ Tuần trước</button>
+            <span style={{fontSize:11,fontWeight:600,color:weekOffset===0?'var(--acc)':'var(--tx)'}}>{weekLabel}</span>
+            <button className="btn-g btn-sm" onClick={()=>setWeekOffset(w=>Math.min(0,w+1))} style={{opacity:weekOffset>=0?.3:1}} disabled={weekOffset>=0}>Tuần sau ›</button>
+          </div>
+          <div style={{overflowX:'auto'}}>
+            <div style={{display:'grid',gridTemplateColumns:'90px repeat(7,1fr)',gap:3,alignItems:'center',minWidth:420}}>
+              <div/>
+              {weekObjs.map((d,i)=>{const ds=wd[i];return<div key={i} style={{textAlign:'center'}}>
+                <div style={{fontSize:9,color:ds===TODAY?'var(--acc)':'var(--mu)',fontWeight:ds===TODAY?700:400}}>
+                  {d.toLocaleDateString('vi-VN',{weekday:'short'})}
+                </div>
+                <div style={{fontSize:10,color:ds===TODAY?'var(--acc)':'var(--dm)',fontWeight:ds===TODAY?700:400}}>
+                  {d.toLocaleDateString('vi-VN',{day:'numeric',month:'numeric'})}
+                </div>
+              </div>;})}
+              <div style={{fontSize:11,color:'var(--mu)'}}>Lớp học ✓</div>
+              {wd.map((date,i)=>{const isCd=lang.classDOW.includes(weekObjs[i].getDay());const done=lang.log[`${date}_class`];
+              return<div key={date} style={{textAlign:'center'}}>
+                {isCd?<div onClick={()=>tog(lang.id,date,'class')} style={{width:26,height:26,borderRadius:4,border:`1.5px solid ${done?lang.color:'var(--bdr)'}`,background:done?lang.color+'44':'transparent',cursor:'pointer',margin:'auto',display:'flex',alignItems:'center',justifyContent:'center',fontSize:11}}>{done?'✓':''}</div>
+                :<div style={{width:26,height:26,background:'var(--bg)',borderRadius:4,margin:'auto',opacity:.12}}/>}
+              </div>;})}
+              <div style={{fontSize:11,color:'var(--mu)'}}>Tự học (phút)</div>
+              {wd.map(date=><div key={date}><input type="number" min={0} max={180} value={lang.log[`${date}_self_min`]||''} onChange={e=>setMin(lang.id,date,+e.target.value)} style={{width:30,background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:3,color:'var(--tx)',fontSize:10,padding:'2px 3px',textAlign:'center',outline:'none'}}/></div>)}
+            </div>
+          </div>
+          <div style={{marginTop:6}}><Bar v={pv} color={lang.color} h={4}/><div className="tx-dm" style={{marginTop:2}}>{st+cd*90}/{goal} phút</div></div>
+        </div>
+        {/* Vocabulary block – counter only */}
+        <div className="lang-cat">
+          <div className="lang-cat-hd flex-sb" style={{marginBottom:8}}>
+            <div style={{display:'flex',alignItems:'center',gap:6}}>
+              <span style={{fontSize:15}}>📝</span><span style={{fontSize:13,fontWeight:600,color:'var(--tx)'}}>Từ vựng</span>
+              <span className="tx-dm">({totalVocab} từ tổng · 🎯 {vocab.weeklyGoal||50}/tuần)</span>
+            </div>
+          </div>
+          <div className="vocab-box">
+            <div style={{fontSize:40,fontWeight:800,color:lang.color,lineHeight:1}}>{totalVocab}</div>
+            <div className="tx-dm" style={{margin:'4px 0 10px'}}>từ đã học</div>
+            <div style={{display:'flex',gap:6,justifyContent:'center',flexWrap:'wrap'}}>
+              {[1,5,10,25,50].map(n=><button key={n} className="btn-p btn-sm" onClick={()=>updateLang(lang.id,{categories:{...cats,vocabulary:{...vocab,total:(vocab.total||0)+n}}})}>{n>0?`+${n}`:n}</button>)}
+              <button className="btn-g btn-sm" style={{color:'var(--cr)'}} onClick={()=>{if(vocab.total>0)updateLang(lang.id,{categories:{...cats,vocabulary:{...vocab,total:Math.max(0,(vocab.total||0)-1)}}});}}>-1</button>
+            </div>
+            <div style={{marginTop:8,fontSize:11,color:'var(--dm)'}}>
+              {Object.entries(CEFR_VOCAB).map(([lv,min])=><span key={lv} style={{marginRight:8,color:totalVocab>=min?lang.color:'var(--dm)',fontWeight:totalVocab>=min?700:400}}>{totalVocab>=min?'✓':''}{lv}≥{min}</span>)}
+            </div>
+          </div>
+        </div>
+        {/* Grammar (with CEFR level chips), Speaking, Writing (with link) */}
+        {[['grammar','📖','Ngữ pháp'],['speaking','🗣️','Nói'],['writing','✍️','Viết']].map(([catKey,emoji,label])=>{
+          const catData=cats[catKey]||{items:[]};const items=catData.items||[];
+          const done2=items.filter(i=>i.done).length;
+          const [open,setOpen2]=[true,()=>{}]; // always open
+          const addItem=(text,level,link)=>{
+            const ni={id:uid(),text:text.trim(),done:false};
+            if(catKey==='grammar')ni.level=level||'';
+            if(catKey==='writing')ni.link=link||'';
+            updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:[...items,ni]}}});
+          };
+          const togItem=(id)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:items.map(i=>i.id===id?{...i,done:!i.done}:i)}}});
+          const delItem=(id)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:items.filter(i=>i.id!==id)}}});
+          const setItemLink=(id,link)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:items.map(i=>i.id===id?{...i,link}:i)}}});
+          return<InlineCatSection key={catKey} catKey={catKey} emoji={emoji} label={label} lang={lang} items={items} done={done2} onToggle={togItem} onDelete={delItem} onAdd={addItem} onSetLink={setItemLink}/>;
+        })}
+        <div style={{marginTop:10,fontSize:11,color:'var(--mu)'}}>📅 <strong style={{color:'var(--tx)'}}>{lang.schedule}</strong> · {lang.resources.join(' · ')}</div>
+      </div>;})}
+  </div>;}
+
+function InlineCatSection({catKey,emoji,label,lang,items,done,onToggle,onDelete,onAdd,onSetLink}){
+  const [open,setOpen]=useState(true);const [newText,setNewText]=useState('');const [newLevel,setNewLevel]=useState('B1');const [newLink,setNewLink]=useState('');
+  const doAdd=()=>{if(!newText.trim())return;onAdd(newText,newLevel,newLink);setNewText('');setNewLink('');};
+  return<div className="lang-cat">
+    <div className="lang-cat-hd flex-sb" style={{marginBottom:open?8:0}} onClick={()=>setOpen(o=>!o)}>
+      <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:15}}>{emoji}</span><span style={{fontSize:13,fontWeight:600,color:'var(--tx)'}}>{label}</span><span className="tx-dm">({done}/{items.length} ✓)</span></div>
+      <span style={{fontSize:10,color:'var(--dm)'}}>{open?'▲':'▼'}</span>
+    </div>
+    {open&&<div>
+      {items.map((item,i)=><div key={item.id} style={{padding:'5px 0',borderBottom:i<items.length-1?'1px solid rgba(37,45,74,.3)':'none'}}>
+        <div style={{display:'flex',alignItems:'center',gap:7}}>
+          <Tick done={item.done} color={lang.color} onClick={()=>onToggle(item.id)}/>
+          {catKey==='grammar'&&item.level&&<span className="level-chip on" style={{background:lang.color+'33',color:lang.color,borderColor:lang.color+'55'}}>{item.level}</span>}
+          <span style={{flex:1,fontSize:12,textDecoration:item.done?'line-through':'none',opacity:item.done?.5:1}}>{item.text}</span>
+          {catKey==='writing'&&<button style={{background:'none',border:'none',cursor:'pointer',color:item.link?lang.color:'var(--dm)',fontSize:10,opacity:item.link?.8:.35}} onClick={()=>{if(item.link)window.open(item.link,'_blank');else{const u=prompt('Link bài viết:','https://');if(u)onSetLink(item.id,u);}}}>🔗</button>}
+          <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.35}} onClick={()=>onDelete(item.id)}>×</button>
+        </div>
+        {catKey==='writing'&&item.link&&<div style={{fontSize:10,color:lang.color,paddingLeft:24,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}><a href={item.link} target="_blank" rel="noreferrer" style={{color:lang.color}}>{item.link}</a></div>}
+      </div>)}
+      <div style={{display:'flex',gap:5,marginTop:7,flexWrap:'wrap'}}>
+        {catKey==='grammar'&&<select value={newLevel} onChange={e=>setNewLevel(e.target.value)} style={{background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:6,color:'var(--tx)',fontSize:11,padding:'4px 6px',outline:'none'}}>{CEFR_LEVELS.map(l=><option key={l} value={l}>{l}</option>)}</select>}
+        <input className="inp" value={newText} onChange={e=>setNewText(e.target.value)} placeholder={catKey==='speaking'?'Topic đã luyện nói...':catKey==='writing'?'Tên bài viết...':'Điểm ngữ pháp...'}
+          onKeyDown={e=>e.key==='Enter'&&doAdd()} style={{flex:1,fontSize:11,padding:'5px 8px'}}/>
+        {catKey==='writing'&&<input className="inp" value={newLink} onChange={e=>setNewLink(e.target.value)} placeholder="Link (optional)..." style={{flex:1,fontSize:11,padding:'5px 8px'}}/>}
+        <button className="btn-p btn-sm" onClick={doAdd}>+</button>
+      </div>
+    </div>}
+  </div>;}
+
+function HabitsPage({data,upd}){
+  const [showAdd,setShowAdd]=useState(false);const [editH,setEditH]=useState(null);const [showArch,setShowArch]=useState(false);
+  const wd=weekDates();
+  const wdObjs=wd.map(ds=>new Date(ds));
+  const tog=(hid,date)=>upd({habits:data.habits.map(h=>h.id===hid?{...h,completions:{...h.completions,[date]:!h.completions[date]}}:h)});
+  const active=data.habits.filter(h=>!h.archived);const archived=data.habits.filter(h=>h.archived);
+  const done=active.filter(h=>h.completions[TODAY]).length;
+  const last30=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().split('T')[0];});
+  const overall=active.length>0?Math.round(last30.reduce((s,d)=>s+active.filter(h=>h.completions[d]).length,0)/(active.length*30)*100):0;
+  return<div>
+    <div className="flex-sb" style={{marginBottom:3}}><div className="h1">✅ Habits</div>
+      <div style={{display:'flex',gap:5}}><button className="btn-g btn-sm" onClick={()=>setShowArch(s=>!s)}>📦 {archived.length}</button><button className="btn-p btn-sm" onClick={()=>setShowAdd(true)}>+ Thêm</button></div>
+    </div>
+    <p className="tx-mu" style={{marginBottom:12}}>Hôm nay: <strong style={{color:'var(--su)'}}>{done}/{active.length}</strong> · 30 ngày: <strong style={{color:'var(--acc)'}}>{overall}%</strong></p>
+    <div className="card" style={{overflowX:'auto',marginBottom:10}}>
+      <div style={{minWidth:420}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr repeat(7,34px)',gap:3,marginBottom:6}}>
+          <div className="lbl" style={{margin:0}}>HABIT</div>
+          {wdObjs.map((d,i)=>{const isT=wd[i]===TODAY;return<div key={i} style={{textAlign:'center'}}>
+            <div style={{fontSize:9,color:isT?'var(--acc)':'var(--mu)',fontWeight:isT?700:400}}>
+              {d.toLocaleDateString('vi-VN',{weekday:'short'})}
+            </div>
+            <div style={{fontSize:10,color:isT?'var(--acc)':'var(--dm)',fontWeight:isT?700:400,background:isT?'var(--acc2)':'transparent',borderRadius:4,padding:'1px 2px'}}>
+              {d.getDate()}/{d.getMonth()+1}
+            </div>
+          </div>;})}
+        </div>
+        {active.map(h=>{const str=hStreak(h.completions);const r30=Math.round(last30.filter(d=>h.completions[d]).length/30*100);
+        return<div key={h.id} style={{display:'grid',gridTemplateColumns:'1fr repeat(7,34px)',gap:3,alignItems:'center',padding:'4px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
+          <div style={{display:'flex',alignItems:'center',gap:6}}>
+            <span style={{fontSize:13}}>{h.emoji}</span>
+            <div style={{flex:1,minWidth:0}}>
+              <div style={{fontSize:11,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{h.name}</div>
+              <div style={{display:'flex',gap:7}}>{str>0&&<span style={{fontSize:9,color:h.color}}>🔥{str}</span>}<span style={{fontSize:9,color:'var(--dm)'}}>{r30}%</span></div>
+            </div>
+            <button onClick={()=>setEditH(h)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.6,flexShrink:0}}>✏️</button>
+          </div>
+          {wd.map((date,i)=>{const d=h.completions[date];return<div key={date} className={`hab-cell ${d?'done':''}`} style={{background:d?h.color:'transparent',borderColor:d?h.color:date===TODAY?'var(--acc3)':'var(--bdr)'}} onClick={()=>tog(h.id,date)}>{d?'✓':''}</div>;})}
+        </div>;})}
+      </div>
+    </div>
+    <div className="card" style={{marginBottom:10}}>
+      <div className="lbl" style={{marginBottom:7}}>📊 THỐNG KÊ 30 NGÀY</div>
+      {active.map(h=>{const r=Math.round(last30.filter(d=>h.completions[d]).length/30*100);const str=hStreak(h.completions);
+      return<div key={h.id} style={{marginBottom:7}}><div className="flex-sb" style={{marginBottom:2}}><span style={{fontSize:11}}>{h.emoji} {h.name}</span><div style={{display:'flex',gap:8,alignItems:'center'}}><span style={{fontSize:10,color:h.color}}>🔥{str}</span><span style={{fontSize:11,color:h.color,fontWeight:600}}>{r}%</span></div></div><Bar v={r} color={h.color} h={4}/></div>;})}
+    </div>
+    {showArch&&archived.length>0&&<div className="card" style={{marginBottom:10,opacity:.7}}>
+      <div className="lbl" style={{marginBottom:7}}>📦 ARCHIVED</div>
+      {archived.map(h=><div key={h.id} style={{display:'flex',gap:8,alignItems:'center',padding:'5px 0',borderBottom:'1px solid var(--bdr)'}}>
+        <span>{h.emoji}</span><span style={{flex:1,fontSize:12,color:'var(--mu)'}}>{h.name}</span>
+        <button className="btn-g btn-sm" onClick={()=>upd({habits:data.habits.map(x=>x.id===h.id?{...x,archived:false}:x)})}>Khôi phục</button>
+        <button className="btn-g btn-sm" style={{color:'var(--cr)'}} onClick={()=>upd({habits:data.habits.filter(x=>x.id!==h.id)})}>Xóa</button>
+      </div>)}
+    </div>}
+    {showAdd&&<div className="ov" onClick={()=>setShowAdd(false)}><div className="modal" style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+      <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>+ Habit mới</span><button className="btn-g btn-sm" onClick={()=>setShowAdd(false)}>✕</button></div>
+      <div style={{display:'grid',gridTemplateColumns:'50px 1fr',gap:8,marginBottom:10}}>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Icon</div><input className="inp" id="hEm" defaultValue="✅" style={{textAlign:'center',fontSize:18,padding:'4px'}}/></div>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Tên</div><input className="inp" id="hNm" placeholder="VD: Đọc sách..."/></div>
+      </div>
+      <div className="tx-dm" style={{marginBottom:5}}>Màu</div>
+      <div style={{display:'flex',gap:6,marginBottom:14}}>{PAL.map((c,ci)=><div key={c} id={`hpal_${ci}`} onClick={()=>PAL.forEach((_,j)=>{const el=document.getElementById(`hpal_${j}`);if(el)el.style.border=j===ci?'3px solid #fff':'3px solid transparent';})} style={{width:22,height:22,borderRadius:'50%',background:c,cursor:'pointer',border:'3px solid transparent'}}/>)}</div>
+      <div style={{display:'flex',gap:8}}>
+        <button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>{const name=document.getElementById('hNm')?.value;const emoji=document.getElementById('hEm')?.value;if(!name?.trim())return;const ci=PAL.findIndex((_,j)=>document.getElementById(`hpal_${j}`)?.style.border!=='3px solid transparent');const col=ci>=0?PAL[ci]:PAL[0];upd({habits:[...data.habits,{id:uid(),name:name.trim(),emoji:emoji||'✅',color:col,completions:{},archived:false}]});setShowAdd(false);}}>Thêm</button>
+        <button className="btn-g" onClick={()=>setShowAdd(false)}>Huỷ</button>
+      </div>
+    </div></div>}
+    {editH&&<EditHabitModal habit={editH} onSave={h=>{upd({habits:data.habits.map(x=>x.id===h.id?h:x)});setEditH(null);}} onArchive={id=>{upd({habits:data.habits.map(h=>h.id===id?{...h,archived:true}:h)});setEditH(null);}} onClose={()=>setEditH(null)}/>}
+  </div>;}
+
+function StudyLogPage({data,upd}){
+  const [showLog,setShowLog]=useState(false);const chartRef=useRef(null);const chartInst=useRef(null);
+  const wd=useMemo(()=>weekDates(),[]);
+  const wl=data.studyLog.filter(l=>wd.includes(l.date));
+  const subH={};wl.forEach(l=>{subH[l.subjectId]=(subH[l.subjectId]||0)+l.hours;});
+  const subC={micro:'#E24B4A',ipe:'#BA7517',gse:'#1D9E75',macro:'#7C6EF5',de:'#FFD700',en:'#4FA3FF',other:'#6B75A0'};
+  const subN={micro:'Microeconometrics',ipe:'IPE',gse:'GSE',macro:'Macro',de:'Tiếng Đức',en:'Tiếng Anh',other:'Khác'};
+  const wt=wl.reduce((s,l)=>s+l.hours,0);
+  useEffect(()=>{if(!chartRef.current||!Object.keys(subH).length)return;if(chartInst.current)chartInst.current.destroy();chartInst.current=new Chart(chartRef.current,{type:'bar',data:{labels:Object.keys(subH).map(k=>subN[k]||k),datasets:[{data:Object.values(subH),backgroundColor:Object.keys(subH).map(k=>subC[k]||'#7C6EF5'),borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6B75A0',font:{size:10}},grid:{color:'rgba(37,45,74,.5)'}},y:{ticks:{color:'#E4E8FA',font:{size:11}},grid:{display:false}}}}});return()=>{if(chartInst.current)chartInst.current.destroy();};},[wl.length]);
+  return<div>
+    <div className="flex-sb" style={{marginBottom:3}}><div className="h1">📊 Study Log</div><button className="btn-g btn-sm" onClick={()=>setShowLog(true)}>+ Log thủ công</button></div>
+    <p className="tx-mu" style={{marginBottom:12}}>Tuần này: <strong style={{color:'#7C6EF5'}}>{wt.toFixed(1)}h</strong> · Dùng tab ⏱️ Timer để auto-log</p>
+    <div className="g2" style={{marginBottom:10}}>
+      <div className="card"><div className="lbl" style={{marginBottom:5}}>PHÂN BỔ TUẦN</div>
+        {Object.keys(subH).length>0?<div className="chart-wrap"><canvas ref={chartRef}/></div>:<div style={{height:90,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--dm)',fontSize:12}}>Mở tab ⏱️ Timer để bắt đầu!</div>}
+      </div>
+      <div className="card"><div className="lbl" style={{marginBottom:5}}>TOP MÔN HỌC</div>
+        {Object.entries(subH).sort((a,b)=>b[1]-a[1]).map(([k,h])=><div key={k} style={{marginBottom:6}}><div className="flex-sb" style={{marginBottom:2}}><span style={{fontSize:11}}>{subN[k]||k}</span><span style={{fontSize:11,color:subC[k]||'#7C6EF5',fontWeight:600}}>{h.toFixed(1)}h</span></div><Bar v={wt>0?h/wt*100:0} color={subC[k]||'#7C6EF5'} h={4}/></div>)}
+        {!Object.keys(subH).length&&<div className="tx-dm">Chưa có dữ liệu</div>}
+        {wt>0&&<div style={{borderTop:'1px solid var(--bdr)',marginTop:7,paddingTop:7,display:'flex',justifyContent:'space-between'}}><span className="tx-mu">Tổng</span><span style={{fontWeight:600,color:'#7C6EF5'}}>{wt.toFixed(1)}h</span></div>}
+      </div>
+    </div>
+    <div className="card"><div className="lbl" style={{marginBottom:7}}>LỊCH SỬ GẦN ĐÂY</div>
+      {!data.studyLog.length&&<div className="tx-dm" style={{textAlign:'center',padding:'14px'}}>Chưa có log — mở tab ⏱️ Timer!</div>}
+      {data.studyLog.slice(0,12).map(l=><div key={l.id} className="log-entry">
+        <div style={{width:30,height:30,borderRadius:5,background:(subC[l.subjectId]||'#7C6EF5')+'22',display:'flex',alignItems:'center',justifyContent:'center',fontSize:14,flexShrink:0}}>{data.courses.find(c=>c.id===l.subjectId)?.emoji||'📚'}</div>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500}}>{l.subjectName||subN[l.subjectId]||l.subjectId}</div><div className="tx-dm">{fmt(l.date)}{l.note&&` · ${l.note}`}</div></div>
+        <div style={{fontSize:13,fontWeight:600,color:subC[l.subjectId]||'#7C6EF5'}}>{l.hours}h</div>
+        <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.4}} onClick={()=>upd({studyLog:data.studyLog.filter(x=>x.id!==l.id)})}>×</button>
+      </div>)}
+    </div>
+    {showLog&&<div className="ov" onClick={()=>setShowLog(false)}><div className="modal" style={{maxWidth:340}} onClick={e=>e.stopPropagation()}>
+      <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>Log thủ công</span><button className="btn-g btn-sm" onClick={()=>setShowLog(false)}>✕</button></div>
+      <select className="sel" id="lsS" style={{marginBottom:7}}>
+        {[...data.courses,{id:'de',name:'Tiếng Đức',emoji:'🇩🇪'},{id:'en',name:'Tiếng Anh',emoji:'🇬🇧'},{id:'other',name:'Khác',emoji:'📌'}].map(c=><option key={c.id} value={c.id}>{c.emoji} {c.name}</option>)}
+      </select>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:7,marginBottom:7}}>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Số giờ</div><input type="number" className="inp" id="lsH" defaultValue="1.5" min="0.25" step="0.25"/></div>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Ngày</div><input type="date" className="inp" id="lsD" defaultValue={TODAY}/></div>
+      </div>
+      <input className="inp" id="lsN" placeholder="Ghi chú..." style={{marginBottom:12}}/>
+      <div style={{display:'flex',gap:7}}>
+        <button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>{const s=document.getElementById('lsS')?.value;const h=parseFloat(document.getElementById('lsH')?.value);const d=document.getElementById('lsD')?.value;const n=document.getElementById('lsN')?.value;if(!h||h<=0)return;const sub=[...data.courses,{id:'de',name:'Tiếng Đức'},{id:'en',name:'Tiếng Anh'},{id:'other',name:'Khác'}].find(c=>c.id===s);upd({studyLog:[{id:uid(),date:d||TODAY,subjectId:s,hours:h,subjectName:sub?.name||'',note:n},...data.studyLog]});setShowLog(false);}}>Lưu</button>
+        <button className="btn-g" onClick={()=>setShowLog(false)}>Huỷ</button>
+      </div>
+    </div></div>}
+    {/* PERFORMANCE REPORT */}
+    <div className="card" style={{marginTop:12}}>
+      <div className="lbl" style={{marginBottom:8}}>📋 BÁO CÁO TUẦN NÀY</div>
+      {(()=>{
+        const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().split('T')[0];});
+        const dailyH=last7.map(ds=>({ds,h:data.studyLog.filter(l=>l.date===ds).reduce((s,l)=>s+l.hours,0),d:new Date(ds)}));
+        const totalH=dailyH.reduce((s,d)=>s+d.h,0);
+        const prevWeek=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-13+i);return d.toISOString().split('T')[0];});
+        const prevH=data.studyLog.filter(l=>prevWeek.includes(l.date)).reduce((s,l)=>s+l.hours,0);
+        const activH=data.habits.filter(h=>!h.archived);
+        const habPct=activH.length>0?Math.round(last7.reduce((s,d)=>s+activH.filter(h=>h.completions[d]).length,0)/(activH.length*7)*100):0;
+        const ratings=last7.map(d=>data.dailyPerf[d]?.rating).filter(Boolean);
+        const avgRating=ratings.length>0?(ratings.reduce((s,r)=>s+r,0)/ratings.length).toFixed(1):null;
+        const maxH=Math.max(...dailyH.map(d=>d.h),1);
+        const diff=totalH-prevH;
+        return<div>
+          <div className="g3" style={{marginBottom:12}}>
+            <div style={{textAlign:'center',background:'var(--sur)',borderRadius:8,padding:'8px'}}><div style={{fontSize:20,fontWeight:700,color:'var(--acc)'}}>{totalH.toFixed(1)}h</div><div className="tx-dm">tổng giờ học</div>{prevH>0&&<div style={{fontSize:10,color:diff>=0?'var(--su)':'var(--cr)',marginTop:2}}>{diff>=0?'+':''}{diff.toFixed(1)}h vs tuần trước</div>}</div>
+            <div style={{textAlign:'center',background:'var(--sur)',borderRadius:8,padding:'8px'}}><div style={{fontSize:20,fontWeight:700,color:'#1D9E75'}}>{habPct}%</div><div className="tx-dm">habits hoàn thành</div></div>
+            <div style={{textAlign:'center',background:'var(--sur)',borderRadius:8,padding:'8px'}}><div style={{fontSize:20,fontWeight:700,color:'var(--go)'}}>{avgRating?`${avgRating}⭐`:'-'}</div><div className="tx-dm">đánh giá TB</div></div>
+          </div>
+          {/* Daily bar chart */}
+          <div style={{display:'flex',gap:4,alignItems:'flex-end',height:70,marginBottom:4}}>
+            {dailyH.map(({ds,h,d})=><div key={ds} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2}}>
+              <div style={{fontSize:9,color:'var(--dm)',fontWeight:600}}>{h>0?h.toFixed(1):''}</div>
+              <div style={{width:'100%',background:ds===TODAY?'var(--acc)':'var(--sur)',borderRadius:'3px 3px 0 0',height:`${Math.max(4,h/maxH*50)}px`,border:`1px solid ${ds===TODAY?'var(--acc3)':'var(--bdr)'}`,transition:'height .3s'}}/>
+              <div style={{fontSize:9,color:ds===TODAY?'var(--acc)':'var(--dm)'}}>{d.getDate()}/{d.getMonth()+1}</div>
+            </div>)}
+          </div>
+          <div style={{fontSize:10,color:'var(--dm)',textAlign:'center'}}>📊 Giờ học mỗi ngày trong tuần (cột xanh = hôm nay)</div>
+        </div>;
+      })()}
+    </div>
+  </div>;}
+
+/* ── EVENTS MANAGEMENT PAGE ── */
+function EventsPage({data,upd}){
+  const [showAdd,setShowAdd]=useState(false);const [editEv,setEditEv]=useState(null);
+  const TC={academic:'#7C6EF5',exam:'#E24B4A',language:'#FFD700',health:'#1D9E75',networking:'#4FA3FF',other:'#6B75A0'};
+  const TL={academic:'Học thuật',exam:'Kỳ thi',language:'Ngôn ngữ',health:'Sức khỏe',networking:'Networking',other:'Khác'};
+  const sorted=[...data.events].sort((a,b)=>a.date.localeCompare(b.date));
+  const upcoming=sorted.filter(e=>e.date>=TODAY);const past=sorted.filter(e=>e.date<TODAY);
+  return<div>
+    <div className="flex-sb" style={{marginBottom:4}}><div className="h1">🗓️ Tất cả Events</div><button className="btn-p btn-sm" onClick={()=>setShowAdd(true)}>+ Thêm</button></div>
+    <p className="tx-mu" style={{marginBottom:14}}>Tất cả events, lịch thi và hoạt động. Cũng có thể thêm/sửa từ Calendar trên Dashboard.</p>
+    {upcoming.length>0&&<div><div className="lbl">SẮP TỚI ({upcoming.length})</div>
+      {upcoming.map(e=>{const d=daysTo(e.date);return<div key={e.id} className="ev-card" style={{background:'var(--card)',border:'1px solid var(--bdr)',borderRadius:10,padding:'10px',marginBottom:7,display:'flex',gap:9,alignItems:'flex-start'}}>
+        <div style={{width:36,height:36,borderRadius:7,background:(TC[e.type]||'#7C6EF5')+'22',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,flexShrink:0}}>{e.emoji}</div>
+        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{e.title}</div><div className="tx-dm">{fmtL(e.date)}{e.time&&` · ${e.time}`}{e.note&&` — ${e.note}`}</div></div>
+        <div style={{textAlign:'right',flexShrink:0}}>
+          <span style={{padding:'2px 6px',borderRadius:4,fontSize:9,fontWeight:600,background:(TC[e.type]||'#7C6EF5')+'22',color:TC[e.type]||'#7C6EF5'}}>{TL[e.type]}</span>
+          <div style={{fontSize:11,color:d===0?'var(--cr)':d<=7?'var(--wa)':'var(--mu)',marginTop:3}}>{d===0?'Hôm nay!':`${d} ngày`}</div>
+        </div>
+        <div style={{display:'flex',flexDirection:'column',gap:3}}>
+          <button onClick={()=>setEditEv(e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.5}}>✏️</button>
+          <button onClick={()=>upd({events:data.events.filter(x=>x.id!==e.id)})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.4}}>×</button>
+        </div>
+      </div>;})}
+    </div>}
+    {past.length>0&&<div style={{marginTop:12,opacity:.65}}><div className="lbl">ĐÃ QUA ({past.length})</div>
+      {past.slice(-8).reverse().map(e=><div key={e.id} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
+        <span style={{fontSize:14}}>{e.emoji}</span>
+        <div style={{flex:1}}><div style={{fontSize:12,textDecoration:'line-through',color:'var(--mu)'}}>{e.title}</div><div className="tx-dm">{fmt(e.date)}</div></div>
+        <button onClick={()=>setEditEv(e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.4}}>✏️</button>
+        <button onClick={()=>upd({events:data.events.filter(x=>x.id!==e.id)})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.4}}>×</button>
+      </div>)}
+    </div>}
+    {showAdd&&<AddEventModal onSave={e=>{upd({events:[...data.events,e]});setShowAdd(false);}} onClose={()=>setShowAdd(false)}/>}
+    {editEv&&<AddEventModal existing={editEv} onSave={e=>{upd({events:data.events.map(x=>x.id===e.id?e:x)});setEditEv(null);}} onClose={()=>setEditEv(null)}/>}
+  </div>;}
+
+/* ── SETTINGS PAGE ── */
+function SettingsPage({data,upd}){
+  const s=data.settings||{theme:'purple',radius:'rounded'};
+  const setS=(k,v)=>{const ns={...s,[k]:v};upd({settings:ns});applyTheme(ns);};
+  return<div>
+    <div className="h1">⚙️ Cài đặt</div>
+    <p className="tx-mu" style={{marginBottom:18}}>Tuỳ chỉnh giao diện StudyOS theo phong cách của bạn.</p>
+    <div className="card" style={{marginBottom:12}}>
+      <div className="lbl" style={{marginBottom:10}}>🎨 THEME MÀU SẮC</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+        {Object.entries(THEMES).map(([k,t])=>{const active=s.theme===k;return<div key={k} onClick={()=>setS('theme',k)} style={{cursor:'pointer',border:`2px solid ${active?t['--acc']:'var(--bdr)'}`,borderRadius:10,padding:'10px 12px',background:active?t['--acc']+'22':'var(--sur)',transition:'all .15s'}}>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:5}}>
+            <div style={{width:20,height:20,borderRadius:'50%',background:t['--acc'],flexShrink:0}}/>
+            <span style={{fontSize:12,fontWeight:active?700:400,color:active?t['--acc']:'var(--tx)'}}>{t.emoji} {t.name}</span>
+            {active&&<span style={{marginLeft:'auto',fontSize:10,color:t['--acc'],fontWeight:700}}>✓</span>}
+          </div>
+          <div style={{display:'flex',gap:3}}>
+            {['--bg','--sur','--card','--acc'].map(v=><div key={v} style={{flex:1,height:8,borderRadius:2,background:t[v]}}/>)}
+          </div>
+        </div>;})}
+      </div>
+    </div>
+    <div className="card" style={{marginBottom:12}}>
+      <div className="lbl" style={{marginBottom:10}}>🔘 BO GÓC (Border Radius)</div>
+      <div style={{display:'flex',gap:8}}>
+        {[['sharp','Vuông sắc','4px'],['rounded','Bo vừa','12px'],['pill','Bo nhiều','20px']].map(([k,label,px])=>{const active=s.radius===k;return<button key={k} onClick={()=>setS('radius',k)} style={{flex:1,padding:'10px',border:`2px solid ${active?'var(--acc)':'var(--bdr)'}`,borderRadius:active?k==='sharp'?4:k==='pill'?20:12:8,background:active?'var(--acc2)':'var(--sur)',cursor:'pointer',color:active?'var(--acc)':'var(--mu)',fontWeight:active?700:400,fontSize:12}}>
+          <div style={{width:24,height:24,border:'2px solid currentColor',borderRadius:px,margin:'0 auto 5px'}}/>
+          {label}
+        </button>;})}
+      </div>
+    </div>
+    <div className="card" style={{marginBottom:12}}>
+      <div className="lbl" style={{marginBottom:8}}>💾 DỮ LIỆU</div>
+      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+        <button className="btn-g" onClick={()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`studyos-backup-${TODAY}.json`;a.click();}}>⬇️ Xuất dữ liệu (JSON)</button>
+        <button className="btn-g" style={{color:'var(--wa)'}} onClick={()=>{if(confirm('Reset tất cả cài đặt theme về mặc định?')){const ns={theme:'purple',radius:'rounded'};upd({settings:ns});applyTheme(ns);}}}>↺ Reset theme</button>
+      </div>
+      <div className="tx-dm" style={{marginTop:8}}>Data tự động sync qua Firebase. Xuất JSON để backup thủ công.</div>
+    </div>
+    <div className="card">
+      <div className="lbl" style={{marginBottom:8}}>ℹ️ THÔNG TIN</div>
+      <div style={{fontSize:12,color:'var(--mu)',lineHeight:1.7}}>
+        StudyOS v7 · React 18 + Firebase<br/>
+        Bochum, Đức 🇩🇪 · GSE Program<br/>
+        <span style={{color:'var(--dm)',fontSize:10}}>Data lưu trên Firebase — sync real-time mọi thiết bị</span>
+      </div>
+    </div>
+  </div>;}
+
+function ParkingLotPage({data,upd}){
+  const [text,setText]=useState('');
+  const add=()=>{if(!text.trim())return;upd({parkingLot:[{id:uid(),text:text.trim(),date:TODAY},...data.parkingLot]});setText('');};
+  return<div>
+    <div className="h1">🅿️ Parking Lot</div>
+    <p className="tx-mu" style={{marginBottom:12}}>Dump mọi ý tưởng vào đây. Não rảnh để tập trung học.</p>
+    <div style={{display:'flex',gap:7,marginBottom:12}}><input className="inp" value={text} onChange={e=>setText(e.target.value)} placeholder="Ý tưởng / task bất kỳ..." onKeyDown={e=>e.key==='Enter'&&add()} style={{flex:1}}/><button className="btn-p" onClick={add}>+ Thêm</button></div>
+    {!data.parkingLot.length&&<div style={{textAlign:'center',padding:'40px 0',color:'var(--dm)'}}><div style={{fontSize:28,marginBottom:8}}>🎉</div><div style={{fontSize:13,color:'var(--mu)'}}>Parking lot trống!</div></div>}
+    {data.parkingLot.map(item=><div key={item.id} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
+      <div style={{width:6,height:6,borderRadius:'50%',background:'#7C6EF5',flexShrink:0}}/>
+      <div style={{flex:1}}><div style={{fontSize:13}}>{item.text}</div><div className="tx-dm">Thêm {item.date}</div></div>
+      <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:14,opacity:.4}} onClick={()=>upd({parkingLot:data.parkingLot.filter(p=>p.id!==item.id)})}>×</button>
+    </div>)}
+  </div>;}
+
+const PAGES=[
+  {id:'dashboard',label:'Dashboard',emoji:'🏠',sec:'TỔNG QUAN'},
+  {id:'phase',label:'Phase Plan',emoji:'🗺️',sec:'TỔNG QUAN'},
+  {id:'timeline',label:'Timeline',emoji:'📅',sec:'TỔNG QUAN'},
+  {id:'timer',label:'Timer / Pomodoro',emoji:'⏱️',sec:'HỌC TẬP'},
+  {id:'courses',label:'Môn học',emoji:'📚',sec:'HỌC TẬP'},
+  {id:'language',label:'Ngôn ngữ',emoji:'🌐',sec:'HỌC TẬP'},
+  {id:'studylog',label:'Study Log',emoji:'📊',sec:'HỌC TẬP'},
+  {id:'habits',label:'Habits',emoji:'✅',sec:'LIFESTYLE'},
+  {id:'events',label:'Events',emoji:'🗓️',sec:'LIFESTYLE'},
+  {id:'admin',label:'Admin Tasks',emoji:'🧹',sec:'LIFESTYLE'},
+  {id:'parking',label:'Parking Lot',emoji:'🅿️',sec:'LIFESTYLE'},
+  {id:'settings',label:'Cài đặt',emoji:'⚙️',sec:'HỆ THỐNG'},
+];
+
+function App(){
+  const [user,setUser]=useState(null);const [data,setData]=useState(null);
+  const [authLoading,setAuthLoading]=useState(true);
+  const [syncing,setSyncing]=useState(false);const [syncErr,setSyncErr]=useState(false);const [lastSync,setLastSync]=useState(null);
+  const [page,setPage]=useState('dashboard');const [pageParams,setPageParams]=useState({});
+  const saveTimer=useRef(null);const saving=useRef(false);const unsubRef=useRef(null);
+
+  useEffect(()=>{
+    if(!FB_ON){let saved=loadLocal();if(saved)saved=migrateToV6(saved);const d=saved||buildInit();setData(d);applyTheme(d.settings);setAuthLoading(false);setTimeout(()=>{const el=document.getElementById('loading');if(el)el.style.display='none';},300);return;}
+    const unsub=_auth.onAuthStateChanged(async u=>{setUser(u);if(u){await loadFB(u.uid);}else{setData(null);}setAuthLoading(false);setTimeout(()=>{const el=document.getElementById('loading');if(el)el.style.display='none';},300);});
+    return()=>unsub();
+  },[]);
+
+  const loadFB=async(uid)=>{try{const ref=_db.collection('users').doc(uid);const doc=await ref.get();let init=doc.exists&&doc.data().appData?JSON.parse(doc.data().appData):buildInit();init=migrateToV6(init);setData(init);if(!doc.exists)await ref.set({appData:JSON.stringify(init),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});setLastSync(new Date());if(unsubRef.current)unsubRef.current();unsubRef.current=ref.onSnapshot(snap=>{if(!snap.exists||saving.current)return;try{setData(migrateToV6(JSON.parse(snap.data().appData)));setLastSync(new Date());setSyncErr(false);}catch(e){}});}catch(e){setSyncErr(true);console.error(e);}};
+  const doSave=async(uid,d)=>{saving.current=true;setSyncing(true);setSyncErr(false);try{await _db.collection('users').doc(uid).set({appData:JSON.stringify(d),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});setLastSync(new Date());}catch(e){setSyncErr(true);}finally{setTimeout(()=>{saving.current=false;},2500);setSyncing(false);}};
+
+  const upd=useCallback((changes)=>{setData(d=>{const nd={...d,...changes};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
+
+  const awardXP=useCallback((amount,label)=>{showXpPop(amount);setData(d=>{const g={...d.gamification,xp:(d.gamification?.xp||0)+amount};const achs=[...(g.achievements||[])];if(!achs.includes('first_log')&&label?.includes('⏱️')){achs.push('first_log');showAch(ACH.find(a=>a.id==='first_log'));}const nd={...d,gamification:{...g,achievements:achs}};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
+
+  const signIn=()=>{const p=new firebase.auth.GoogleAuthProvider();_auth.signInWithPopup(p).catch(e=>console.error(e));};
+  const signOut=()=>{if(unsubRef.current)unsubRef.current();_auth.signOut();setUser(null);setData(null);};
+  const nav=(pg,params={})=>{setPage(pg);setPageParams(params);};
+
+  if(authLoading)return null;
+  if(FB_ON&&!user)return<SignInPage onSignIn={signIn}/>;
+  if(!data)return null;
+
+  const sections={};PAGES.forEach(p=>{if(!sections[p.sec])sections[p.sec]=[];sections[p.sec].push(p);});
+  const cp=PAGES.find(p=>p.id===page);
+  const xp=data.gamification?.xp||0;const lv=getLevel(xp);
+  const nlv=LEVELS.find(l=>l.level===lv.level+1)||lv;
+  const xpP=Math.min(100,Math.round((xp-lv.min)/(nlv.min-lv.min)*100));
+  const critCount=data.courses.filter(c=>c.risk==='critical').length;
+  const hMissed=data.habits.filter(h=>!h.archived&&!h.completions[TODAY]).length;
+
+  function renderPage(){
+    if(page==='dashboard')return<DashboardPage data={data} upd={upd} nav={nav} awardXP={awardXP}/>;
+    if(page==='phase')return<PhasePage data={data} upd={upd}/>;
+    if(page==='timeline')return<TimelinePage data={data}/>;
+    if(page==='timer')return<TimerPage data={data} upd={upd} awardXP={awardXP}/>;
+    if(page==='courses')return<CoursesPage data={data} upd={upd} initCourseId={pageParams.courseId}/>;
+    if(page==='language')return<LanguagePage data={data} upd={upd}/>;
+    if(page==='studylog')return<StudyLogPage data={data} upd={upd}/>;
+    if(page==='habits')return<HabitsPage data={data} upd={upd}/>;
+    if(page==='admin')return<AdminPage data={data} upd={upd}/>;
+    if(page==='parking')return<ParkingLotPage data={data} upd={upd}/>;
+  }
+
+  return<div className="app">
+    <div className="sb">
+      <div className="sb-logo">
+        <div className="sb-title">⚡ StudyOS <span style={{fontSize:9,background:'var(--acc2)',color:'var(--acc)',borderRadius:3,padding:'1px 4px'}}>v6</span></div>
+        <div style={{marginTop:7}}>
+          <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{fontSize:13}}>{lv.emoji}</span><span style={{fontSize:11,fontWeight:600,color:'var(--tx)'}}>Lv.{lv.level} {lv.name}</span><span style={{fontSize:10,color:'var(--mu)',marginLeft:'auto'}}>{xp} XP</span></div>
+          <div className="xp-bar"><div className="xp-fill" style={{width:`${xpP}%`,background:'linear-gradient(90deg,var(--acc),#B06EF5)'}}/></div>
+          <div className="xp-info"><span>{xp-lv.min}</span><span>/{nlv.min-lv.min}</span></div>
+        </div>
+      </div>
+      <div style={{flex:1,paddingBottom:8}}>
+        {Object.entries(sections).map(([sec,pages])=><div key={sec}>
+          <div className="sb-sec">{sec}</div>
+          {pages.map(p=>{let badge=null;
+            if(p.id==='courses'&&critCount>0)badge=<span style={{marginLeft:'auto',background:'var(--cr)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{critCount}</span>;
+            if(p.id==='habits'&&hMissed>0)badge=<span style={{marginLeft:'auto',background:'var(--wa)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{hMissed}</span>;
+            if(p.id==='parking'&&data.parkingLot.length>0)badge=<span style={{marginLeft:'auto',color:'var(--dm)',fontSize:10}}>{data.parkingLot.length}</span>;
+            return<button key={p.id} className={`nav ${page===p.id?'on':''}`} onClick={()=>nav(p.id)}>
+              <span style={{fontSize:14,width:18,textAlign:'center',flexShrink:0}}>{p.emoji}</span>{p.label}{badge}
+            </button>;})}
+        </div>)}
+      </div>
+      <div style={{padding:'8px 12px',borderTop:'1px solid var(--bdr)'}}>
+        {FB_ON&&user&&<div>
+          <div style={{fontSize:10,color:'var(--mu)',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>👤 {user.displayName||user.email}</div>
+          <div style={{display:'flex',alignItems:'center',fontSize:10,color:'var(--mu)',marginBottom:5}}>
+            <div className={`sync-dot ${syncing?'pulsing':''}`} style={{background:syncErr?'var(--cr)':syncing?'var(--wa)':'var(--su)'}}/>
+            {syncErr?'Lỗi sync':syncing?'Đang sync...':lastSync?`${lastSync.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}`:''}
+          </div>
+          <button className="btn-g" style={{padding:'3px 8px',fontSize:10,width:'100%',justifyContent:'center'}} onClick={signOut}>Đăng xuất</button>
+        </div>}
+        {!FB_ON&&<div style={{fontSize:10,color:'var(--dm)'}}>⚠️ Chưa cấu hình Firebase</div>}
+      </div>
+    </div>
+    <div className="main">
+      <div className="mhd">
+        <div style={{fontSize:14,fontWeight:500}}>{cp?.emoji} {cp?.label}</div>
+        <div style={{fontSize:11,color:'var(--mu)'}}>{new Date().toLocaleDateString('vi-VN',{day:'numeric',month:'numeric',year:'numeric'})}</div>
+      </div>
+      <div className="scroll"><div className="content">{renderPage()}</div></div>
+    </div>
+  </div>;}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyOS ⚡ v5</title>
+<title>StudyOS ⚡ v9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -23,7 +25,7 @@
   --in:#378ADD;--inb:rgba(55,138,221,.1);--inBdr:rgba(55,138,221,.25);
   --go:#F5A623;
 }
-body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;overflow:hidden;height:100vh}
+body{background:var(--bg);color:var(--tx);font-family:var(--font,-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif);overflow:hidden;height:100vh}
 #root{height:100vh}
 .app{display:flex;height:100vh}
 .sb{width:215px;min-width:215px;background:var(--sur);border-right:1px solid var(--bdr);display:flex;flex-direction:column;height:100vh;overflow-y:auto}
@@ -125,6 +127,10 @@ body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSyst
 .grade-pill{border-radius:8px;padding:6px 12px;font-weight:700;font-size:13px;display:inline-flex;align-items:center;gap:6px}
 .week-nav{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:8px}
 .archived-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--sur);border-radius:8px;margin-bottom:6px;opacity:.75}
+.note-card{border-radius:10px;padding:12px;margin-bottom:0;border:1px solid var(--bdr);position:relative;min-height:80px}
+.note-card:hover .note-del{opacity:.7}
+.note-del{opacity:0;transition:opacity .15s}
+.ptask-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(37,45,74,.3)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--dm);border-radius:3px}
@@ -133,8 +139,8 @@ body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSyst
 <body>
 <div id="loading" style="position:fixed;inset:0;background:#0C0F1A;display:flex;align-items:center;justify-content:center;z-index:9999">
   <div style="text-align:center"><div style="font-size:42px;margin-bottom:12px">⚡</div>
-  <div style="color:#7C6EF5;font-size:15px;font-family:system-ui">StudyOS v7 — Đang tải...</div>
-  <div style="color:#353D60;font-size:11px;margin-top:5px;font-family:system-ui">v7: Personalization · Performance Report · German B2+ Goals</div></div>
+  <div style="color:#7C6EF5;font-size:15px;font-family:system-ui">StudyOS v9 — Đang tải...</div>
+  <div style="color:#353D60;font-size:11px;margin-top:5px;font-family:system-ui">v9: EmojiPicker · Recurring Events · ParkingLot 2.0 · SubTask DDL</div></div>
 </div>
 <div id="root"></div>
 <script>
@@ -170,10 +176,12 @@ const THEMES={
   amber:{name:'Amber Dark',emoji:'🟡','--acc':'#F59E0B','--acc2':'rgba(245,158,11,.13)','--acc3':'rgba(245,158,11,.28)','--bg':'#17120A','--sur':'#211A0C','--card':'#2A2010','--ch':'#322814','--bdr':'#3A2E16','--dm':'#48381E'},
   red:{name:'Red Energy',emoji:'🔴','--acc':'#EF4444','--acc2':'rgba(239,68,68,.13)','--acc3':'rgba(239,68,68,.28)','--bg':'#140A0A','--sur':'#1E1010','--card':'#281616','--ch':'#2E1A1A','--bdr':'#361E1E','--dm':'#442626'},
 };
+const FONTS={system:'-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif',inter:'"Inter",system-ui,sans-serif',outfit:'"Outfit",system-ui,sans-serif',space:'"Space Grotesk",system-ui,sans-serif',dm:'"DM Sans",system-ui,sans-serif'};
 function applyTheme(settings){
   if(!settings)return;
   const t=THEMES[settings.theme||'purple']||THEMES.purple;
   Object.entries(t).filter(([k])=>k.startsWith('--')).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
+  document.documentElement.style.setProperty('--font',FONTS[settings.fontFamily||'system']||FONTS.system);
   let el=document.getElementById('br-override');
   if(!el){el=document.createElement('style');el.id='br-override';document.head.appendChild(el);}
   const br=settings.radius==='sharp'?'5px':settings.radius==='pill'?'20px':'12px';
@@ -212,8 +220,40 @@ function migrateToV6(d){
     return{...l,categories:{...cats,grammar,vocabulary:vocab,writing,speaking:cats.speaking||{items:[]}}};
   });
   if(!d.timerCategories)d.timerCategories=[];
-  if(!d.settings)d.settings={theme:'purple',radius:'rounded'};
+  if(!d.settings)d.settings={theme:'purple',radius:'rounded',fontFamily:'system',bannerUrl:''};
+  if(!d.settings.fontFamily)d.settings.fontFamily='system';
+  if(!d.settings.bannerUrl)d.settings.bannerUrl='';
+  // Migrate todayFocus → dailyFocus
+  if(!d.dailyFocus){
+    d.dailyFocus={};
+    if(d.todayFocus){
+      const old=d.todayFocus;
+      d.dailyFocus[old.date||TODAY]={
+        mustDo:{text:old.mustDo||'',done:false},
+        top3:(old.top3||[]).map((t,i)=>({id:'t'+(i+1),text:t||'',done:false}))
+      };
+    }
+    delete d.todayFocus;
+  }
+  // Migrate courses: add sections, instructor, contact, location
+  if(d.courses)d.courses=d.courses.map(c=>{
+    const updated={...c};
+    if(!updated.instructor)updated.instructor='';
+    if(!updated.contact)updated.contact='';
+    if(!updated.location)updated.location='';
+    if(!updated.sections){
+      const secNames=[...new Set((c.topics||[]).map(t=>t.sec).filter(Boolean))];
+      updated.sections=secNames.map((name,i)=>({id:'s'+(i+1),name}));
+    }
+    return updated;
+  });
   if(d.phases)d.phases=d.phases.map(p=>({...p,goals:p.goals.map(g=>g.id==='g1'&&g.linkedTo==='course_completion'?{...g,type:'gpa',linkedTo:'gpa_auto'}:g)}));
+  // V9 migrations
+  if(!d.parkingTasks){d.parkingTasks=(d.parkingLot||[]).map(p=>({...p,category:'Khác',deadline:'',done:false}));}
+  if(!d.parkingNotes)d.parkingNotes=[];
+  if(!d.parkingCategories)d.parkingCategories=['Ý tưởng','Cần làm','Học tập','Công việc','Khác'];
+  if(d.events)d.events=d.events.map(e=>({...e,shortLabel:e.shortLabel||'',recurring:e.recurring||false,recurringDow:e.recurringDow||[],recurringEndDate:e.recurringEndDate||''}));
+  if(d.courses)d.courses=d.courses.map(c=>({...c,topics:(c.topics||[]).map(t=>({...t,subtasks:(t.subtasks||[]).map(s=>({...s,dueDate:s.dueDate||''}))}))}));
   return d;
 }
 
@@ -272,10 +312,19 @@ adminTasks:{
 dailyPerf:{},
 gamification:{xp:0,achievements:[]},
 timerCategories:[],
-settings:{theme:'purple',radius:'rounded'},
+settings:{theme:'purple',radius:'rounded',fontFamily:'system',bannerUrl:''},
 parkingLot:[{id:'p1',text:'Tìm công cụ AI hỗ trợ học Econometrics',date:TODAY},{id:'p2',text:'Cập nhật CV cho Phase 2',date:TODAY}],
-todayFocus:{date:TODAY,mustDo:'',top3:['','','']}
+parkingTasks:[{id:'pt1',text:'Tìm công cụ AI hỗ trợ học Econometrics',category:'Học tập',deadline:'',done:false,date:TODAY},{id:'pt2',text:'Cập nhật CV cho Phase 2',category:'Công việc',deadline:'2026-08-01',done:false,date:TODAY}],
+parkingNotes:[],
+parkingCategories:['Ý tưởng','Cần làm','Học tập','Công việc','Khác'],
+dailyFocus:{}
 };}
+
+function getDayFocus(data,date){
+  const d=data.dailyFocus?.[date];
+  if(d)return d;
+  return{mustDo:{text:'',done:false},top3:[{id:'t1',text:'',done:false},{id:'t2',text:'',done:false},{id:'t3',text:'',done:false}]};
+}
 
 const SK='studyos-v7';
 function saveLocal(d){try{localStorage.setItem(SK,JSON.stringify(d));}catch(e){}}
@@ -290,31 +339,91 @@ function Tick({done,color,onClick}){return<div className="tick" style={{borderCo
 
 function SignInPage({onSignIn}){return<div className="signin-wrap"><div style={{textAlign:'center',maxWidth:380,padding:'40px 32px',background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:20}}>
   <div style={{fontSize:46,marginBottom:14}}>⚡</div>
-  <div style={{fontSize:21,fontWeight:700,color:'var(--acc)',marginBottom:6}}>StudyOS v7</div>
-  <p style={{color:'var(--mu)',marginBottom:22,lineHeight:1.7,fontSize:13}}>Personalization · Performance Report · German B2+<br/><strong style={{color:'var(--tx)'}}>Sync real-time tất cả thiết bị</strong></p>
+  <div style={{fontSize:21,fontWeight:700,color:'var(--acc)',marginBottom:6}}>StudyOS v9</div>
+  <p style={{color:'var(--mu)',marginBottom:22,lineHeight:1.7,fontSize:13}}>EmojiPicker · Recurring Events · ParkingLot 2.0<br/><strong style={{color:'var(--tx)'}}>Sync real-time tất cả thiết bị</strong></p>
   <button className="g-btn" onClick={onSignIn}>
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
     Đăng nhập bằng Google
   </button>
 </div></div>;}
 
+/* ── V9: EMOJI PICKER ── */
+const EMOJI_LIST={'📚 Học tập':['📚','📖','✏️','📝','🎓','🔬','📊','📈','💻','🧮','📐','🔭','💡','🗒️','📋'],'📅 Deadline':['📅','⏰','⌛','🗓️','⏱️','🎯','📌','🔔','✅','☑️','🚨','🔥','⚡','🏁','🎪'],'🌍 Sự kiện':['🌍','🎤','🏆','🎉','🤝','💼','🗣️','🏫','🌱','💰','🤔','🎭','🏅','🎊','🌐'],'🏠 Cuộc sống':['🏠','🍳','🛒','👕','🏊','💧','😴','🍎','☕','🎵','🌞','🌙','❤️','🐾','🎨']};
+function EmojiPicker({value,onChange}){
+  const [open,setOpen]=useState(false);
+  const ref=useRef(null);
+  useEffect(()=>{const h=(e)=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener('mousedown',h);return()=>document.removeEventListener('mousedown',h);},[]);
+  return<div style={{position:'relative'}} ref={ref}>
+    <div style={{fontSize:22,cursor:'pointer',background:'var(--ch)',borderRadius:7,width:42,height:42,display:'flex',alignItems:'center',justifyContent:'center',border:'1px solid var(--bdr)',userSelect:'none'}} onClick={()=>setOpen(o=>!o)} title="Chọn emoji">{value||'📌'}</div>
+    {open&&<div style={{position:'absolute',top:'calc(100% + 4px)',left:0,zIndex:500,background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:12,padding:'10px',width:248,boxShadow:'0 8px 32px rgba(0,0,0,.5)',maxHeight:260,overflowY:'auto'}}>
+      {Object.entries(EMOJI_LIST).map(([cat,emojis])=><div key={cat} style={{marginBottom:8}}>
+        <div style={{fontSize:9,color:'var(--dm)',fontWeight:700,marginBottom:3,letterSpacing:'.05em'}}>{cat}</div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:2}}>
+          {emojis.map(e=><button key={e} onClick={()=>{onChange(e);setOpen(false);}} style={{background:'none',border:'1px solid transparent',borderRadius:5,cursor:'pointer',fontSize:16,padding:'3px 5px',lineHeight:1}} onMouseEnter={ev=>ev.currentTarget.style.background='var(--ch)'} onMouseLeave={ev=>ev.currentTarget.style.background='none'}>{e}</button>)}
+        </div>
+      </div>)}
+      <div style={{borderTop:'1px solid var(--bdr)',paddingTop:6}}>
+        <input className="inp" value={value} onChange={e=>onChange(e.target.value)} placeholder="Nhập emoji khác..." style={{fontSize:13,padding:'4px 8px'}} onClick={e=>e.stopPropagation()}/>
+      </div>
+    </div>}
+  </div>;}
+
+/* ── V9: RECURRING EVENT HELPERS ── */
+function getEventsOnDate(events,date){
+  const dow=new Date(date+'T12:00:00').getDay();
+  return events.filter(e=>{
+    if(e.date===date)return true;
+    if(e.recurring&&(e.recurringDow||[]).includes(dow)){
+      if(date<e.date)return false;
+      if(e.recurringEndDate&&date>e.recurringEndDate)return false;
+      return true;
+    }
+    return false;
+  }).map(e=>e.date===date?e:{...e,date,id:`${e.id}_${date}`});
+}
+function getUpcomingEvts(events,days=45){
+  const res=[];const seen=new Set();
+  for(let i=0;i<days;i++){const d=new Date(TODAY+'T12:00:00');d.setDate(d.getDate()+i);const ds=d.toISOString().split('T')[0];getEventsOnDate(events,ds).forEach(e=>{if(!seen.has(e.id)){seen.add(e.id);res.push(e);}});}
+  return res;
+}
+
 function AddEventModal({initDate,existing,onSave,onClose}){
-  const [f,setF]=useState(existing?{title:existing.title,date:existing.date,time:existing.time||'',emoji:existing.emoji,type:existing.type,note:existing.note||''}:{title:'',date:initDate||TODAY,time:'',emoji:'📅',type:'academic',note:''});
+  const [f,setF]=useState(existing?{title:existing.title,date:existing.date,time:existing.time||'',emoji:existing.emoji||'📅',type:existing.type,note:existing.note||'',shortLabel:existing.shortLabel||'',recurring:existing.recurring||false,recurringDow:existing.recurringDow||[],recurringEndDate:existing.recurringEndDate||''}:{title:'',date:initDate||TODAY,time:'',emoji:'📅',type:'academic',note:'',shortLabel:'',recurring:false,recurringDow:[],recurringEndDate:''});
   const s=(k,v)=>setF(p=>({...p,[k]:v}));
-  return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:380}} onClick={e=>e.stopPropagation()}>
+  const togDow=(d)=>setF(p=>({...p,recurringDow:p.recurringDow.includes(d)?p.recurringDow.filter(x=>x!==d):[...p.recurringDow,d]}));
+  return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:420}} onClick={e=>e.stopPropagation()}>
     <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>{existing?'✏️ Sửa Event':'Thêm Event'}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
-    <div style={{display:'grid',gridTemplateColumns:'50px 1fr',gap:8,marginBottom:8}}>
-      <div><div className="tx-dm" style={{marginBottom:2}}>Icon</div><input className="inp" value={f.emoji} onChange={e=>s('emoji',e.target.value)} style={{textAlign:'center',fontSize:18,padding:'5px'}}/></div>
+    <div style={{display:'grid',gridTemplateColumns:'52px 1fr',gap:8,marginBottom:8}}>
+      <div><div className="tx-dm" style={{marginBottom:4}}>Icon</div><EmojiPicker value={f.emoji} onChange={v=>s('emoji',v)}/></div>
       <div><div className="tx-dm" style={{marginBottom:2}}>Tiêu đề *</div><input className="inp" value={f.title} onChange={e=>s('title',e.target.value)} placeholder="Tên event..."/></div>
     </div>
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
       <div><div className="tx-dm" style={{marginBottom:2}}>Ngày</div><input type="date" className="inp" value={f.date} onChange={e=>s('date',e.target.value)}/></div>
       <div><div className="tx-dm" style={{marginBottom:2}}>Giờ</div><input type="time" className="inp" value={f.time} onChange={e=>s('time',e.target.value)}/></div>
     </div>
-    <select className="sel" value={f.type} onChange={e=>s('type',e.target.value)} style={{marginBottom:8}}>
-      {[['academic','Học thuật'],['exam','Kỳ thi'],['language','Ngôn ngữ'],['health','Sức khỏe'],['networking','Networking'],['other','Khác']].map(([k,v])=><option key={k} value={k}>{v}</option>)}
-    </select>
-    <input className="inp" value={f.note} onChange={e=>s('note',e.target.value)} placeholder="Ghi chú..." style={{marginBottom:14}}/>
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Loại</div>
+        <select className="sel" value={f.type} onChange={e=>s('type',e.target.value)}>
+          {[['academic','Học thuật'],['exam','Kỳ thi'],['language','Ngôn ngữ'],['health','Sức khỏe'],['networking','Networking'],['other','Khác']].map(([k,v])=><option key={k} value={k}>{v}</option>)}
+        </select>
+      </div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>Tên tắt (Gantt)</div><input className="inp" value={f.shortLabel} onChange={e=>s('shortLabel',e.target.value)} placeholder="VD: Prs GSE"/></div>
+    </div>
+    <input className="inp" value={f.note} onChange={e=>s('note',e.target.value)} placeholder="Ghi chú..." style={{marginBottom:8}}/>
+    <div style={{background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:8,padding:'9px',marginBottom:12}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,cursor:'pointer',marginBottom:f.recurring?8:0}} onClick={()=>s('recurring',!f.recurring)}>
+        <div style={{width:17,height:17,borderRadius:4,border:`1.5px solid ${f.recurring?'var(--acc)':'var(--bdr)'}`,background:f.recurring?'var(--acc)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0}}>{f.recurring&&<span style={{color:'#fff',fontSize:9,fontWeight:700}}>✓</span>}</div>
+        <span style={{fontSize:12,color:f.recurring?'var(--tx)':'var(--mu)',fontWeight:f.recurring?500:400}}>🔄 Lặp lại hàng tuần</span>
+      </div>
+      {f.recurring&&<div>
+        <div className="tx-dm" style={{marginBottom:4}}>Ngày trong tuần</div>
+        <div style={{display:'flex',gap:4,flexWrap:'wrap',marginBottom:8}}>
+          {DV.map((d,i)=><button key={i} onClick={()=>togDow(i)} style={{width:33,height:33,borderRadius:6,border:`1.5px solid ${f.recurringDow.includes(i)?'var(--acc)':'var(--bdr)'}`,background:f.recurringDow.includes(i)?'var(--acc2)':'transparent',color:f.recurringDow.includes(i)?'var(--acc)':'var(--mu)',cursor:'pointer',fontSize:11,fontWeight:600}}>{d}</button>)}
+        </div>
+        <div className="tx-dm" style={{marginBottom:2}}>Lặp đến ngày</div>
+        <input type="date" className="inp" value={f.recurringEndDate} onChange={e=>s('recurringEndDate',e.target.value)} style={{fontSize:11}}/>
+      </div>}
+    </div>
     <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>f.title&&onSave(existing?{...existing,...f}:{...f,id:uid()})}>{existing?'Lưu':'Thêm'}</button><button className="btn-g" onClick={onClose}>Huỷ</button></div>
   </div></div>;}
 
@@ -337,9 +446,9 @@ function EditHabitModal({habit,onSave,onArchive,onClose}){
 
 /* ── V5 NEW: COURSE EDITOR MODAL ── */
 function CourseEditorModal({existing,onSave,onClose}){
-  const [f,setF]=useState(existing?{name:existing.name,emoji:existing.emoji,color:existing.color,risk:existing.risk,schedule:existing.schedule||'',examDate:existing.examDate||'',endDate:existing.endDate||'',nextAction:existing.nextAction||'',note:existing.note||'',ects:existing.ects??6,grade:existing.grade??''}:{name:'',emoji:'📚',color:'#7C6EF5',risk:'medium',schedule:'',examDate:'',endDate:'',nextAction:'',note:'',ects:6,grade:''});
+  const [f,setF]=useState(existing?{name:existing.name,emoji:existing.emoji,color:existing.color,risk:existing.risk,schedule:existing.schedule||'',examDate:existing.examDate||'',endDate:existing.endDate||'',nextAction:existing.nextAction||'',note:existing.note||'',ects:existing.ects??6,grade:existing.grade??'',instructor:existing.instructor||'',contact:existing.contact||'',location:existing.location||''}:{name:'',emoji:'📚',color:'#7C6EF5',risk:'medium',schedule:'',examDate:'',endDate:'',nextAction:'',note:'',ects:6,grade:'',instructor:'',contact:'',location:''});
   const s=(k,v)=>setF(p=>({...p,[k]:v}));
-  const save=()=>{if(!f.name.trim())return;const base=existing||{id:uid(),topics:[],tasks:[],archived:false,notes:[],phases:[]};const grade=f.grade===''?null:parseFloat(f.grade);onSave({...base,...f,examDate:f.examDate||null,endDate:f.endDate||null,ects:parseFloat(f.ects)||6,grade});};
+  const save=()=>{if(!f.name.trim())return;const base=existing||{id:uid(),topics:[],tasks:[],archived:false,notes:[],phases:[],sections:[]};const grade=f.grade===''?null:parseFloat(f.grade);onSave({...base,...f,examDate:f.examDate||null,endDate:f.endDate||null,ects:parseFloat(f.ects)||6,grade});};
   const band=f.grade!==''?gradeBand(parseFloat(f.grade)):null;
   return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:440}} onClick={e=>e.stopPropagation()}>
     <div className="flex-sb" style={{marginBottom:14}}><span style={{fontSize:15,fontWeight:500}}>{existing?'✏️ Sửa môn học':'📚 Thêm môn học mới'}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
@@ -353,17 +462,27 @@ function CourseEditorModal({existing,onSave,onClose}){
     </div>
     <div className="tx-dm" style={{marginBottom:4}}>Màu sắc</div>
     <div style={{display:'flex',gap:7,marginBottom:10}}>{PAL.map(c=><div key={c} onClick={()=>s('color',c)} style={{width:24,height:24,borderRadius:'50%',background:c,cursor:'pointer',border:`3px solid ${f.color===c?'#fff':'transparent'}`}}/>)}</div>
-    <div className="tx-dm" style={{marginBottom:2}}>Lịch học</div>
-    <input className="inp" value={f.schedule} onChange={e=>s('schedule',e.target.value)} placeholder="VD: Thứ 2, 16:00–18:00" style={{marginBottom:8}}/>
+    {/* Location + Schedule */}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>📍 Địa điểm học</div><input className="inp" value={f.location} onChange={e=>s('location',e.target.value)} placeholder="VD: HZO 10, Raum 201"/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>📅 Lịch học</div><input className="inp" value={f.schedule} onChange={e=>s('schedule',e.target.value)} placeholder="VD: T2 16–18h"/></div>
+    </div>
+    {/* Instructor + Contact */}
+    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
+      <div><div className="tx-dm" style={{marginBottom:2}}>👨‍🏫 Giảng viên</div><input className="inp" value={f.instructor} onChange={e=>s('instructor',e.target.value)} placeholder="Tên giảng viên"/></div>
+      <div><div className="tx-dm" style={{marginBottom:2}}>📧 Liên hệ</div><input className="inp" value={f.contact} onChange={e=>s('contact',e.target.value)} placeholder="Email / Moodle..."/></div>
+    </div>
+    {/* Dates */}
     <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:8}}>
       <div><div className="tx-dm" style={{marginBottom:2}}>Ngày thi</div><input type="date" className="inp" value={f.examDate} onChange={e=>s('examDate',e.target.value)}/></div>
       <div><div className="tx-dm" style={{marginBottom:2}}>Ngày kết thúc</div><input type="date" className="inp" value={f.endDate} onChange={e=>s('endDate',e.target.value)}/></div>
     </div>
+    {/* ECTS + Grade */}
     <div style={{background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:8,padding:'10px',marginBottom:10}}>
       <div className="lbl" style={{marginBottom:7}}>🎓 ĐIỂM SỐ (cho GPA tự động)</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
         <div><div className="tx-dm" style={{marginBottom:2}}>ECTS (tín chỉ)</div><input type="number" className="inp" value={f.ects} onChange={e=>s('ects',e.target.value)} min="1" max="30" step="1"/></div>
-        <div><div className="tx-dm" style={{marginBottom:2}}>Điểm thi (1.0–5.0, để trống nếu chưa thi)</div><input type="number" className="inp" value={f.grade} onChange={e=>s('grade',e.target.value)} min="1.0" max="5.0" step="0.1" placeholder="VD: 1.7"/></div>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Điểm thi (1.0–5.0)</div><input type="number" className="inp" value={f.grade} onChange={e=>s('grade',e.target.value)} min="1.0" max="5.0" step="0.1" placeholder="Để trống nếu chưa thi"/></div>
       </div>
       {band&&<div style={{marginTop:7,fontSize:11,color:band.color,fontWeight:600}}>● {band.label}</div>}
     </div>
@@ -383,7 +502,7 @@ function AdminTaskModal({existing,existingMode,onSave,onClose}){
   return<div className="ov" onClick={onClose}><div className="modal" style={{maxWidth:360}} onClick={e=>e.stopPropagation()}>
     <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>{isEdit?'✏️ Sửa Admin Task':'Thêm Admin Task'}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
     <div style={{display:'grid',gridTemplateColumns:'52px 1fr',gap:8,marginBottom:10}}>
-      <div><div className="tx-dm" style={{marginBottom:2}}>Icon</div><input className="inp" value={f.emoji} onChange={e=>s('emoji',e.target.value)} style={{textAlign:'center',fontSize:18,padding:'5px'}}/></div>
+      <div><div className="tx-dm" style={{marginBottom:4}}>Icon</div><EmojiPicker value={f.emoji} onChange={v=>s('emoji',v)}/></div>
       <div><div className="tx-dm" style={{marginBottom:2}}>Tên task *</div><input className="inp" value={f.title} onChange={e=>s('title',e.target.value)} placeholder="VD: Nấu ăn..."/></div>
     </div>
     {!isEdit&&<div style={{display:'flex',gap:8,marginBottom:10}}>
@@ -398,14 +517,20 @@ function AdminTaskModal({existing,existingMode,onSave,onClose}){
     <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>{if(!f.title.trim())return;onSave(f);}}>{isEdit?'Lưu':'Thêm'}</button><button className="btn-g" onClick={onClose}>Huỷ</button></div>
   </div></div>;}
 
-/* ── V5 NEW: TOPIC ROW WITH SUBTASKS ── */
-function TopicRow({topic,courseColor,onToggle,onDelete,onEdit,onToggleSub,onAddSub,onDeleteSub}){
-  const [exp,setExp]=useState(false);const [newSub,setNewSub]=useState('');
+/* ── V9: TOPIC ROW WITH SUBTASK EDIT + DEADLINE ── */
+function TopicRow({topic,courseColor,onToggle,onDelete,onEdit,onToggleSub,onAddSub,onEditSub,onDeleteSub,onMoveUp,onMoveDown}){
+  const [showList,setShowList]=useState(false);
+  const [showInput,setShowInput]=useState(false);
+  const [newSub,setNewSub]=useState('');
+  const [newSubDate,setNewSubDate]=useState('');
   const [editing,setEditing]=useState(false);
   const [eLabel,setELabel]=useState(topic.label);const [eDue,setEDue]=useState(topic.dueDate||'');
+  const [editSubId,setEditSubId]=useState(null);
+  const [editSubText,setEditSubText]=useState('');
+  const [editSubDate,setEditSubDate]=useState('');
   const subs=topic.subtasks||[];const subsDone=subs.filter(s=>s.done).length;
   const dd=topic.dueDate?daysTo(topic.dueDate):null;
-  const addSub=()=>{if(!newSub.trim())return;onAddSub(newSub.trim());setNewSub('');};
+  const addSub=()=>{if(!newSub.trim())return;onAddSub(newSub.trim(),newSubDate);setNewSub('');setNewSubDate('');setShowInput(false);};
   const saveEdit=()=>{if(!eLabel.trim())return;onEdit({label:eLabel.trim(),dueDate:eDue});setEditing(false);};
   if(editing)return<div style={{padding:'6px 0',background:'var(--sur)',borderRadius:6,marginBottom:2}}>
     <input className="inp" value={eLabel} onChange={e=>setELabel(e.target.value)} style={{marginBottom:5,fontSize:12}}/>
@@ -416,26 +541,46 @@ function TopicRow({topic,courseColor,onToggle,onDelete,onEdit,onToggleSub,onAddS
     </div>
   </div>;
   return<div>
-    <div style={{display:'flex',alignItems:'center',gap:7,padding:'5px 0'}}>
+    <div style={{display:'flex',alignItems:'center',gap:6,padding:'5px 0'}}>
+      {onMoveUp&&<button onClick={onMoveUp} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,opacity:.4,padding:'0 1px'}}>↑</button>}
+      {onMoveDown&&<button onClick={onMoveDown} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,opacity:.4,padding:'0 1px'}}>↓</button>}
       <Tick done={topic.done} color={courseColor} onClick={onToggle}/>
-      <span style={{flex:1,fontSize:12,textDecoration:topic.done?'line-through':'none',opacity:topic.done?.5:1,cursor:'pointer'}} onClick={()=>setExp(e=>!e)}>
-        {topic.label}{subs.length>0&&<span style={{fontSize:9,color:'var(--mu)',marginLeft:5}}>({subsDone}/{subs.length})</span>}
-      </span>
+      <span style={{flex:1,fontSize:12,textDecoration:topic.done?'line-through':'none',opacity:topic.done?.5:1}}>{topic.label}{subs.length>0&&<span style={{fontSize:9,color:'var(--mu)',marginLeft:5}}>({subsDone}/{subs.length})</span>}</span>
       {topic.dueDate&&!topic.done&&<span style={{fontSize:10,color:dd<=0?'var(--cr)':dd<=3?'var(--wa)':'var(--dm)',whiteSpace:'nowrap'}}>{dd<=0?'Quá hạn!':fmt(topic.dueDate)}</span>}
-      <button onClick={()=>setExp(e=>!e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,padding:'0 2px',opacity:.6}}>{exp?'▲':'▼'}</button>
-      <button onClick={()=>setEditing(true)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.45}}>✏️</button>
+      <button onClick={()=>{setShowList(s=>!s);setShowInput(false);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,opacity:.5}}>{showList?'▲':'▼'}</button>
+      <button onClick={()=>setEditing(true)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.4}}>✏️</button>
       <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.35}} onClick={onDelete}>×</button>
     </div>
-    {exp&&<div className="sub-indent">
-      {subs.map(sub=><div key={sub.id} style={{display:'flex',alignItems:'center',gap:6,padding:'3px 0',borderBottom:'1px solid rgba(37,45,74,.2)'}}>
-        <Tick done={sub.done} color={courseColor} onClick={()=>onToggleSub(sub.id)}/>
-        <span style={{flex:1,fontSize:11,textDecoration:sub.done?'line-through':'none',opacity:sub.done?.5:1}}>{sub.text}</span>
-        <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.4}} onClick={()=>onDeleteSub(sub.id)}>×</button>
-      </div>)}
-      <div style={{display:'flex',gap:5,marginTop:5}}>
-        <input className="inp" value={newSub} onChange={e=>setNewSub(e.target.value)} placeholder="+ Subtask (Enter)..." style={{flex:1,fontSize:11,padding:'4px 7px'}} onKeyDown={e=>e.key==='Enter'&&addSub()}/>
-        <button className="btn-p btn-sm" onClick={addSub}>+</button>
-      </div>
+    {showList&&<div className="sub-indent">
+      {subs.length===0&&!showInput&&<div className="tx-dm" style={{fontSize:11,padding:'3px 0'}}>Chưa có subtask nào</div>}
+      {subs.map(sub=>{
+        const isEdSub=editSubId===sub.id;
+        const subDD=sub.dueDate?daysTo(sub.dueDate):null;
+        if(isEdSub)return<div key={sub.id} style={{background:'var(--sur)',borderRadius:7,padding:'7px',marginBottom:4,border:'1px solid var(--bdr)'}}>
+          <input className="inp" value={editSubText} onChange={e=>setEditSubText(e.target.value)} style={{marginBottom:5,fontSize:11}} autoFocus onKeyDown={e=>e.key==='Escape'&&setEditSubId(null)}/>
+          <div style={{display:'flex',gap:4}}>
+            <input type="date" className="inp" value={editSubDate} onChange={e=>setEditSubDate(e.target.value)} style={{flex:1,fontSize:10}}/>
+            <button className="btn-p btn-sm" onClick={()=>{if(onEditSub&&editSubText.trim())onEditSub(sub.id,editSubText.trim(),editSubDate);setEditSubId(null);}}>✓</button>
+            <button className="btn-g btn-sm" onClick={()=>setEditSubId(null)}>✕</button>
+          </div>
+        </div>;
+        return<div key={sub.id} style={{display:'flex',alignItems:'center',gap:6,padding:'4px 0',borderBottom:'1px solid rgba(37,45,74,.2)'}}>
+          <Tick done={sub.done} color={courseColor} onClick={()=>onToggleSub(sub.id)}/>
+          <span style={{flex:1,fontSize:11,textDecoration:sub.done?'line-through':'none',opacity:sub.done?.5:1}}>{sub.text}</span>
+          {sub.dueDate&&!sub.done&&<span style={{fontSize:9,color:subDD<=0?'var(--cr)':subDD<=3?'var(--wa)':'var(--dm)',whiteSpace:'nowrap'}}>{subDD<=0?'❗Quá hạn':fmt(sub.dueDate)}</span>}
+          <button onClick={()=>{setEditSubId(sub.id);setEditSubText(sub.text);setEditSubDate(sub.dueDate||'');}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,opacity:.4}}>✏️</button>
+          <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.35}} onClick={()=>onDeleteSub(sub.id)}>×</button>
+        </div>;
+      })}
+      {showInput?<div style={{marginTop:6,background:'var(--sur)',borderRadius:7,padding:'7px',border:'1px solid var(--bdr)'}}>
+        <input className="inp" value={newSub} onChange={e=>setNewSub(e.target.value)} placeholder="Tên subtask..." autoFocus
+          style={{marginBottom:5,fontSize:11}} onKeyDown={e=>{if(e.key==='Enter'&&!newSubDate)addSub();if(e.key==='Escape'){setShowInput(false);setNewSub('');setNewSubDate('');}}}/> 
+        <div style={{display:'flex',gap:4}}>
+          <input type="date" className="inp" value={newSubDate} onChange={e=>setNewSubDate(e.target.value)} style={{flex:1,fontSize:10}} placeholder="Deadline (tùy chọn)"/>
+          <button className="btn-p btn-sm" onClick={addSub}>✓</button>
+          <button className="btn-g btn-sm" onClick={()=>{setShowInput(false);setNewSub('');setNewSubDate('');}}>✕</button>
+        </div>
+      </div>:<button className="btn-g btn-sm" style={{marginTop:5,fontSize:10}} onClick={()=>setShowInput(true)}>+ Subtask</button>}
     </div>}
   </div>;}
 
@@ -611,7 +756,11 @@ function MiniCalendar({events,onDateSelect,selectedDate}){
   for(let i=firstDay-1;i>=0;i--)cells.push({day:dip-i,cur:false});
   for(let i=1;i<=dim;i++)cells.push({day:i,cur:true});
   while(cells.length%7!==0)cells.push({day:cells.length-dim-firstDay+1,cur:false});
-  const evByDate={};events.forEach(e=>{if(!evByDate[e.date])evByDate[e.date]=[];evByDate[e.date].push(e);});
+  const evByDate={};
+  // Build date map including recurring events for calendar month
+  const y=cal[0][0].y,m=cal[0][0].m;
+  for(let d=1;d<=31;d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;if(ds.startsWith(`${y}-${String(m+1).padStart(2,'0')}`)){getEventsOnDate(events,ds).forEach(e=>{if(!evByDate[ds])evByDate[ds]=[];evByDate[ds].push(e);});}}
+  events.filter(e=>!e.recurring).forEach(e=>{if(!evByDate[e.date])evByDate[e.date]=[];if(!evByDate[e.date].find(x=>x.id===e.id))evByDate[e.date].push(e);});
   const TC={academic:'#7C6EF5',exam:'#E24B4A',language:'#FFD700',health:'#1D9E75',networking:'#4FA3FF',other:'#6B75A0'};
   const prev=()=>{if(vm===0){setVm(11);setVy(y=>y-1);}else setVm(m=>m-1);};
   const next=()=>{if(vm===11){setVm(0);setVy(y=>y+1);}else setVm(m=>m+1);};
@@ -635,29 +784,38 @@ function MiniCalendar({events,onDateSelect,selectedDate}){
 
 function DashboardPage({data,upd,nav,awardXP}){
   const [editF,setEditF]=useState(false);
-  const [f,setF]=useState(data.todayFocus);
+  const [fEdit,setFEdit]=useState({mustDo:'',top3:['','','']});
+  const [focusDate,setFocusDate]=useState(TODAY);
+  const [adminDate,setAdminDate]=useState(TODAY);
   const [selDate,setSelDate]=useState(TODAY);
   const [showAddEv,setShowAddEv]=useState(false);
   const [editEv,setEditEv]=useState(null);
   const [showAddAdmin,setShowAddAdmin]=useState(false);
   const [editAdmin,setEditAdmin]=useState(null); // {src,item}
   const [perfDate,setPerfDate]=useState(TODAY);
-  useEffect(()=>setF(data.todayFocus),[data.todayFocus]);
   const phase=data.phases.find(p=>p.id===data.currentPhaseId);
   const crits=data.courses.filter(c=>c.risk==='critical'&&!c.archived);
-  const stale=data.todayFocus.date!==TODAY;
+  // dailyFocus helpers
+  const fd=getDayFocus(data,focusDate);
+  const stale=focusDate===TODAY&&!fd.mustDo?.text&&!fd.top3?.some(t=>t.text);
+  const openEditF=()=>{setFEdit({mustDo:fd.mustDo?.text||'',top3:(fd.top3||[]).map(t=>t.text||'')});setEditF(true);};
+  const saveF=()=>{const nfd={mustDo:{text:fEdit.mustDo.trim(),done:fd.mustDo?.done||false},top3:[{id:'t1',text:fEdit.top3[0]?.trim()||'',done:fd.top3?.[0]?.done||false},{id:'t2',text:fEdit.top3[1]?.trim()||'',done:fd.top3?.[1]?.done||false},{id:'t3',text:fEdit.top3[2]?.trim()||'',done:fd.top3?.[2]?.done||false}]};const df={...(data.dailyFocus||{}),[focusDate]:nfd};upd({dailyFocus:df});if(nfd.mustDo.text&&!fd.mustDo?.text)awardXP(XPR.focus,'Focus set!');setEditF(false);};
+  const togMustDo=()=>{const nfd={...fd,mustDo:{...(fd.mustDo||{text:''}),done:!fd.mustDo?.done}};upd({dailyFocus:{...(data.dailyFocus||{}),[focusDate]:nfd}});};
+  const togTop3=(id)=>{const nfd={...fd,top3:(fd.top3||[]).map(t=>t.id===id?{...t,done:!t.done}:t)};upd({dailyFocus:{...(data.dailyFocus||{}),[focusDate]:nfd}});};
+  const fmtDateNav=(ds)=>{if(ds===TODAY)return'Hôm nay';const d=new Date(ds+'T12:00:00');const diff=Math.round((d-new Date(TODAY+'T12:00:00'))/(86400000));if(diff===1)return'Ngày mai';if(diff===-1)return'Hôm qua';if(diff>0)return`+${diff} ngày`;return`${Math.abs(diff)} ngày trước`;};
+  const navFocus=(dir)=>{const d=new Date(focusDate+'T12:00:00');d.setDate(d.getDate()+dir);setFocusDate(d.toISOString().split('T')[0]);};
+  const navAdmin=(dir)=>{const d=new Date(adminDate+'T12:00:00');d.setDate(d.getDate()+dir);setAdminDate(d.toISOString().split('T')[0]);};
+  const adminDow=new Date(adminDate+'T12:00:00').getDay();
   const wd=weekDates();
   const weekH=data.studyLog.filter(l=>wd.includes(l.date)).reduce((s,l)=>s+l.hours,0);
-  const selEvs=data.events.filter(e=>e.date===selDate).sort((a,b)=>a.time.localeCompare(b.time));
-  const todayDow=new Date().getDay();
-  const recToday=data.adminTasks.recurring.filter(r=>r.dow.includes(todayDow));
-  const dailyToday=data.adminTasks.daily[TODAY]||[];
-  const allAdmin=[...recToday.map(r=>({...r,src:'rec'})),...dailyToday.map(t=>({...t,src:'day'}))];
+  const selEvs=getEventsOnDate(data.events,selDate).sort((a,b)=>a.time.localeCompare(b.time));
+  const recAdmin=data.adminTasks.recurring.filter(r=>r.dow.includes(adminDow));
+  const dailyAdmin=data.adminTasks.daily[adminDate]||[];
+  const allAdmin=[...recAdmin.map(r=>({...r,src:'rec'})),...dailyAdmin.map(t=>({...t,src:'day'}))];
   const perfD=(date)=>{const p=data.dailyPerf[date]||{};const h=data.studyLog.filter(l=>l.date===date).reduce((s,l)=>s+l.hours,0);const act=data.habits.filter(x=>!x.archived);return{...p,h,hd:act.filter(x=>x.completions[date]).length,ht:act.length};};
   const perf=perfD(perfDate);
-  const saveF=()=>{const nf={...f,date:TODAY};upd({todayFocus:nf});if(nf.mustDo&&!data.todayFocus.mustDo)awardXP(XPR.focus,'Focus set!');setEditF(false);};
-  const isAdminDone=(item)=>{if(item.src==='rec'){const d=data.adminTasks.daily[TODAY]||[];return d.find(t=>t.id===`rec_${item.id}`)?.done||false;}return item.done||false;};
-  const togAdmin=(item)=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};const existing=at.daily[TODAY]||[];if(item.src==='rec'){const key=`rec_${item.id}`;const idx=existing.findIndex(t=>t.id===key);if(idx>=0)at.daily[TODAY]=existing.map(t=>t.id===key?{...t,done:!t.done}:t);else at.daily[TODAY]=[...existing,{id:key,title:item.title,done:true}];}else{at.daily[TODAY]=existing.map(t=>t.id===item.id?{...t,done:!t.done}:t);}upd({adminTasks:at});};
+  const isAdminDone=(item)=>{if(item.src==='rec'){const d=data.adminTasks.daily[adminDate]||[];return d.find(t=>t.id===`rec_${item.id}`)?.done||false;}return item.done||false;};
+  const togAdmin=(item)=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};const existing=at.daily[adminDate]||[];if(item.src==='rec'){const key=`rec_${item.id}`;const idx=existing.findIndex(t=>t.id===key);if(idx>=0)at.daily[adminDate]=existing.map(t=>t.id===key?{...t,done:!t.done}:t);else at.daily[adminDate]=[...existing,{id:key,title:item.title,done:true}];}else{at.daily[adminDate]=existing.map(t=>t.id===item.id?{...t,done:!t.done}:t);}upd({adminTasks:at});};
   const saveRating=(r)=>{const dp={...data.dailyPerf,[perfDate]:{...(data.dailyPerf[perfDate]||{}),rating:r}};upd({dailyPerf:dp});};
   const navPerf=(d)=>{const nd=new Date(perfDate);nd.setDate(nd.getDate()+d);const s=nd.toISOString().split('T')[0];if(s<=TODAY)setPerfDate(s);};
   const sorted=[...data.courses].filter(c=>!c.archived).sort((a,b)=>{const o={critical:0,watch:1,medium:2,good:3};return(o[a.risk]??2)-(o[b.risk]??2);});
@@ -665,7 +823,7 @@ function DashboardPage({data,upd,nav,awardXP}){
   const saveAdminEdit=(f)=>{
     if(!editAdmin)return;
     if(editAdmin.src==='rec'){upd({adminTasks:{...data.adminTasks,recurring:data.adminTasks.recurring.map(r=>r.id===editAdmin.item.id?{...r,title:f.title,emoji:f.emoji,dow:f.dow}:r)}});}
-    else{const daily={...data.adminTasks.daily};daily[TODAY]=(daily[TODAY]||[]).map(t=>t.id===editAdmin.item.id?{...t,title:f.title,emoji:f.emoji}:t);upd({adminTasks:{...data.adminTasks,daily}});}
+    else{const daily={...data.adminTasks.daily};daily[adminDate]=(daily[adminDate]||[]).map(t=>t.id===editAdmin.item.id?{...t,title:f.title,emoji:f.emoji}:t);upd({adminTasks:{...data.adminTasks,daily}});}
     setEditAdmin(null);
   };
 
@@ -679,11 +837,36 @@ function DashboardPage({data,upd,nav,awardXP}){
   const upcomingDeadlines=allDeadlines.filter(d=>d.date>=TODAY).slice(0,6);
   const overdueDeadlines=allDeadlines.filter(d=>d.date<TODAY);
 
+  // Exam countdown
+  const nextExam=data.courses.filter(c=>!c.archived&&c.examDate&&c.examDate>=TODAY).sort((a,b)=>a.examDate.localeCompare(b.examDate))[0];
+  const daysToExam=nextExam?daysTo(nextExam.examDate):null;
+
   return<div>
-    <div style={{marginBottom:12}}>
-      <div className="tx-mu">{new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
-      <div style={{fontSize:11,color:'#7C6EF5',marginTop:2}}>📍 {phase?.name} · còn {daysTo(phase?.endDate)} ngày</div>
-    </div>
+    {data.settings?.bannerUrl&&<div style={{width:'100%',height:120,borderRadius:10,marginBottom:12,overflow:'hidden',position:'relative',flexShrink:0}}>
+      <img src={data.settings.bannerUrl} alt="banner" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',display:'block'}} onError={e=>{e.target.style.display='none';e.target.parentElement.style.background='var(--sur)';}}/>
+      <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,transparent 30%,rgba(0,0,0,.6))'}}/>
+      <div style={{position:'absolute',bottom:10,left:12,right:12,display:'flex',justifyContent:'space-between',alignItems:'flex-end'}}>
+        <div><div style={{color:'#fff',fontSize:13,fontWeight:600,textShadow:'0 1px 3px rgba(0,0,0,.5)'}}>{new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long'})}</div>
+        <div style={{fontSize:11,color:'rgba(255,255,255,.8)',marginTop:1}}>{phase?.name}</div></div>
+        {nextExam&&<div style={{background:'rgba(0,0,0,.5)',borderRadius:7,padding:'4px 10px',textAlign:'center',backdropFilter:'blur(4px)'}}>
+          <div style={{fontSize:22,fontWeight:800,color:daysToExam<=7?'#ff6b6b':daysToExam<=14?'#ffa94d':'#fff',lineHeight:1}}>{daysToExam}</div>
+          <div style={{fontSize:8,color:'rgba(255,255,255,.7)',fontWeight:700}}>NGÀY ĐẾN THI</div>
+        </div>}
+      </div>
+    </div>}
+    {!data.settings?.bannerUrl&&<div style={{marginBottom:12}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+        <div>
+          <div className="tx-mu">{new Date().toLocaleDateString('vi-VN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+          <div style={{fontSize:11,color:'#7C6EF5',marginTop:2}}>📍 {phase?.name} · còn {daysTo(phase?.endDate)} ngày</div>
+        </div>
+        {nextExam&&<div style={{background:'var(--card)',border:`1px solid ${daysToExam<=7?'var(--crBdr)':daysToExam<=14?'var(--waBdr)':'var(--acc3)'}`,borderRadius:9,padding:'7px 13px',textAlign:'center',flexShrink:0}}>
+          <div style={{fontSize:26,fontWeight:800,color:daysToExam<=7?'var(--cr)':daysToExam<=14?'var(--wa)':'var(--acc)',lineHeight:1}}>{daysToExam}</div>
+          <div style={{fontSize:9,color:'var(--dm)',fontWeight:700,marginTop:1}}>NGÀY ĐẾN THI</div>
+          <div style={{fontSize:10,color:'var(--mu)'}}>{nextExam.emoji} {nextExam.name.split(' ').slice(0,2).join(' ')}</div>
+        </div>}
+      </div>
+    </div>}
     {crits.map(c=><div key={c.id} style={{background:'var(--crb)',border:'1px solid var(--crBdr)',borderRadius:10,padding:'10px 13px',marginBottom:10,display:'flex',gap:10,alignItems:'center'}}>
       <span style={{fontSize:18}}>🚨</span>
       <div><div style={{fontSize:10,fontWeight:700,color:'var(--cr)',marginBottom:2}}>CẦN XỬ LÝ NGAY</div>
@@ -696,32 +879,78 @@ function DashboardPage({data,upd,nav,awardXP}){
     </div>}
     <div className="g2" style={{marginBottom:10}}>
       <div className="card" style={{borderColor:stale?'var(--waBdr)':'rgba(124,110,245,.3)'}}>
-        {stale&&<div style={{background:'var(--wab)',border:'1px solid var(--waBdr)',borderRadius:6,padding:'5px 9px',marginBottom:7,fontSize:11,color:'var(--wa)'}}>⚠️ Focus chưa cập nhật — <span style={{textDecoration:'underline',cursor:'pointer'}} onClick={()=>setEditF(true)}>set ngay</span></div>}
-        <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>⚡ FOCUS HÔM NAY</div><button className="btn-g btn-sm" onClick={()=>setEditF(true)}>Sửa</button></div>
+        {/* Header: label + date nav + edit */}
+        <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:7}}>
+          <div className="lbl" style={{margin:0,flex:1}}>⚡ FOCUS</div>
+          <button className="btn-g btn-sm" onClick={()=>navFocus(-1)}>‹</button>
+          <div style={{position:'relative'}}>
+            <input type="date" value={focusDate} onChange={e=>e.target.value&&setFocusDate(e.target.value)}
+              style={{position:'absolute',opacity:0,width:'100%',height:'100%',cursor:'pointer',top:0,left:0,zIndex:1}}/>
+            <span style={{fontSize:10,color:focusDate===TODAY?'var(--acc)':'var(--tx)',fontWeight:focusDate===TODAY?700:400,minWidth:72,textAlign:'center',display:'block',padding:'0 2px',position:'relative',zIndex:0}}>
+              {fmtDateNav(focusDate)}<br/><span style={{fontSize:9,color:'var(--dm)'}}>{fmt(focusDate)}</span>
+            </span>
+          </div>
+          <button className="btn-g btn-sm" onClick={()=>navFocus(1)}>›</button>
+          {focusDate!==TODAY&&<button className="btn-g btn-sm" onClick={()=>setFocusDate(TODAY)} style={{fontSize:9}}>Now</button>}
+          <button className="btn-g btn-sm" onClick={openEditF}>✏️</button>
+        </div>
+        {stale&&<div style={{background:'var(--wab)',border:'1px solid var(--waBdr)',borderRadius:6,padding:'5px 9px',marginBottom:7,fontSize:11,color:'var(--wa)'}}>⚠️ Chưa set focus — <span style={{textDecoration:'underline',cursor:'pointer'}} onClick={openEditF}>đặt ngay</span></div>}
         {editF?<div>
           <div className="tx-dm" style={{marginBottom:2}}>🎯 MUST DO</div>
-          <input className="inp" value={f.mustDo} onChange={e=>setF(p=>({...p,mustDo:e.target.value}))} placeholder="Việc quan trọng nhất hôm nay..." style={{marginBottom:6}}/>
+          <input className="inp" value={fEdit.mustDo} onChange={e=>setFEdit(p=>({...p,mustDo:e.target.value}))} placeholder="Việc quan trọng nhất..." style={{marginBottom:6}} autoFocus/>
           <div className="tx-dm" style={{marginBottom:2}}>📌 TOP 3</div>
-          {f.top3.map((t,i)=><input key={i} className="inp" value={t} onChange={e=>{const a=[...f.top3];a[i]=e.target.value;setF(p=>({...p,top3:a}));}} placeholder={`Task ${i+1}...`} style={{marginBottom:4}}/>)}
+          {fEdit.top3.map((t,i)=><input key={i} className="inp" value={t} onChange={e=>{const a=[...fEdit.top3];a[i]=e.target.value;setFEdit(p=>({...p,top3:a}));}} placeholder={`Task ${i+1}...`} style={{marginBottom:4}} onKeyDown={e=>e.key==='Enter'&&i===2&&saveF()}/>)}
           <div style={{display:'flex',gap:5,marginTop:6}}><button className="btn-p btn-sm" onClick={saveF}>Lưu</button><button className="btn-g btn-sm" onClick={()=>setEditF(false)}>Huỷ</button></div>
         </div>:<div>
-          {f.mustDo?<div style={{background:'var(--acc2)',border:'1px solid var(--acc3)',borderRadius:7,padding:'8px 10px',marginBottom:6}}><div style={{fontSize:9,color:'#7C6EF5',fontWeight:700,marginBottom:2}}>🎯 MUST DO</div><div style={{fontSize:13,fontWeight:500}}>{f.mustDo}</div></div>
-          :<div style={{border:'1px dashed var(--bdr)',borderRadius:7,padding:'8px',textAlign:'center',cursor:'pointer',marginBottom:6}} onClick={()=>setEditF(true)}><span className="tx-dm">+ Set must-do</span></div>}
-          {f.top3.some(t=>t)&&<div>{f.top3.filter(t=>t).map((t,i)=><div key={i} style={{display:'flex',gap:6,alignItems:'center',marginBottom:3}}><div style={{width:12,height:12,borderRadius:2,border:'1.5px solid var(--bdr)',flexShrink:0}}/><span style={{fontSize:11}}>{t}</span></div>)}</div>}
+          {fd.mustDo?.text
+            ?<div style={{background:'var(--acc2)',border:'1px solid var(--acc3)',borderRadius:7,padding:'8px 10px',marginBottom:6,display:'flex',alignItems:'center',gap:8,cursor:'pointer'}} onClick={togMustDo}>
+              <Tick done={fd.mustDo.done} color='var(--acc)' onClick={togMustDo}/>
+              <div style={{flex:1}}>
+                <div style={{fontSize:9,color:'#7C6EF5',fontWeight:700,marginBottom:1}}>🎯 MUST DO</div>
+                <div style={{fontSize:13,fontWeight:500,textDecoration:fd.mustDo.done?'line-through':'none',opacity:fd.mustDo.done?.55:1}}>{fd.mustDo.text}</div>
+              </div>
+              {fd.mustDo.done&&<span style={{fontSize:11,color:'var(--su)'}}>✓</span>}
+            </div>
+            :<div style={{border:'1px dashed var(--bdr)',borderRadius:7,padding:'8px',textAlign:'center',cursor:'pointer',marginBottom:6}} onClick={openEditF}>
+              <span className="tx-dm" style={{fontSize:11}}>+ Set must-do {focusDate===TODAY?'hôm nay':'ngày này'}</span>
+            </div>}
+          {fd.top3?.some(t=>t.text)
+            ?<div>{fd.top3.filter(t=>t.text).map(t=><div key={t.id} style={{display:'flex',gap:6,alignItems:'center',marginBottom:4,cursor:'pointer',padding:'2px 0'}} onClick={()=>togTop3(t.id)}>
+                <Tick done={t.done} color='var(--acc)' onClick={()=>togTop3(t.id)}/>
+                <span style={{fontSize:11,flex:1,textDecoration:t.done?'line-through':'none',opacity:t.done?.45:1}}>{t.text}</span>
+              </div>)}</div>
+            :<div style={{fontSize:11,color:'var(--dm)',paddingTop:2}}>— Chưa có Top 3</div>}
+          {!fd.mustDo?.text&&!fd.top3?.some(t=>t.text)&&<div style={{textAlign:'center',paddingTop:4}}>
+            <button className="btn-g btn-sm" style={{fontSize:10}} onClick={openEditF}>+ Đặt kế hoạch {focusDate===TODAY?'hôm nay':'ngày này'}</button>
+          </div>}
         </div>}
       </div>
       <div className="card">
-        <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>🧹 ADMIN TASKS HÔM NAY</div><button className="btn-g btn-sm" onClick={()=>nav('admin')}>Quản lý</button></div>
-        {allAdmin.length===0&&<div className="tx-dm" style={{padding:'6px 0'}}>Không có admin task hôm nay 🎉</div>}
+        {/* Header: label + date nav + manage */}
+        <div style={{display:'flex',alignItems:'center',gap:4,marginBottom:7}}>
+          <div className="lbl" style={{margin:0,flex:1}}>🧹 ADMIN</div>
+          <button className="btn-g btn-sm" onClick={()=>navAdmin(-1)}>‹</button>
+          <div style={{position:'relative'}}>
+            <input type="date" value={adminDate} onChange={e=>e.target.value&&setAdminDate(e.target.value)}
+              style={{position:'absolute',opacity:0,width:'100%',height:'100%',cursor:'pointer',top:0,left:0,zIndex:1}}/>
+            <span style={{fontSize:10,color:adminDate===TODAY?'var(--acc)':'var(--tx)',fontWeight:adminDate===TODAY?700:400,minWidth:72,textAlign:'center',display:'block',padding:'0 2px',position:'relative',zIndex:0}}>
+              {fmtDateNav(adminDate)}<br/><span style={{fontSize:9,color:'var(--dm)'}}>{fmt(adminDate)}</span>
+            </span>
+          </div>
+          <button className="btn-g btn-sm" onClick={()=>navAdmin(1)}>›</button>
+          {adminDate!==TODAY&&<button className="btn-g btn-sm" onClick={()=>setAdminDate(TODAY)} style={{fontSize:9}}>Now</button>}
+          <button className="btn-g btn-sm" onClick={()=>nav('admin')}>⚙️</button>
+        </div>
+        {allAdmin.length===0&&<div className="tx-dm" style={{padding:'6px 0'}}>Không có admin task ngày này 🎉</div>}
         {allAdmin.map((item,i)=>{const done=isAdminDone(item);return<div key={i} className="admin-item">
           <div style={{width:20,height:20,borderRadius:4,border:`1.5px solid ${done?'var(--su)':'var(--bdr)'}`,background:done?'var(--su)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0,fontSize:10}}
             onClick={()=>togAdmin(item)}>{done&&<span style={{color:'#fff',fontWeight:700}}>✓</span>}</div>
           <span style={{fontSize:12,textDecoration:done?'line-through':'none',opacity:done?.6:1,flex:1}}>{item.emoji} {item.title}</span>
           {item.src==='rec'&&<span style={{fontSize:9,color:'var(--dm)'}}>↻</span>}
           <button onClick={()=>setEditAdmin({src:item.src,item})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.5}}>✏️</button>
-          {item.src==='day'&&<button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.5}} onClick={()=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};at.daily[TODAY]=(at.daily[TODAY]||[]).filter(t=>t.id!==item.id);upd({adminTasks:at});}}>×</button>}
+          {item.src==='day'&&<button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.5}} onClick={()=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};at.daily[adminDate]=(at.daily[adminDate]||[]).filter(t=>t.id!==item.id);upd({adminTasks:at});}}>×</button>}
         </div>;})}
-        <button className="btn-g btn-sm" style={{marginTop:8,width:'100%',justifyContent:'center'}} onClick={()=>setShowAddAdmin(true)}>+ Thêm admin task</button>
+        <button className="btn-g btn-sm" style={{marginTop:8,width:'100%',justifyContent:'center'}} onClick={()=>setShowAddAdmin(true)}>+ Thêm task {adminDate===TODAY?'hôm nay':fmt(adminDate)}</button>
       </div>
     </div>
     <div style={{marginBottom:10}}><QuickLangInput data={data} upd={upd}/></div>
@@ -815,7 +1044,7 @@ function DashboardPage({data,upd,nav,awardXP}){
     </div>
     {showAddEv&&<AddEventModal initDate={selDate} onSave={e=>{upd({events:[...data.events,e]});setShowAddEv(false);}} onClose={()=>setShowAddEv(false)}/>}
     {editEv&&<AddEventModal existing={editEv} onSave={e=>{upd({events:data.events.map(x=>x.id===e.id?e:x)});setEditEv(null);}} onClose={()=>setEditEv(null)}/>}
-    {showAddAdmin&&<AdminTaskModal onSave={item=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};if(item.type==='recurring'&&item.dow.length>0)at.recurring=[...at.recurring,{id:uid(),title:item.title,emoji:item.emoji,dow:item.dow}];else{at.daily[TODAY]=[...(at.daily[TODAY]||[]),{id:uid(),title:item.title,emoji:item.emoji,done:false,src:'day'}];}upd({adminTasks:at});setShowAddAdmin(false);}} onClose={()=>setShowAddAdmin(false)}/>}
+    {showAddAdmin&&<AdminTaskModal onSave={item=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};if(item.type==='recurring'&&item.dow.length>0)at.recurring=[...at.recurring,{id:uid(),title:item.title,emoji:item.emoji,dow:item.dow}];else{at.daily[adminDate]=[...(at.daily[adminDate]||[]),{id:uid(),title:item.title,emoji:item.emoji,done:false,src:'day'}];}upd({adminTasks:at});setShowAddAdmin(false);}} onClose={()=>setShowAddAdmin(false)}/>}
     {editAdmin&&<AdminTaskModal existing={editAdmin.item} existingMode={editAdmin.src==='rec'?'recurring':'daily'} onSave={saveAdminEdit} onClose={()=>setEditAdmin(null)}/>}
   </div>;}
 
@@ -1216,17 +1445,35 @@ function CourseDetail({course,onBack,onUpdate,onDelete}){
   const [editNA,setEditNA]=useState(false);const [na,setNa]=useState(course.nextAction||'');
   const [showEdit,setShowEdit]=useState(false);const [showDel,setShowDel]=useState(false);
   const [newTask,setNewTask]=useState('');const [newTaskDue,setNewTaskDue]=useState('');const [newTaskTime,setNewTaskTime]=useState('');
-  const [editTask,setEditTask]=useState(null); // {id,text,dueDate,dueTime}
+  const [editTask,setEditTask]=useState(null);
+  const [editSecName,setEditSecName]=useState(null); // {old, new}
+  const [newSecName,setNewSecName]=useState('');const [showAddSec,setShowAddSec]=useState(false);
+  const [expandedSecs,setExpandedSecs]=useState({});
+  const [delSecConfirm,setDelSecConfirm]=useState(null);
   useEffect(()=>setNa(course.nextAction||''),[course.nextAction]);
-  const secs=[...new Set(course.topics.map(t=>t.sec))];const p=pct(course.topics);
+  const p=pct(course.topics);
   const upd=ch=>onUpdate({...course,...ch});
   const updTopic=(id,changes)=>upd({topics:course.topics.map(t=>t.id===id?{...t,...changes}:t)});
-  const addSubtask=(topicId,text)=>updTopic(topicId,{subtasks:[...(course.topics.find(t=>t.id===topicId)?.subtasks||[]),{id:uid(),text,done:false}]});
+  const addSubtask=(topicId,text,dueDate)=>updTopic(topicId,{subtasks:[...(course.topics.find(t=>t.id===topicId)?.subtasks||[]),{id:uid(),text,done:false,dueDate:dueDate||''}]});
+  const editSubtask=(topicId,subId,text,dueDate)=>updTopic(topicId,{subtasks:(course.topics.find(t=>t.id===topicId)?.subtasks||[]).map(s=>s.id===subId?{...s,text,dueDate:dueDate||''}:s)});
   const togSubtask=(topicId,subId)=>updTopic(topicId,{subtasks:(course.topics.find(t=>t.id===topicId)?.subtasks||[]).map(s=>s.id===subId?{...s,done:!s.done}:s)});
   const delSubtask=(topicId,subId)=>updTopic(topicId,{subtasks:(course.topics.find(t=>t.id===topicId)?.subtasks||[]).filter(s=>s.id!==subId)});
   const band=course.grade!=null?gradeBand(course.grade):null;
   const addTask=()=>{if(!newTask.trim())return;upd({tasks:[...course.tasks,{id:uid(),text:newTask.trim(),done:false,dueDate:newTaskDue,dueTime:newTaskTime}]});setNewTask('');setNewTaskDue('');setNewTaskTime('');};
   const saveTask=()=>{if(!editTask)return;upd({tasks:course.tasks.map(t=>t.id===editTask.id?{...t,...editTask}:t)});setEditTask(null);};
+  const moveTask=(i,dir)=>{const tasks=[...course.tasks];const ni=i+dir;if(ni<0||ni>=tasks.length)return;[tasks[i],tasks[ni]]=[tasks[ni],tasks[i]];upd({tasks});};
+
+  // Sections management
+  const sections=course.sections||[...new Set(course.topics.map(t=>t.sec).filter(Boolean))].map((n,i)=>({id:'s'+(i+1),name:n}));
+  const togSec=(sname)=>setExpandedSecs(e=>({...e,[sname]:!e[sname]}));
+  const renameSection=(oldName,newName)=>{
+    if(!newName.trim()||newName===oldName)return;
+    upd({sections:sections.map(s=>s.name===oldName?{...s,name:newName}:s),topics:course.topics.map(t=>t.sec===oldName?{...t,sec:newName}:t)});
+    setEditSecName(null);
+  };
+  const addSection=()=>{if(!newSecName.trim())return;if(sections.find(s=>s.name===newSecName.trim())){setNewSecName('');setShowAddSec(false);return;}upd({sections:[...sections,{id:uid(),name:newSecName.trim()}]});setNewSecName('');setShowAddSec(false);};
+  const deleteSection=(secName)=>{upd({sections:sections.filter(s=>s.name!==secName),topics:course.topics.filter(t=>t.sec!==secName)});setDelSecConfirm(null);};
+  const moveTopicInSec=(secName,i,dir)=>{const st=course.topics.filter(t=>t.sec===secName);const ni=i+dir;if(ni<0||ni>=st.length)return;const otherTopics=course.topics.filter(t=>t.sec!==secName);const newSt=[...st];[newSt[i],newSt[ni]]=[newSt[ni],newSt[i]];const result=[];let secIdx=0;course.topics.forEach(t=>{if(t.sec===secName){result.push(newSt[secIdx++]);}else{result.push(t);}});upd({topics:result});};
 
   return<div>
     <div className="flex-sb" style={{marginBottom:11}}>
@@ -1238,28 +1485,33 @@ function CourseDetail({course,onBack,onUpdate,onDelete}){
         <button className="btn-g btn-sm" style={{color:'var(--cr)'}} onClick={()=>setShowDel(true)}>🗑️</button>
       </div>
     </div>
+    {/* COURSE HEADER */}
     <div className="flex-sb" style={{marginBottom:9}}>
       <div>
         <div style={{fontSize:22}}>{course.emoji}</div>
         <div className="h1" style={{margin:'2px 0 0'}}>{course.name}</div>
-        <div className="tx-dm">{course.schedule}</div>
-        {course.examDate&&<div style={{fontSize:11,color:'var(--cr)',marginTop:2}}>📅 Thi: {fmtL(course.examDate)} · còn {daysTo(course.examDate)} ngày</div>}
-        {!course.examDate&&course.endDate&&<div style={{fontSize:11,color:'var(--mu)',marginTop:2}}>🏁 Kết thúc: {fmtL(course.endDate)}</div>}
+        {(course.instructor||course.location||course.schedule)&&<div style={{display:'flex',gap:10,flexWrap:'wrap',marginTop:3}}>
+          {course.instructor&&<div style={{fontSize:11,color:'var(--mu)'}}>👨‍🏫 {course.instructor}</div>}
+          {course.contact&&<div style={{fontSize:11,color:'var(--acc)',cursor:'pointer'}} onClick={()=>course.contact&&window.open(`mailto:${course.contact}`,'_blank')}>📧 {course.contact}</div>}
+          {course.location&&<div style={{fontSize:11,color:'var(--mu)'}}>📍 {course.location}</div>}
+          {course.schedule&&<div style={{fontSize:11,color:'var(--mu)'}}>📅 {course.schedule}</div>}
+        </div>}
+        {course.examDate&&<div style={{fontSize:11,color:'var(--cr)',marginTop:3}}>🎯 Thi: {fmtL(course.examDate)} · còn {daysTo(course.examDate)} ngày</div>}
+        {!course.examDate&&course.endDate&&<div style={{fontSize:11,color:'var(--mu)',marginTop:3}}>🏁 Kết thúc: {fmtL(course.endDate)}</div>}
         {course.ects&&<div style={{fontSize:10,color:'var(--dm)',marginTop:2}}>{course.ects} ECTS</div>}
       </div>
       <div style={{textAlign:'right',display:'flex',flexDirection:'column',gap:6,alignItems:'flex-end'}}>
         <Badge risk={course.risk}/>
         {band?<div className="grade-pill" style={{background:band.color+'22',color:band.color,border:`1px solid ${band.color}44`,fontSize:11}}>
           <span style={{fontSize:16,fontWeight:800}}>{course.grade}</span><span style={{fontSize:10}}>{band.label}</span>
-        </div>:<div style={{fontSize:10,color:'var(--dm)',textAlign:'right'}}>Chưa có điểm</div>}
+        </div>:<div style={{fontSize:10,color:'var(--dm)'}}>Chưa có điểm</div>}
       </div>
     </div>
     {course.archived&&<div style={{background:'var(--wab)',border:'1px solid var(--waBdr)',borderRadius:8,padding:'7px 11px',marginBottom:9,fontSize:11,color:'var(--wa)'}}>📦 Môn đã được archive</div>}
     {course.note&&<div style={{background:'var(--crb)',border:'1px solid var(--crBdr)',borderRadius:8,padding:'8px 11px',marginBottom:9,fontSize:12,lineHeight:1.5}}>{course.note}</div>}
     <div className="card" style={{marginBottom:9}}>
       <div className="flex-sb" style={{marginBottom:5}}><span style={{fontSize:13,fontWeight:500}}>Tiến độ tổng thể</span><span style={{fontSize:19,fontWeight:600,color:course.color||'#7C6EF5'}}>{p}%</span></div>
-      <Bar v={p} color={course.color} h={8}/>
-      <div className="tx-dm" style={{marginTop:4}}>{course.topics.filter(t=>t.done).length}/{course.topics.length} topics hoàn thành</div>
+      <Bar v={p} color={course.color} h={8}/><div className="tx-dm" style={{marginTop:4}}>{course.topics.filter(t=>t.done).length}/{course.topics.length} topics</div>
     </div>
     <div className="card" style={{marginBottom:9}}>
       <div className="flex-sb" style={{marginBottom:4}}><div className="lbl" style={{margin:0}}>→ BƯỚC TIẾP THEO</div>{!editNA&&<button className="btn-g btn-sm" onClick={()=>setEditNA(true)}>Sửa</button>}</div>
@@ -1267,70 +1519,98 @@ function CourseDetail({course,onBack,onUpdate,onDelete}){
       :<div style={{fontSize:13,lineHeight:1.5}}>{course.nextAction||'—'}</div>}
     </div>
 
-    {/* BLOCK 1: TOPICS */}
-    {secs.map(sec=>{const st=course.topics.filter(t=>t.sec===sec);const sd=st.filter(t=>t.done).length;
-    const nd=st.filter(t=>!t.done&&t.dueDate).sort((a,b)=>a.dueDate.localeCompare(b.dueDate))[0];
-    return<div key={sec} className="card" style={{marginBottom:9}}>
-      <div className="flex-sb" style={{marginBottom:7}}>
-        <div className="lbl" style={{margin:0}}>📚 {sec.toUpperCase()}</div>
-        <div style={{display:'flex',gap:8,alignItems:'center'}}>
-          {nd&&<span style={{fontSize:10,color:daysTo(nd.dueDate)<=3?'var(--cr)':'var(--wa)'}}>⏰ next: {fmt(nd.dueDate)}</span>}
-          <span style={{fontSize:10,color:sd===st.length?'var(--su)':'var(--mu)'}}>{sd}/{st.length} ✓</span>
+    {/* BLOCK 1: TOPICS by section — default collapsed */}
+    <div className="flex-sb" style={{marginBottom:8}}>
+      <div className="lbl" style={{margin:0}}>📚 TOPICS</div>
+      <button className="btn-g btn-sm" onClick={()=>setShowAddSec(s=>!s)}>+ Section</button>
+    </div>
+    {showAddSec&&<div style={{display:'flex',gap:5,marginBottom:8}}>
+      <input className="inp" value={newSecName} onChange={e=>setNewSecName(e.target.value)} placeholder="Tên section mới..." onKeyDown={e=>e.key==='Enter'&&addSection()} style={{flex:1,fontSize:12}}/>
+      <button className="btn-p btn-sm" onClick={addSection}>Thêm</button>
+      <button className="btn-g btn-sm" onClick={()=>setShowAddSec(false)}>✕</button>
+    </div>}
+    {sections.map(sec=>{
+      const st=course.topics.filter(t=>t.sec===sec.name);
+      const sd=st.filter(t=>t.done).length;
+      const nd=st.filter(t=>!t.done&&t.dueDate).sort((a,b)=>a.dueDate.localeCompare(b.dueDate))[0];
+      const isOpen=expandedSecs[sec.name];
+      const isRenaming=editSecName?.old===sec.name;
+      return<div key={sec.id} className="card" style={{marginBottom:8}}>
+        <div className="flex-sb" style={{cursor:'pointer'}} onClick={()=>!isRenaming&&togSec(sec.name)}>
+          <div style={{display:'flex',alignItems:'center',gap:7}}>
+            <span style={{fontSize:12,color:'var(--dm)'}}>{isOpen?'▼':'▶'}</span>
+            {isRenaming?<input className="inp" value={editSecName.new} onChange={e=>setEditSecName(p=>({...p,new:e.target.value}))} onClick={e=>e.stopPropagation()} autoFocus onKeyDown={e=>{if(e.key==='Enter')renameSection(sec.name,editSecName.new);if(e.key==='Escape')setEditSecName(null);}} style={{fontSize:12,padding:'3px 7px',width:140}}/>
+            :<div style={{fontSize:13,fontWeight:700,color:'var(--tx)',letterSpacing:'.01em'}}>📚 {sec.name}</div>}
+            <span style={{fontSize:10,color:sd===st.length&&st.length>0?'var(--su)':'var(--mu)'}}>{sd}/{st.length} ✓</span>
+          </div>
+          <div style={{display:'flex',gap:5,alignItems:'center'}} onClick={e=>e.stopPropagation()}>
+            {nd&&!isOpen&&<span style={{fontSize:9,color:daysTo(nd.dueDate)<=3?'var(--cr)':'var(--wa)'}}>⏰{fmt(nd.dueDate)}</span>}
+            {isRenaming?<><button className="btn-p btn-sm" onClick={e=>{e.stopPropagation();renameSection(sec.name,editSecName.new);}}>✓</button><button className="btn-g btn-sm" onClick={e=>{e.stopPropagation();setEditSecName(null);}}>✕</button></>
+            :<>{delSecConfirm===sec.name
+              ?<><button className="btn-g btn-sm" style={{background:'var(--crb)',color:'var(--cr)',borderColor:'var(--crBdr)',fontSize:10}} onClick={e=>{e.stopPropagation();deleteSection(sec.name);}}>Xoá!</button><button className="btn-g btn-sm" onClick={e=>{e.stopPropagation();setDelSecConfirm(null);}}>✕</button></>
+              :<><button onClick={e=>{e.stopPropagation();setEditSecName({old:sec.name,new:sec.name});}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.5}}>✏️</button>
+              <button onClick={e=>{e.stopPropagation();setDelSecConfirm(sec.name);}} style={{background:'none',border:'none',cursor:'pointer',color:'var(--cr)',fontSize:12,opacity:.6}}>🗑️</button></> }</>}
+          </div>
         </div>
-      </div>
-      {st.map((tp,i)=><div key={tp.id} style={{borderBottom:i<st.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
-        <TopicRow topic={tp} courseColor={course.color}
-          onToggle={()=>updTopic(tp.id,{done:!tp.done})}
-          onDelete={()=>upd({topics:course.topics.filter(t=>t.id!==tp.id)})}
-          onEdit={(changes)=>updTopic(tp.id,changes)}
-          onToggleSub={(subId)=>togSubtask(tp.id,subId)}
-          onAddSub={(text)=>addSubtask(tp.id,text)}
-          onDeleteSub={(subId)=>delSubtask(tp.id,subId)}/>
-      </div>)}
-      <input className="inp" placeholder={`+ Topic mới vào ${sec} (Enter)...`} style={{marginTop:6,fontSize:11,padding:'5px 8px'}}
-        onKeyDown={e=>{if(e.key==='Enter'&&e.target.value.trim()){upd({topics:[...course.topics,{id:uid(),label:e.target.value.trim(),sec,done:false,dueDate:'',subtasks:[]}]});e.target.value='';}}}/>
-    </div>;})}
+        {isOpen&&<div style={{marginTop:8}}>
+          {st.length===0&&<div className="tx-dm" style={{padding:'6px 0'}}>Section này chưa có topic nào</div>}
+          {st.map((tp,i)=><div key={tp.id} style={{borderBottom:i<st.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
+            <TopicRow topic={tp} courseColor={course.color}
+              onToggle={()=>updTopic(tp.id,{done:!tp.done})}
+              onDelete={()=>upd({topics:course.topics.filter(t=>t.id!==tp.id)})}
+              onEdit={(changes)=>updTopic(tp.id,changes)}
+              onToggleSub={(subId)=>togSubtask(tp.id,subId)}
+              onAddSub={(text,dueDate)=>addSubtask(tp.id,text,dueDate)}
+              onEditSub={(subId,text,dueDate)=>editSubtask(tp.id,subId,text,dueDate)}
+              onDeleteSub={(subId)=>delSubtask(tp.id,subId)}
+              onMoveUp={i>0?()=>moveTopicInSec(sec.name,i,-1):null}
+              onMoveDown={i<st.length-1?()=>moveTopicInSec(sec.name,i,1):null}/>
+          </div>)}
+          <input className="inp" placeholder={`+ Topic mới vào ${sec.name} (Enter)...`} style={{marginTop:6,fontSize:11,padding:'5px 8px'}}
+            onKeyDown={e=>{if(e.key==='Enter'&&e.target.value.trim()){upd({sections,topics:[...course.topics,{id:uid(),label:e.target.value.trim(),sec:sec.name,done:false,dueDate:'',subtasks:[]}]});e.target.value='';}}}/>
+        </div>}
+      </div>;
+    })}
 
-    {/* BLOCK 2: LỊCH HỌC (schedule) */}
+    {/* BLOCK 2: LỊCH HỌC */}
     <CourseScheduleView course={course}/>
 
-    {/* BLOCK 3: TASKS with dueDate/time */}
+    {/* BLOCK 3: TASKS */}
     <div className="card" style={{marginBottom:9}}>
       <div className="lbl" style={{marginBottom:8}}>✅ TASKS</div>
       {course.tasks.map((task,i)=>{
-        const isEditing=editTask?.id===task.id;
-        const dd=task.dueDate?daysTo(task.dueDate):null;
+        const isEditing=editTask?.id===task.id;const dd=task.dueDate?daysTo(task.dueDate):null;
         if(isEditing)return<div key={task.id} style={{padding:'6px 0',borderBottom:i<course.tasks.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
           <input className="inp" value={editTask.text} onChange={e=>setEditTask(p=>({...p,text:e.target.value}))} style={{marginBottom:5,fontSize:12}}/>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr auto auto',gap:5,alignItems:'center'}}>
-            <input type="date" className="inp" value={editTask.dueDate||''} onChange={e=>setEditTask(p=>({...p,dueDate:e.target.value}))} style={{fontSize:11}}/>
-            <input type="time" className="inp" value={editTask.dueTime||''} onChange={e=>setEditTask(p=>({...p,dueTime:e.target.value}))} style={{fontSize:11}}/>
+          <div style={{display:'flex',gap:5}}>
+            <input type="date" className="inp" value={editTask.dueDate||''} onChange={e=>setEditTask(p=>({...p,dueDate:e.target.value}))} style={{flex:1,fontSize:11}}/>
+            <input type="time" className="inp" value={editTask.dueTime||''} onChange={e=>setEditTask(p=>({...p,dueTime:e.target.value}))} style={{width:80,fontSize:11}}/>
             <button className="btn-p btn-sm" onClick={saveTask}>✓</button>
             <button className="btn-g btn-sm" onClick={()=>setEditTask(null)}>✕</button>
           </div>
         </div>;
-        return<div key={task.id} style={{display:'flex',alignItems:'center',gap:7,padding:'5px 0',borderBottom:i<course.tasks.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
+        return<div key={task.id} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 0',borderBottom:i<course.tasks.length-1?'1px solid rgba(37,45,74,.4)':'none'}}>
+          <button onClick={()=>moveTask(i,-1)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,opacity:.4}}>↑</button>
+          <button onClick={()=>moveTask(i,1)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:10,opacity:.4}}>↓</button>
           <Tick done={task.done} color="#1D9E75" onClick={()=>upd({tasks:course.tasks.map(t=>t.id===task.id?{...t,done:!t.done}:t)})}/>
           <span style={{flex:1,fontSize:12,textDecoration:task.done?'line-through':'none',opacity:task.done?.5:1}}>{task.text}</span>
-          {task.dueDate&&!task.done&&<span style={{fontSize:10,color:dd<=0?'var(--cr)':dd<=2?'var(--wa)':'var(--dm)',whiteSpace:'nowrap'}}>{task.dueTime?task.dueTime+' ':''}{dd<=0?'Quá hạn!':fmt(task.dueDate)}</span>}
-          <button onClick={()=>setEditTask({id:task.id,text:task.text,dueDate:task.dueDate||'',dueTime:task.dueTime||''})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.45}}>✏️</button>
+          {task.dueDate&&!task.done&&<span style={{fontSize:10,color:dd<=0?'var(--cr)':dd<=2?'var(--wa)':'var(--dm)',whiteSpace:'nowrap'}}>{dd<=0?'Quá hạn!':fmt(task.dueDate)}</span>}
+          <button onClick={()=>setEditTask({id:task.id,text:task.text,dueDate:task.dueDate||'',dueTime:task.dueTime||''})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.4}}>✏️</button>
           <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.4}} onClick={()=>upd({tasks:course.tasks.filter(t=>t.id!==task.id)})}>×</button>
-        </div>;})}
-      {/* Add new task */}
+        </div>;
+      })}
       <div style={{borderTop:'1px solid var(--bdr)',marginTop:7,paddingTop:7}}>
         <input className="inp" value={newTask} onChange={e=>setNewTask(e.target.value)} placeholder="Thêm task mới..." onKeyDown={e=>e.key==='Enter'&&addTask()} style={{marginBottom:5}}/>
         <div style={{display:'flex',gap:5}}>
-          <input type="date" className="inp" value={newTaskDue} onChange={e=>setNewTaskDue(e.target.value)} style={{flex:1,fontSize:11}} placeholder="Deadline (optional)"/>
+          <input type="date" className="inp" value={newTaskDue} onChange={e=>setNewTaskDue(e.target.value)} style={{flex:1,fontSize:11}}/>
           <input type="time" className="inp" value={newTaskTime} onChange={e=>setNewTaskTime(e.target.value)} style={{width:80,fontSize:11}}/>
           <button className="btn-p btn-sm" onClick={addTask}>+ Thêm</button>
         </div>
       </div>
     </div>
 
-    {/* BLOCK 4: GANTT PHASES */}
+    {/* BLOCK 4 & 5 */}
     <CourseGanttPhases course={course} onUpdate={upd}/>
-
-    {/* BLOCK 5: NOTES & Q&A */}
     <CourseNotesBlock course={course} onUpdate={upd}/>
 
     {showEdit&&<CourseEditorModal existing={course} onSave={c=>{onUpdate(c);setShowEdit(false);}} onClose={()=>setShowEdit(false)}/>}
@@ -1712,6 +1992,31 @@ function SettingsPage({data,upd}){
       </div>
     </div>
     <div className="card" style={{marginBottom:12}}>
+      <div className="lbl" style={{marginBottom:10}}>✏️ FONT CHỮ</div>
+      <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+        {[['system','System (Mặc định)'],['inter','Inter'],['outfit','Outfit'],['space','Space Grotesk'],['dm','DM Sans']].map(([k,label])=>{const active=(s.fontFamily||'system')===k;return<button key={k} onClick={()=>setS('fontFamily',k)} style={{padding:'7px 13px',borderRadius:8,border:`1.5px solid ${active?'var(--acc)':'var(--bdr)'}`,background:active?'var(--acc2)':'var(--sur)',color:active?'var(--acc)':'var(--mu)',cursor:'pointer',fontSize:12,fontFamily:FONTS[k],fontWeight:active?600:400,transition:'all .12s'}}>{label}</button>;})}
+      </div>
+    </div>
+    <div className="card" style={{marginBottom:12}}>
+      <div className="lbl" style={{marginBottom:8}}>🖼️ BANNER DASHBOARD</div>
+      <input className="inp" value={s.bannerUrl||''} onChange={e=>setS('bannerUrl',e.target.value)} placeholder="Dán URL hình ảnh vào đây..." style={{marginBottom:8}}/>
+      <div className="tx-dm" style={{marginBottom:8,fontSize:11}}>Chọn nhanh từ Unsplash:</div>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:5,marginBottom:8}}>
+        {[
+          ['📚 Desk','https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=70'],
+          ['📖 Books','https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=70'],
+          ['☕ Coffee','https://images.unsplash.com/photo-1432888622747-4eb9a8f2c293?w=800&q=70'],
+          ['🏔 Mountain','https://images.unsplash.com/photo-1519681393784-d120267933ba?w=800&q=70'],
+          ['🌅 Sunset','https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=70'],
+          ['🌆 City','https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&q=70'],
+        ].map(([label,url])=><button key={label} onClick={()=>setS('bannerUrl',url)} style={{padding:'5px',borderRadius:7,border:`1.5px solid ${s.bannerUrl===url?'var(--acc)':'var(--bdr)'}`,background:'var(--sur)',cursor:'pointer',fontSize:11,color:s.bannerUrl===url?'var(--acc)':'var(--mu)',fontWeight:s.bannerUrl===url?600:400}}>{label}</button>)}
+      </div>
+      {s.bannerUrl&&<div style={{width:'100%',height:80,borderRadius:8,overflow:'hidden',border:'1px solid var(--bdr)',marginTop:2}}>
+        <img src={s.bannerUrl} alt="preview" style={{width:'100%',height:'100%',objectFit:'cover'}} onError={e=>e.target.style.display='none'}/>
+      </div>}
+      {s.bannerUrl&&<button className="btn-g btn-sm" style={{marginTop:6,color:'var(--cr)'}} onClick={()=>setS('bannerUrl','')}>Xoá banner</button>}
+    </div>
+    <div className="card" style={{marginBottom:12}}>
       <div className="lbl" style={{marginBottom:8}}>💾 DỮ LIỆU</div>
       <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
         <button className="btn-g" onClick={()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`studyos-backup-${TODAY}.json`;a.click();}}>⬇️ Xuất dữ liệu (JSON)</button>
@@ -1722,7 +2027,7 @@ function SettingsPage({data,upd}){
     <div className="card">
       <div className="lbl" style={{marginBottom:8}}>ℹ️ THÔNG TIN</div>
       <div style={{fontSize:12,color:'var(--mu)',lineHeight:1.7}}>
-        StudyOS v7 · React 18 + Firebase<br/>
+        StudyOS v9 · React 18 + Firebase<br/>
         Bochum, Đức 🇩🇪 · GSE Program<br/>
         <span style={{color:'var(--dm)',fontSize:10}}>Data lưu trên Firebase — sync real-time mọi thiết bị</span>
       </div>
@@ -1730,18 +2035,176 @@ function SettingsPage({data,upd}){
   </div>;}
 
 function ParkingLotPage({data,upd}){
-  const [text,setText]=useState('');
-  const add=()=>{if(!text.trim())return;upd({parkingLot:[{id:uid(),text:text.trim(),date:TODAY},...data.parkingLot]});setText('');};
+  const [tab,setTab]=useState('tasks');
+  const [showAddTask,setShowAddTask]=useState(false);
+  const [showAddNote,setShowAddNote]=useState(false);
+  const [editTask,setEditTask]=useState(null);
+  const [editNote,setEditNote]=useState(null);
+  const [catFilter,setCatFilter]=useState('all');
+  const [newCat,setNewCat]=useState('');const [showCatMgr,setShowCatMgr]=useState(false);
+  const [showDone,setShowDone]=useState(false);
+  const tasks=data.parkingTasks||[];const notes=data.parkingNotes||[];const cats=data.parkingCategories||['Ý tưởng','Cần làm','Học tập','Khác'];
+  const undone=tasks.filter(t=>!t.done);const done=tasks.filter(t=>t.done);
+  const filtered=catFilter==='all'?undone:undone.filter(t=>t.category===catFilter);
+  const addTask=f=>{upd({parkingTasks:[{id:uid(),...f,done:false,date:TODAY},...tasks]});setShowAddTask(false);};
+  const updTask=(id,ch)=>upd({parkingTasks:tasks.map(t=>t.id===id?{...t,...ch}:t)});
+  const delTask=id=>upd({parkingTasks:tasks.filter(t=>t.id!==id)});
+  const addNote=f=>{upd({parkingNotes:[{id:uid(),...f,date:TODAY},...notes]});setShowAddNote(false);};
+  const updNote=(id,ch)=>upd({parkingNotes:notes.map(n=>n.id===id?{...n,...ch}:n)});
+  const delNote=id=>upd({parkingNotes:notes.filter(n=>n.id!==id)});
+  const NOTE_COLORS=[['#1A2038','Indigo'],['#2A1F3D','Violet'],['#1A2F26','Emerald'],['#2F2214','Amber'],['#1A252F','Teal'],['#2F1A22','Rose']];
+
   return<div>
-    <div className="h1">🅿️ Parking Lot</div>
-    <p className="tx-mu" style={{marginBottom:12}}>Dump mọi ý tưởng vào đây. Não rảnh để tập trung học.</p>
-    <div style={{display:'flex',gap:7,marginBottom:12}}><input className="inp" value={text} onChange={e=>setText(e.target.value)} placeholder="Ý tưởng / task bất kỳ..." onKeyDown={e=>e.key==='Enter'&&add()} style={{flex:1}}/><button className="btn-p" onClick={add}>+ Thêm</button></div>
-    {!data.parkingLot.length&&<div style={{textAlign:'center',padding:'40px 0',color:'var(--dm)'}}><div style={{fontSize:28,marginBottom:8}}>🎉</div><div style={{fontSize:13,color:'var(--mu)'}}>Parking lot trống!</div></div>}
-    {data.parkingLot.map(item=><div key={item.id} style={{display:'flex',gap:8,alignItems:'center',padding:'6px 0',borderBottom:'1px solid rgba(37,45,74,.3)'}}>
-      <div style={{width:6,height:6,borderRadius:'50%',background:'#7C6EF5',flexShrink:0}}/>
-      <div style={{flex:1}}><div style={{fontSize:13}}>{item.text}</div><div className="tx-dm">Thêm {item.date}</div></div>
-      <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:14,opacity:.4}} onClick={()=>upd({parkingLot:data.parkingLot.filter(p=>p.id!==item.id)})}>×</button>
-    </div>)}
+    <div className="flex-sb" style={{marginBottom:6}}>
+      <div className="h1">🅿️ Parking Lot</div>
+      {tab==='tasks'&&<button className="btn-p btn-sm" onClick={()=>setShowAddTask(true)}>+ Task</button>}
+      {tab==='notes'&&<button className="btn-p btn-sm" onClick={()=>setShowAddNote(true)}>+ Note</button>}
+    </div>
+    <p className="tx-mu" style={{marginBottom:12}}>Dump ý tưởng, task và ghi chú — não rảnh để tập trung học.</p>
+    <div style={{display:'flex',gap:7,marginBottom:14}}>
+      {[['tasks',`✅ Tasks (${undone.length})`],['notes',`📝 Notes (${notes.length})`]].map(([k,l])=>
+        <button key={k} onClick={()=>setTab(k)} style={{padding:'7px 16px',borderRadius:8,border:`1.5px solid ${tab===k?'var(--acc)':'var(--bdr)'}`,background:tab===k?'var(--acc2)':'var(--sur)',color:tab===k?'var(--acc)':'var(--mu)',cursor:'pointer',fontSize:12,fontWeight:tab===k?700:400}}>{l}</button>)}
+    </div>
+
+    {tab==='tasks'&&<div>
+      <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:10,alignItems:'center'}}>
+        {['all',...cats].map(c=><button key={c} onClick={()=>setCatFilter(c)} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${catFilter===c?'var(--acc)':'var(--bdr)'}`,background:catFilter===c?'var(--acc2)':'transparent',color:catFilter===c?'var(--acc)':'var(--mu)',cursor:'pointer',fontSize:11}}>{c==='all'?`🗂 Tất cả (${undone.length})`:c}</button>)}
+        <button className="btn-g btn-sm" onClick={()=>setShowCatMgr(s=>!s)} title="Quản lý category">⚙️</button>
+      </div>
+      {showCatMgr&&<div className="card" style={{marginBottom:10}}>
+        <div className="flex-sb" style={{marginBottom:8}}><div className="lbl" style={{margin:0}}>Quản lý Categories</div><button className="btn-g btn-sm" onClick={()=>setShowCatMgr(false)}>✕</button></div>
+        <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:8}}>
+          {cats.map(c=><div key={c} style={{display:'flex',alignItems:'center',gap:3,background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:6,padding:'3px 8px'}}>
+            <span style={{fontSize:12}}>{c}</span>
+            {!['Ý tưởng','Cần làm','Học tập','Khác'].includes(c)&&<button style={{background:'none',border:'none',cursor:'pointer',color:'var(--cr)',fontSize:11}} onClick={()=>upd({parkingCategories:cats.filter(x=>x!==c)})}>×</button>}
+          </div>)}
+        </div>
+        <div style={{display:'flex',gap:5}}>
+          <input className="inp" value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="Thêm category..." style={{flex:1,fontSize:12}} onKeyDown={e=>e.key==='Enter'&&newCat.trim()&&(!cats.includes(newCat.trim()))&&(upd({parkingCategories:[...cats,newCat.trim()]}),setNewCat(''))}/>
+          <button className="btn-p btn-sm" onClick={()=>{if(newCat.trim()&&!cats.includes(newCat.trim())){upd({parkingCategories:[...cats,newCat.trim()]});setNewCat('');}}}> + </button>
+        </div>
+      </div>}
+      {filtered.length===0&&<div style={{textAlign:'center',padding:'24px 0',color:'var(--dm)'}}><div style={{fontSize:24,marginBottom:6}}>🎉</div><div style={{fontSize:12}}>Không có task nào</div></div>}
+      {filtered.map(task=>{
+        const dd=task.deadline?daysTo(task.deadline):null;
+        if(editTask?.id===task.id)return<div key={task.id} className="card" style={{marginBottom:7}}>
+          <div className="tx-dm" style={{marginBottom:3}}>Nội dung</div>
+          <input className="inp" value={editTask.text} onChange={e=>setEditTask(p=>({...p,text:e.target.value}))} style={{marginBottom:6}} autoFocus/>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginBottom:8}}>
+            <div><div className="tx-dm" style={{marginBottom:2}}>Category</div>
+              <select className="sel" value={editTask.category} onChange={e=>setEditTask(p=>({...p,category:e.target.value}))}>
+                {cats.map(c=><option key={c} value={c}>{c}</option>)}
+              </select></div>
+            <div><div className="tx-dm" style={{marginBottom:2}}>Deadline</div>
+              <input type="date" className="inp" value={editTask.deadline||''} onChange={e=>setEditTask(p=>({...p,deadline:e.target.value}))}/></div>
+          </div>
+          <div style={{display:'flex',gap:5}}><button className="btn-p btn-sm" onClick={()=>{updTask(task.id,editTask);setEditTask(null);}}>Lưu</button><button className="btn-g btn-sm" onClick={()=>setEditTask(null)}>Huỷ</button></div>
+        </div>;
+        return<div key={task.id} className="ptask-row">
+          <div style={{width:20,height:20,borderRadius:5,border:`1.5px solid ${task.done?'var(--su)':'var(--bdr)'}`,background:task.done?'var(--su)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}} onClick={()=>updTask(task.id,{done:!task.done})}>{task.done&&<span style={{color:'#fff',fontSize:10,fontWeight:700}}>✓</span>}</div>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{fontSize:12,textDecoration:task.done?'line-through':'none',opacity:task.done?.6:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{task.text}</div>
+            <div style={{display:'flex',gap:5,marginTop:1,alignItems:'center'}}>
+              <span style={{fontSize:9,background:'var(--acc2)',color:'var(--acc)',borderRadius:4,padding:'1px 5px'}}>{task.category}</span>
+              {task.deadline&&<span style={{fontSize:9,color:dd<=0?'var(--cr)':dd<=3?'var(--wa)':'var(--dm)'}}>{dd<=0?'Quá hạn!':fmt(task.deadline)}</span>}
+            </div>
+          </div>
+          <button onClick={()=>setEditTask({...task})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.4}}>✏️</button>
+          <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.35}} onClick={()=>delTask(task.id)}>×</button>
+        </div>;})}
+      {done.length>0&&<div style={{marginTop:10}}>
+        <button className="btn-g btn-sm" onClick={()=>setShowDone(s=>!s)} style={{marginBottom:6}}>☑️ Đã xong ({done.length}) {showDone?'▲':'▼'}</button>
+        {showDone&&done.map(task=><div key={task.id} className="ptask-row" style={{opacity:.5}}>
+          <div style={{width:20,height:20,borderRadius:5,border:'1.5px solid var(--su)',background:'var(--su)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}} onClick={()=>updTask(task.id,{done:false})}><span style={{color:'#fff',fontSize:10,fontWeight:700}}>✓</span></div>
+          <span style={{flex:1,fontSize:12,textDecoration:'line-through'}}>{task.text}</span>
+          <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--cr)',fontSize:13}} onClick={()=>delTask(task.id)}>×</button>
+        </div>)}
+      </div>}
+    </div>}
+
+    {tab==='notes'&&<div>
+      {notes.length===0&&<div style={{textAlign:'center',padding:'30px 0',color:'var(--dm)'}}><div style={{fontSize:30,marginBottom:8}}>📝</div><div style={{fontSize:12,color:'var(--mu)'}}>Chưa có ghi chú nào</div><button className="btn-p btn-sm" style={{marginTop:10}} onClick={()=>setShowAddNote(true)}>+ Thêm ghi chú đầu tiên</button></div>}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+        {notes.map(note=>{
+          const isEdit=editNote?.id===note.id;
+          const bg=note.color||'#1A2038';
+          if(isEdit)return<div key={note.id} className="note-card" style={{background:bg,gridColumn:'1/-1'}}>
+            <div className="flex-sb" style={{marginBottom:6}}>
+              <input className="inp" value={editNote.title||''} onChange={e=>setEditNote(p=>({...p,title:e.target.value}))} placeholder="Tiêu đề..." style={{fontSize:13,fontWeight:600,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.2)',color:'#fff',padding:'2px 0',flex:1}} autoFocus/>
+              <button style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,.6)',fontSize:13,marginLeft:8}} onClick={()=>{updNote(note.id,editNote);setEditNote(null);}}>✓</button>
+            </div>
+            <div style={{display:'flex',gap:4,marginBottom:8}}>
+              {NOTE_COLORS.map(([c,l])=><div key={c} onClick={()=>setEditNote(p=>({...p,color:c}))} style={{width:20,height:20,borderRadius:'50%',background:c,border:`2px solid ${editNote.color===c?'#fff':'transparent'}`,cursor:'pointer'}} title={l}/>)}
+            </div>
+            <div style={{display:'flex',gap:5,marginBottom:6}}>
+              {[['text','📄 Ghi chú'],['todos','☑️ Todo list']].map(([k,l])=><button key={k} onClick={()=>setEditNote(p=>({...p,noteType:k}))} style={{padding:'3px 8px',borderRadius:5,border:`1px solid ${editNote.noteType===k?'rgba(255,255,255,.5)':'rgba(255,255,255,.15)'}`,background:editNote.noteType===k?'rgba(255,255,255,.1)':'transparent',color:editNote.noteType===k?'#fff':'rgba(255,255,255,.5)',cursor:'pointer',fontSize:10}}>{l}</button>)}
+            </div>
+            {editNote.noteType==='todos'
+              ?<div>{(editNote.todos||[]).map((td,i)=><div key={i} style={{display:'flex',gap:5,marginBottom:3}}>
+                  <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid rgba(255,255,255,.4)',background:td.done?'rgba(255,255,255,.4)':'transparent',cursor:'pointer',flexShrink:0,marginTop:1}} onClick={()=>setEditNote(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,done:!t.done}:t)}))}/>
+                  <input value={td.text} onChange={e=>setEditNote(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,text:e.target.value}:t)}))} style={{flex:1,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.15)',color:'#fff',fontSize:12,padding:'1px 0',textDecoration:td.done?'line-through':'none',opacity:td.done?.6:1}}/>
+                  <button onClick={()=>setEditNote(p=>({...p,todos:p.todos.filter((_,j)=>j!==i)}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:12}}>×</button>
+                </div>)}
+                <button onClick={()=>setEditNote(p=>({...p,todos:[...(p.todos||[]),{id:uid(),text:'',done:false}]}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.5)',cursor:'pointer',fontSize:11,marginTop:4}}>+ Thêm item</button>
+              </div>
+              :<textarea value={editNote.content||''} onChange={e=>setEditNote(p=>({...p,content:e.target.value}))} placeholder="Nội dung ghi chú..." style={{width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:6,color:'#fff',fontSize:12,padding:'7px',resize:'vertical',minHeight:80,boxSizing:'border-box'}}/>}
+          </div>;
+          return<div key={note.id} className="note-card" style={{background:bg,cursor:'pointer'}} onClick={()=>setEditNote({...note})}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:5}}>
+              {note.title&&<div style={{fontSize:13,fontWeight:700,color:'#fff',flex:1,marginRight:4,lineHeight:1.3}}>{note.title}</div>}
+              <button className="note-del" onClick={e=>{e.stopPropagation();delNote(note.id);}} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,.5)',fontSize:13,flexShrink:0}}>×</button>
+            </div>
+            {note.noteType==='todos'
+              ?<div>{(note.todos||[]).slice(0,5).map((td,i)=><div key={i} style={{display:'flex',gap:5,alignItems:'center',marginBottom:3}}>
+                  <div style={{width:12,height:12,borderRadius:3,border:'1.5px solid rgba(255,255,255,.35)',background:td.done?'rgba(255,255,255,.35)':'transparent',flexShrink:0}}/>
+                  <span style={{fontSize:11,color:td.done?'rgba(255,255,255,.45)':'rgba(255,255,255,.8)',textDecoration:td.done?'line-through':'none'}}>{td.text}</span>
+                </div>)}
+                {(note.todos||[]).length>5&&<div style={{fontSize:10,color:'rgba(255,255,255,.4)',marginTop:2}}>+{note.todos.length-5} items nữa...</div>}
+              </div>
+              :<div style={{fontSize:12,color:'rgba(255,255,255,.75)',lineHeight:1.5,whiteSpace:'pre-wrap',overflow:'hidden',display:'-webkit-box',WebkitLineClamp:5,WebkitBoxOrient:'vertical'}}>{note.content}</div>}
+            <div style={{fontSize:9,color:'rgba(255,255,255,.3)',marginTop:7}}>{fmt(note.date)}</div>
+          </div>;})}
+      </div>
+    </div>}
+
+    {showAddTask&&<div className="ov" onClick={()=>setShowAddTask(false)}><div className="modal" style={{maxWidth:380}} onClick={e=>e.stopPropagation()}>
+      <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>+ Task mới</span><button className="btn-g btn-sm" onClick={()=>setShowAddTask(false)}>✕</button></div>
+      {(()=>{const [ft,setFt]=useState({text:'',category:cats[0]||'Khác',deadline:''});return<div>
+        <input className="inp" value={ft.text} onChange={e=>setFt(p=>({...p,text:e.target.value}))} placeholder="Nội dung task..." style={{marginBottom:8}} autoFocus/>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
+          <div><div className="tx-dm" style={{marginBottom:2}}>Category</div>
+            <select className="sel" value={ft.category} onChange={e=>setFt(p=>({...p,category:e.target.value}))}>
+              {cats.map(c=><option key={c} value={c}>{c}</option>)}
+            </select></div>
+          <div><div className="tx-dm" style={{marginBottom:2}}>Deadline</div>
+            <input type="date" className="inp" value={ft.deadline} onChange={e=>setFt(p=>({...p,deadline:e.target.value}))}/></div>
+        </div>
+        <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>ft.text.trim()&&addTask(ft)}>Thêm</button><button className="btn-g" onClick={()=>setShowAddTask(false)}>Huỷ</button></div>
+      </div>;})()}
+    </div></div>}
+
+    {showAddNote&&<div className="ov" onClick={()=>setShowAddNote(false)}><div className="modal" style={{maxWidth:380,background:'#1A2038'}} onClick={e=>e.stopPropagation()}>
+      {(()=>{const [fn,setFn]=useState({title:'',content:'',color:'#1A2038',noteType:'text',todos:[]});return<div>
+        <div className="flex-sb" style={{marginBottom:10}}><span style={{fontSize:14,fontWeight:500,color:'#fff'}}>📝 Ghi chú mới</span><button onClick={()=>setShowAddNote(false)} style={{background:'none',border:'none',color:'rgba(255,255,255,.6)',cursor:'pointer',fontSize:16}}>✕</button></div>
+        <input className="inp" value={fn.title} onChange={e=>setFn(p=>({...p,title:e.target.value}))} placeholder="Tiêu đề (tùy chọn)..." style={{marginBottom:8,background:'rgba(255,255,255,.05)',borderColor:'rgba(255,255,255,.15)',color:'#fff'}} autoFocus/>
+        <div style={{display:'flex',gap:4,marginBottom:8}}>
+          {NOTE_COLORS.map(([c,l])=><div key={c} onClick={()=>setFn(p=>({...p,color:c}))} style={{width:22,height:22,borderRadius:'50%',background:c,border:`2.5px solid ${fn.color===c?'#fff':'transparent'}`,cursor:'pointer'}} title={l}/>)}
+        </div>
+        <div style={{display:'flex',gap:5,marginBottom:8}}>
+          {[['text','📄 Ghi chú'],['todos','☑️ Todo list']].map(([k,l])=><button key={k} onClick={()=>setFn(p=>({...p,noteType:k}))} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${fn.noteType===k?'rgba(255,255,255,.5)':'rgba(255,255,255,.15)'}`,background:fn.noteType===k?'rgba(255,255,255,.1)':'transparent',color:fn.noteType===k?'#fff':'rgba(255,255,255,.4)',cursor:'pointer',fontSize:11}}>{l}</button>)}
+        </div>
+        {fn.noteType==='todos'
+          ?<div style={{marginBottom:10}}>{(fn.todos||[]).map((td,i)=><div key={i} style={{display:'flex',gap:5,marginBottom:4}}>
+              <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid rgba(255,255,255,.4)',background:'transparent',cursor:'pointer',flexShrink:0,marginTop:2}} onClick={()=>setFn(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,done:!t.done}:t)}))}/>
+              <input value={td.text} onChange={e=>setFn(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,text:e.target.value}:t)}))} placeholder={`Item ${i+1}...`} style={{flex:1,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.15)',color:'#fff',fontSize:12,padding:'2px 0'}} autoFocus={i===fn.todos.length-1&&fn.todos.length>0}/>
+              <button onClick={()=>setFn(p=>({...p,todos:p.todos.filter((_,j)=>j!==i)}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer'}}>×</button>
+            </div>)}
+            <button onClick={()=>setFn(p=>({...p,todos:[...(p.todos||[]),{id:uid(),text:'',done:false}]}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.5)',cursor:'pointer',fontSize:11,padding:'2px 0'}}>+ Thêm item</button>
+          </div>
+          :<textarea value={fn.content} onChange={e=>setFn(p=>({...p,content:e.target.value}))} placeholder="Viết ghi chú..." style={{width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:6,color:'#fff',fontSize:12,padding:'8px',resize:'vertical',minHeight:90,marginBottom:10,boxSizing:'border-box'}}/>}
+        <div style={{display:'flex',gap:8,marginTop:fn.noteType==='todos'?8:0}}><button style={{flex:1,padding:'9px',borderRadius:8,background:'var(--acc)',color:'#fff',border:'none',cursor:'pointer',fontSize:13,fontWeight:600}} onClick={()=>addNote(fn)}>Lưu ghi chú</button><button style={{padding:'9px 14px',borderRadius:8,background:'rgba(255,255,255,.08)',color:'rgba(255,255,255,.6)',border:'1px solid rgba(255,255,255,.15)',cursor:'pointer'}} onClick={()=>setShowAddNote(false)}>Huỷ</button></div>
+      </div>;})()}
+    </div></div>}
   </div>;}
 
 const PAGES=[
@@ -1813,7 +2276,7 @@ function App(){
   return<div className="app">
     <div className="sb">
       <div className="sb-logo">
-        <div className="sb-title">⚡ StudyOS <span style={{fontSize:9,background:'var(--acc2)',color:'var(--acc)',borderRadius:3,padding:'1px 4px'}}>v7</span></div>
+        <div className="sb-title">⚡ StudyOS <span style={{fontSize:9,background:'var(--acc2)',color:'var(--acc)',borderRadius:3,padding:'1px 4px'}}>v9</span></div>
         <div style={{marginTop:7}}>
           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{fontSize:13}}>{lv.emoji}</span><span style={{fontSize:11,fontWeight:600,color:'var(--tx)'}}>Lv.{lv.level} {lv.name}</span><span style={{fontSize:10,color:'var(--mu)',marginLeft:'auto'}}>{xp} XP</span></div>
           <div className="xp-bar"><div className="xp-fill" style={{width:`${xpP}%`,background:'linear-gradient(90deg,var(--acc),#B06EF5)'}}/></div>
@@ -1827,7 +2290,7 @@ function App(){
             if(p.id==='courses'&&critCount>0)badge=<span style={{marginLeft:'auto',background:'var(--cr)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{critCount}</span>;
             if(p.id==='habits'&&hMissed>0)badge=<span style={{marginLeft:'auto',background:'var(--wa)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{hMissed}</span>;
             if(p.id==='events'){const up=data.events.filter(e=>e.date>=TODAY).length;if(up>0)badge=<span style={{marginLeft:'auto',color:'var(--mu)',fontSize:10}}>{up}</span>;}
-            if(p.id==='parking'&&data.parkingLot.length>0)badge=<span style={{marginLeft:'auto',color:'var(--dm)',fontSize:10}}>{data.parkingLot.length}</span>;
+            if(p.id==='parking'){const total=(data.parkingTasks||[]).filter(t=>!t.done).length+(data.parkingNotes||[]).length;if(total>0)badge=<span style={{marginLeft:'auto',color:'var(--dm)',fontSize:10}}>{total}</span>;}
             return<button key={p.id} className={`nav ${page===p.id?'on':''}`} onClick={()=>nav(p.id)}>
               <span style={{fontSize:14,width:18,textAlign:'center',flexShrink:0}}>{p.emoji}</span>{p.label}{badge}
             </button>;})}

@@ -757,10 +757,8 @@ function MiniCalendar({events,onDateSelect,selectedDate}){
   for(let i=1;i<=dim;i++)cells.push({day:i,cur:true});
   while(cells.length%7!==0)cells.push({day:cells.length-dim-firstDay+1,cur:false});
   const evByDate={};
-  // Build date map including recurring events for calendar month
-  const y=cal[0][0].y,m=cal[0][0].m;
-  for(let d=1;d<=31;d++){const ds=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;if(ds.startsWith(`${y}-${String(m+1).padStart(2,'0')}`)){getEventsOnDate(events,ds).forEach(e=>{if(!evByDate[ds])evByDate[ds]=[];evByDate[ds].push(e);});}}
-  events.filter(e=>!e.recurring).forEach(e=>{if(!evByDate[e.date])evByDate[e.date]=[];if(!evByDate[e.date].find(x=>x.id===e.id))evByDate[e.date].push(e);});
+  // Include recurring events for this calendar month
+  for(let d=1;d<=dim;d++){const ds=`${vy}-${String(vm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;getEventsOnDate(events,ds).forEach(e=>{if(!evByDate[ds])evByDate[ds]=[];if(!evByDate[ds].find(x=>x.id===e.id))evByDate[ds].push(e);});}
   const TC={academic:'#7C6EF5',exam:'#E24B4A',language:'#FFD700',health:'#1D9E75',networking:'#4FA3FF',other:'#6B75A0'};
   const prev=()=>{if(vm===0){setVm(11);setVy(y=>y-1);}else setVm(m=>m-1);};
   const next=()=>{if(vm===11){setVm(0);setVy(y=>y+1);}else setVm(m=>m+1);};
@@ -953,7 +951,58 @@ function DashboardPage({data,upd,nav,awardXP}){
         <button className="btn-g btn-sm" style={{marginTop:8,width:'100%',justifyContent:'center'}} onClick={()=>setShowAddAdmin(true)}>+ Thêm task {adminDate===TODAY?'hôm nay':fmt(adminDate)}</button>
       </div>
     </div>
-    <div style={{marginBottom:10}}><QuickLangInput data={data} upd={upd}/></div>
+    <div style={{marginBottom:10}}>
+    {(upcomingDeadlines.length>0||overdueDeadlines.length>0)&&<div className="card" style={{marginBottom:10}}>
+      <div className="flex-sb" style={{marginBottom:8}}><div className="lbl" style={{margin:0}}>⏰ DEADLINES (từ tất cả môn học)</div><button className="btn-g btn-sm" onClick={()=>nav('courses')}>Xem môn học →</button></div>
+      {overdueDeadlines.slice(0,3).map((d,i)=><div key={'o'+i} className="deadline-row">
+        <span style={{fontSize:14}}>{d.courseEmoji}</span>
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.label}</div><div className="tx-dm">{d.courseName}</div></div>
+        <span style={{fontSize:10,color:'var(--cr)',fontWeight:700,whiteSpace:'nowrap'}}>Quá hạn!</span>
+      </div>)}
+      {upcomingDeadlines.map((d,i)=>{const days=daysTo(d.date);return<div key={'u'+i} className="deadline-row">
+        <span style={{fontSize:14}}>{d.courseEmoji}</span>
+        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.label}</div><div className="tx-dm">{d.courseName} · {fmt(d.date)}{d.time?` ${d.time}`:''}</div></div>
+        <span style={{fontSize:10,color:days<=2?'var(--cr)':days<=5?'var(--wa)':'var(--mu)',fontWeight:700,whiteSpace:'nowrap'}}>{days}N</span>
+      </div>;})}
+    </div>}
+    </div>
+    <div className="lbl" style={{marginBottom:7}}>MÔN HỌC</div>
+    <div className="g2" style={{marginBottom:10}}>
+      {sorted.map(c=>{const p=pct(c.topics);const r=RISK[c.risk]||RISK.medium;const d=daysTo(c.examDate||c.endDate);
+      const ringColor=d!==null?(d<=7?'#E24B4A':d<=14?'#BA7517':d<=28?'#F5A623':c.color):c.color;
+      return<div key={c.id} className="card" style={{borderColor:r.cls.includes('cr')?'var(--crBdr)':r.cls.includes('wa')?'var(--waBdr)':'var(--bdr)',cursor:'pointer',position:'relative',overflow:'hidden',padding:'12px'}}
+        onClick={()=>nav('courses',{courseId:c.id})} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
+        <div className="link-strip" style={{background:c.color}}/>
+        <div style={{paddingLeft:7,display:'flex',gap:10}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div className="flex-sb" style={{marginBottom:5}}>
+              <div><div style={{fontSize:15}}>{c.emoji}</div><div style={{fontSize:12,fontWeight:500,marginTop:1}}>{c.name}</div></div>
+              <Badge risk={c.risk}/>
+            </div>
+            <div style={{marginBottom:5}}><div className="flex-sb" style={{marginBottom:2}}><span className="tx-dm">{c.topics.filter(t=>t.done).length}/{c.topics.length}</span><span style={{fontSize:10,color:c.color,fontWeight:600}}>{p}%</span></div><Bar v={p} color={c.color}/></div>
+            <div style={{background:'var(--sur)',borderRadius:4,padding:'4px 7px',fontSize:10,color:'var(--mu)'}}>→ {c.nextAction}</div>
+          </div>
+          {d!==null&&<div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
+            <div className="cd-big" style={{color:ringColor}}>{d}</div>
+            <div style={{fontSize:9,color:'var(--dm)',fontWeight:600,marginTop:-2}}>NGÀY{c.examDate?' ĐẾN THI':''}</div>
+          </div>}
+        </div>
+      </div>;})}
+    </div>
+    <div className="card" style={{marginBottom:10}}>
+      <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>✅ HABITS HÔM NAY</div>
+        <span style={{fontSize:11,color:'var(--su)'}}>{data.habits.filter(h=>!h.archived&&h.completions[TODAY]).length}/{data.habits.filter(h=>!h.archived).length}</span>
+      </div>
+      <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
+        {data.habits.filter(h=>!h.archived).map(h=>{const done=h.completions[TODAY];
+        return<div key={h.id} style={{display:'flex',alignItems:'center',gap:6,background:done?h.color+'22':'var(--sur)',border:`1px solid ${done?h.color+'44':'var(--bdr)'}`,borderRadius:8,padding:'5px 9px',cursor:'pointer',transition:'all .15s'}}
+          onClick={()=>{const habits=data.habits.map(x=>x.id===h.id?{...x,completions:{...x.completions,[TODAY]:!x.completions[TODAY]}}:x);upd({habits});if(!done)awardXP(XPR.habit,`${h.emoji} Habit!`);}}>
+          <span style={{fontSize:13}}>{h.emoji}</span>
+          <span style={{fontSize:11,color:done?h.color:'var(--mu)',textDecoration:done?'line-through':'none'}}>{h.name}</span>
+          {done&&<span style={{fontSize:10,color:h.color,fontWeight:700}}>✓</span>}
+        </div>;})}
+      </div>
+    </div>
     <div className="g2" style={{marginBottom:10}}>
       <div className="card">
         <div className="flex-sb" style={{marginBottom:8}}><div className="lbl" style={{margin:0}}>📅 LỊCH</div><button className="btn-g btn-sm" onClick={()=>setShowAddEv(true)}>+ Event</button></div>
@@ -992,56 +1041,7 @@ function DashboardPage({data,upd,nav,awardXP}){
         </div>
       </div>
     </div>
-    {(upcomingDeadlines.length>0||overdueDeadlines.length>0)&&<div className="card" style={{marginBottom:10}}>
-      <div className="flex-sb" style={{marginBottom:8}}><div className="lbl" style={{margin:0}}>⏰ DEADLINES (từ tất cả môn học)</div><button className="btn-g btn-sm" onClick={()=>nav('courses')}>Xem môn học →</button></div>
-      {overdueDeadlines.slice(0,3).map((d,i)=><div key={'o'+i} className="deadline-row">
-        <span style={{fontSize:14}}>{d.courseEmoji}</span>
-        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.label}</div><div className="tx-dm">{d.courseName}</div></div>
-        <span style={{fontSize:10,color:'var(--cr)',fontWeight:700,whiteSpace:'nowrap'}}>Quá hạn!</span>
-      </div>)}
-      {upcomingDeadlines.map((d,i)=>{const days=daysTo(d.date);return<div key={'u'+i} className="deadline-row">
-        <span style={{fontSize:14}}>{d.courseEmoji}</span>
-        <div style={{flex:1,minWidth:0}}><div style={{fontSize:12,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{d.label}</div><div className="tx-dm">{d.courseName} · {fmt(d.date)}{d.time?` ${d.time}`:''}</div></div>
-        <span style={{fontSize:10,color:days<=2?'var(--cr)':days<=5?'var(--wa)':'var(--mu)',fontWeight:700,whiteSpace:'nowrap'}}>{days}N</span>
-      </div>;})}
-    </div>}
-    <div className="lbl" style={{marginBottom:7}}>MÔN HỌC</div>
-    <div className="g2" style={{marginBottom:10}}>
-      {sorted.map(c=>{const p=pct(c.topics);const r=RISK[c.risk]||RISK.medium;const d=daysTo(c.examDate||c.endDate);
-      const ringColor=d!==null?(d<=7?'#E24B4A':d<=14?'#BA7517':d<=28?'#F5A623':c.color):c.color;
-      return<div key={c.id} className="card" style={{borderColor:r.cls.includes('cr')?'var(--crBdr)':r.cls.includes('wa')?'var(--waBdr)':'var(--bdr)',cursor:'pointer',position:'relative',overflow:'hidden',padding:'12px'}}
-        onClick={()=>nav('courses',{courseId:c.id})} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
-        <div className="link-strip" style={{background:c.color}}/>
-        <div style={{paddingLeft:7,display:'flex',gap:10}}>
-          <div style={{flex:1,minWidth:0}}>
-            <div className="flex-sb" style={{marginBottom:5}}>
-              <div><div style={{fontSize:15}}>{c.emoji}</div><div style={{fontSize:12,fontWeight:500,marginTop:1}}>{c.name}</div></div>
-              <Badge risk={c.risk}/>
-            </div>
-            <div style={{marginBottom:5}}><div className="flex-sb" style={{marginBottom:2}}><span className="tx-dm">{c.topics.filter(t=>t.done).length}/{c.topics.length}</span><span style={{fontSize:10,color:c.color,fontWeight:600}}>{p}%</span></div><Bar v={p} color={c.color}/></div>
-            <div style={{background:'var(--sur)',borderRadius:4,padding:'4px 7px',fontSize:10,color:'var(--mu)'}}>→ {c.nextAction}</div>
-          </div>
-          {d!==null&&<div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            <div className="cd-big" style={{color:ringColor}}>{d}</div>
-            <div style={{fontSize:9,color:'var(--dm)',fontWeight:600,marginTop:-2}}>NGÀY{c.examDate?' ĐẾN THI':''}</div>
-          </div>}
-        </div>
-      </div>;})}
-    </div>
-    <div className="card">
-      <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>✅ HABITS HÔM NAY</div>
-        <span style={{fontSize:11,color:'var(--su)'}}>{data.habits.filter(h=>!h.archived&&h.completions[TODAY]).length}/{data.habits.filter(h=>!h.archived).length}</span>
-      </div>
-      <div style={{display:'flex',flexWrap:'wrap',gap:7}}>
-        {data.habits.filter(h=>!h.archived).map(h=>{const done=h.completions[TODAY];
-        return<div key={h.id} style={{display:'flex',alignItems:'center',gap:6,background:done?h.color+'22':'var(--sur)',border:`1px solid ${done?h.color+'44':'var(--bdr)'}`,borderRadius:8,padding:'5px 9px',cursor:'pointer',transition:'all .15s'}}
-          onClick={()=>{const habits=data.habits.map(x=>x.id===h.id?{...x,completions:{...x.completions,[TODAY]:!x.completions[TODAY]}}:x);upd({habits});if(!done)awardXP(XPR.habit,`${h.emoji} Habit!`);}}>
-          <span style={{fontSize:13}}>{h.emoji}</span>
-          <span style={{fontSize:11,color:done?h.color:'var(--mu)',textDecoration:done?'line-through':'none'}}>{h.name}</span>
-          {done&&<span style={{fontSize:10,color:h.color,fontWeight:700}}>✓</span>}
-        </div>;})}
-      </div>
-    </div>
+    <div style={{marginBottom:10}}><QuickLangInput data={data} upd={upd}/></div>
     {showAddEv&&<AddEventModal initDate={selDate} onSave={e=>{upd({events:[...data.events,e]});setShowAddEv(false);}} onClose={()=>setShowAddEv(false)}/>}
     {editEv&&<AddEventModal existing={editEv} onSave={e=>{upd({events:data.events.map(x=>x.id===e.id?e:x)});setEditEv(null);}} onClose={()=>setEditEv(null)}/>}
     {showAddAdmin&&<AdminTaskModal onSave={item=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};if(item.type==='recurring'&&item.dow.length>0)at.recurring=[...at.recurring,{id:uid(),title:item.title,emoji:item.emoji,dow:item.dow}];else{at.daily[adminDate]=[...(at.daily[adminDate]||[]),{id:uid(),title:item.title,emoji:item.emoji,done:false,src:'day'}];}upd({adminTasks:at});setShowAddAdmin(false);}} onClose={()=>setShowAddAdmin(false)}/>}
@@ -1929,23 +1929,41 @@ function EventsPage({data,upd}){
   const [showAdd,setShowAdd]=useState(false);const [editEv,setEditEv]=useState(null);
   const TC={academic:'#7C6EF5',exam:'#E24B4A',language:'#FFD700',health:'#1D9E75',networking:'#4FA3FF',other:'#6B75A0'};
   const TL={academic:'Học thuật',exam:'Kỳ thi',language:'Ngôn ngữ',health:'Sức khỏe',networking:'Networking',other:'Khác'};
-  const sorted=[...data.events].sort((a,b)=>a.date.localeCompare(b.date));
-  const upcoming=sorted.filter(e=>e.date>=TODAY);const past=sorted.filter(e=>e.date<TODAY);
+  const baseEvents=[...data.events].sort((a,b)=>a.date.localeCompare(b.date));
+  const nonRecurring=baseEvents.filter(e=>!e.recurring);
+  const recurring=baseEvents.filter(e=>e.recurring);
+  const upcoming=getUpcomingEvts(data.events,45);
+  const past=nonRecurring.filter(e=>e.date<TODAY);
+  const delBase=(id)=>{const base=id.split('_')[0];upd({events:data.events.filter(x=>x.id!==base)});};
+  const getBase=(e)=>data.events.find(x=>x.id===e.id.split('_')[0])||e;
   return<div>
     <div className="flex-sb" style={{marginBottom:4}}><div className="h1">🗓️ Tất cả Events</div><button className="btn-p btn-sm" onClick={()=>setShowAdd(true)}>+ Thêm</button></div>
     <p className="tx-mu" style={{marginBottom:14}}>Tất cả events, lịch thi và hoạt động. Cũng có thể thêm/sửa từ Calendar trên Dashboard.</p>
-    {upcoming.length>0&&<div><div className="lbl">SẮP TỚI ({upcoming.length})</div>
-      {upcoming.map(e=>{const d=daysTo(e.date);return<div key={e.id} className="ev-card" style={{background:'var(--card)',border:'1px solid var(--bdr)',borderRadius:10,padding:'10px',marginBottom:7,display:'flex',gap:9,alignItems:'flex-start'}}>
+    {recurring.length>0&&<div className="card" style={{marginBottom:12}}>
+      <div className="lbl" style={{marginBottom:8}}>🔄 LỊCH LẶP LẠI ({recurring.length})</div>
+      {recurring.map(e=><div key={e.id} style={{display:'flex',gap:8,alignItems:'center',padding:'5px 0',borderBottom:'1px solid rgba(37,45,74,.2)'}}>
+        <span style={{fontSize:15}}>{e.emoji}</span>
+        <div style={{flex:1}}><div style={{fontSize:12,fontWeight:500}}>{e.title}</div>
+          <div className="tx-dm">{e.recurringDow.map(d=>DV[d]).join(', ')} · đến {e.recurringEndDate?fmt(e.recurringEndDate):'hết học kỳ'}</div></div>
+        <button onClick={()=>setEditEv(e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:11,opacity:.5}}>✏️</button>
+        <button onClick={()=>upd({events:data.events.filter(x=>x.id!==e.id)})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.4}}>×</button>
+      </div>)}
+    </div>}
+    {upcoming.length>0&&<div><div className="lbl">SẮP TỚI — 45 NGÀY TỚI ({upcoming.length})</div>
+      {upcoming.map(e=>{const d=daysTo(e.date);const isRec=e.id.includes('_');return<div key={e.id} className="ev-card" style={{background:'var(--card)',border:'1px solid var(--bdr)',borderRadius:10,padding:'10px',marginBottom:7,display:'flex',gap:9,alignItems:'flex-start'}}>
         <div style={{width:36,height:36,borderRadius:7,background:(TC[e.type]||'#7C6EF5')+'22',display:'flex',alignItems:'center',justifyContent:'center',fontSize:17,flexShrink:0}}>{e.emoji}</div>
-        <div style={{flex:1}}><div style={{fontSize:13,fontWeight:500}}>{e.title}</div><div className="tx-dm">{fmtL(e.date)}{e.time&&` · ${e.time}`}{e.note&&` — ${e.note}`}</div></div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:13,fontWeight:500}}>{e.title}{isRec&&<span style={{fontSize:9,marginLeft:5,color:'var(--dm)'}}>🔄</span>}</div>
+          <div className="tx-dm">{fmtL(e.date)}{e.time&&` · ${e.time}`}{e.note&&` — ${e.note}`}</div>
+        </div>
         <div style={{textAlign:'right',flexShrink:0}}>
           <span style={{padding:'2px 6px',borderRadius:4,fontSize:9,fontWeight:600,background:(TC[e.type]||'#7C6EF5')+'22',color:TC[e.type]||'#7C6EF5'}}>{TL[e.type]}</span>
           <div style={{fontSize:11,color:d===0?'var(--cr)':d<=7?'var(--wa)':'var(--mu)',marginTop:3}}>{d===0?'Hôm nay!':`${d} ngày`}</div>
         </div>
-        <div style={{display:'flex',flexDirection:'column',gap:3}}>
-          <button onClick={()=>setEditEv(e)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.5}}>✏️</button>
-          <button onClick={()=>upd({events:data.events.filter(x=>x.id!==e.id)})} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.4}}>×</button>
-        </div>
+        {!isRec&&<div style={{display:'flex',flexDirection:'column',gap:3}}>
+          <button onClick={()=>setEditEv(getBase(e))} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:12,opacity:.5}}>✏️</button>
+          <button onClick={()=>delBase(e.id)} style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13,opacity:.4}}>×</button>
+        </div>}
       </div>;})}
     </div>}
     {past.length>0&&<div style={{marginTop:12,opacity:.65}}><div className="lbl">ĐÃ QUA ({past.length})</div>
@@ -2043,22 +2061,29 @@ function ParkingLotPage({data,upd}){
   const [catFilter,setCatFilter]=useState('all');
   const [newCat,setNewCat]=useState('');const [showCatMgr,setShowCatMgr]=useState(false);
   const [showDone,setShowDone]=useState(false);
+  // Form state at top level (fixes Rules of Hooks)
+  const [taskForm,setTaskForm]=useState({text:'',category:'Khác',deadline:''});
+  const [noteForm,setNoteForm]=useState({title:'',content:'',color:'#1A2038',noteType:'text',todos:[]});
+  const tf=(k,v)=>setTaskForm(p=>({...p,[k]:v}));
+  const nf=(k,v)=>setNoteForm(p=>({...p,[k]:v}));
+
   const tasks=data.parkingTasks||[];const notes=data.parkingNotes||[];const cats=data.parkingCategories||['Ý tưởng','Cần làm','Học tập','Khác'];
   const undone=tasks.filter(t=>!t.done);const done=tasks.filter(t=>t.done);
   const filtered=catFilter==='all'?undone:undone.filter(t=>t.category===catFilter);
-  const addTask=f=>{upd({parkingTasks:[{id:uid(),...f,done:false,date:TODAY},...tasks]});setShowAddTask(false);};
+  const addTask=()=>{if(!taskForm.text.trim())return;upd({parkingTasks:[{id:uid(),...taskForm,done:false,date:TODAY},...tasks]});setTaskForm({text:'',category:cats[0]||'Khác',deadline:''});setShowAddTask(false);};
   const updTask=(id,ch)=>upd({parkingTasks:tasks.map(t=>t.id===id?{...t,...ch}:t)});
   const delTask=id=>upd({parkingTasks:tasks.filter(t=>t.id!==id)});
-  const addNote=f=>{upd({parkingNotes:[{id:uid(),...f,date:TODAY},...notes]});setShowAddNote(false);};
+  const addNote=()=>{upd({parkingNotes:[{id:uid(),...noteForm,date:TODAY},...notes]});setNoteForm({title:'',content:'',color:'#1A2038',noteType:'text',todos:[]});setShowAddNote(false);};
   const updNote=(id,ch)=>upd({parkingNotes:notes.map(n=>n.id===id?{...n,...ch}:n)});
   const delNote=id=>upd({parkingNotes:notes.filter(n=>n.id!==id)});
+  const togNoteTodo=(noteId,i)=>{const note=notes.find(n=>n.id===noteId);if(!note)return;updNote(noteId,{todos:note.todos.map((t,j)=>j===i?{...t,done:!t.done}:t)});};
   const NOTE_COLORS=[['#1A2038','Indigo'],['#2A1F3D','Violet'],['#1A2F26','Emerald'],['#2F2214','Amber'],['#1A252F','Teal'],['#2F1A22','Rose']];
 
   return<div>
     <div className="flex-sb" style={{marginBottom:6}}>
       <div className="h1">🅿️ Parking Lot</div>
-      {tab==='tasks'&&<button className="btn-p btn-sm" onClick={()=>setShowAddTask(true)}>+ Task</button>}
-      {tab==='notes'&&<button className="btn-p btn-sm" onClick={()=>setShowAddNote(true)}>+ Note</button>}
+      {tab==='tasks'&&<button className="btn-p btn-sm" onClick={()=>{setTaskForm({text:'',category:cats[0]||'Khác',deadline:''});setShowAddTask(true);}}>+ Task</button>}
+      {tab==='notes'&&<button className="btn-p btn-sm" onClick={()=>{setNoteForm({title:'',content:'',color:'#1A2038',noteType:'text',todos:[]});setShowAddNote(true);}}>+ Note</button>}
     </div>
     <p className="tx-mu" style={{marginBottom:12}}>Dump ý tưởng, task và ghi chú — não rảnh để tập trung học.</p>
     <div style={{display:'flex',gap:7,marginBottom:14}}>
@@ -2080,11 +2105,11 @@ function ParkingLotPage({data,upd}){
           </div>)}
         </div>
         <div style={{display:'flex',gap:5}}>
-          <input className="inp" value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="Thêm category..." style={{flex:1,fontSize:12}} onKeyDown={e=>e.key==='Enter'&&newCat.trim()&&(!cats.includes(newCat.trim()))&&(upd({parkingCategories:[...cats,newCat.trim()]}),setNewCat(''))}/>
+          <input className="inp" value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="Tên category mới..." style={{flex:1,fontSize:12}} onKeyDown={e=>{if(e.key==='Enter'&&newCat.trim()&&!cats.includes(newCat.trim())){upd({parkingCategories:[...cats,newCat.trim()]});setNewCat('');}}}/>
           <button className="btn-p btn-sm" onClick={()=>{if(newCat.trim()&&!cats.includes(newCat.trim())){upd({parkingCategories:[...cats,newCat.trim()]});setNewCat('');}}}> + </button>
         </div>
       </div>}
-      {filtered.length===0&&<div style={{textAlign:'center',padding:'24px 0',color:'var(--dm)'}}><div style={{fontSize:24,marginBottom:6}}>🎉</div><div style={{fontSize:12}}>Không có task nào</div></div>}
+      {filtered.length===0&&<div style={{textAlign:'center',padding:'24px 0',color:'var(--dm)'}}><div style={{fontSize:24,marginBottom:6}}>🎉</div><div style={{fontSize:12}}>Không có task nào trong category này</div></div>}
       {filtered.map(task=>{
         const dd=task.deadline?daysTo(task.deadline):null;
         if(editTask?.id===task.id)return<div key={task.id} className="card" style={{marginBottom:7}}>
@@ -2098,7 +2123,7 @@ function ParkingLotPage({data,upd}){
             <div><div className="tx-dm" style={{marginBottom:2}}>Deadline</div>
               <input type="date" className="inp" value={editTask.deadline||''} onChange={e=>setEditTask(p=>({...p,deadline:e.target.value}))}/></div>
           </div>
-          <div style={{display:'flex',gap:5}}><button className="btn-p btn-sm" onClick={()=>{updTask(task.id,editTask);setEditTask(null);}}>Lưu</button><button className="btn-g btn-sm" onClick={()=>setEditTask(null)}>Huỷ</button></div>
+          <div style={{display:'flex',gap:5}}><button className="btn-p btn-sm" onClick={()=>{updTask(task.id,{text:editTask.text,category:editTask.category,deadline:editTask.deadline});setEditTask(null);}}>Lưu</button><button className="btn-g btn-sm" onClick={()=>setEditTask(null)}>Huỷ</button></div>
         </div>;
         return<div key={task.id} className="ptask-row">
           <div style={{width:20,height:20,borderRadius:5,border:`1.5px solid ${task.done?'var(--su)':'var(--bdr)'}`,background:task.done?'var(--su)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}} onClick={()=>updTask(task.id,{done:!task.done})}>{task.done&&<span style={{color:'#fff',fontSize:10,fontWeight:700}}>✓</span>}</div>
@@ -2114,7 +2139,7 @@ function ParkingLotPage({data,upd}){
         </div>;})}
       {done.length>0&&<div style={{marginTop:10}}>
         <button className="btn-g btn-sm" onClick={()=>setShowDone(s=>!s)} style={{marginBottom:6}}>☑️ Đã xong ({done.length}) {showDone?'▲':'▼'}</button>
-        {showDone&&done.map(task=><div key={task.id} className="ptask-row" style={{opacity:.5}}>
+        {showDone&&done.map(task=><div key={task.id} className="ptask-row" style={{opacity:.55}}>
           <div style={{width:20,height:20,borderRadius:5,border:'1.5px solid var(--su)',background:'var(--su)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',flexShrink:0}} onClick={()=>updTask(task.id,{done:false})}><span style={{color:'#fff',fontSize:10,fontWeight:700}}>✓</span></div>
           <span style={{flex:1,fontSize:12,textDecoration:'line-through'}}>{task.text}</span>
           <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--cr)',fontSize:13}} onClick={()=>delTask(task.id)}>×</button>
@@ -2123,87 +2148,91 @@ function ParkingLotPage({data,upd}){
     </div>}
 
     {tab==='notes'&&<div>
-      {notes.length===0&&<div style={{textAlign:'center',padding:'30px 0',color:'var(--dm)'}}><div style={{fontSize:30,marginBottom:8}}>📝</div><div style={{fontSize:12,color:'var(--mu)'}}>Chưa có ghi chú nào</div><button className="btn-p btn-sm" style={{marginTop:10}} onClick={()=>setShowAddNote(true)}>+ Thêm ghi chú đầu tiên</button></div>}
+      {notes.length===0&&<div style={{textAlign:'center',padding:'30px 0'}}><div style={{fontSize:30,marginBottom:8}}>📝</div><div style={{fontSize:12,color:'var(--mu)'}}>Chưa có ghi chú nào</div><button className="btn-p btn-sm" style={{marginTop:10}} onClick={()=>setShowAddNote(true)}>+ Thêm ghi chú đầu tiên</button></div>}
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
         {notes.map(note=>{
-          const isEdit=editNote?.id===note.id;
-          const bg=note.color||'#1A2038';
+          const isEdit=editNote?.id===note.id;const bg=note.color||'#1A2038';
           if(isEdit)return<div key={note.id} className="note-card" style={{background:bg,gridColumn:'1/-1'}}>
-            <div className="flex-sb" style={{marginBottom:6}}>
-              <input className="inp" value={editNote.title||''} onChange={e=>setEditNote(p=>({...p,title:e.target.value}))} placeholder="Tiêu đề..." style={{fontSize:13,fontWeight:600,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.2)',color:'#fff',padding:'2px 0',flex:1}} autoFocus/>
-              <button style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,.6)',fontSize:13,marginLeft:8}} onClick={()=>{updNote(note.id,editNote);setEditNote(null);}}>✓</button>
+            <div className="flex-sb" style={{marginBottom:8}}>
+              <input value={editNote.title||''} onChange={e=>setEditNote(p=>({...p,title:e.target.value}))} placeholder="Tiêu đề..." style={{fontSize:13,fontWeight:600,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.2)',color:'#fff',padding:'2px 0',flex:1,outline:'none'}} autoFocus/>
+              <button style={{background:'rgba(255,255,255,.15)',border:'none',cursor:'pointer',color:'#fff',fontSize:11,borderRadius:5,padding:'3px 8px',marginLeft:8,fontWeight:600}} onClick={()=>{updNote(note.id,editNote);setEditNote(null);}}>✓ Lưu</button>
             </div>
             <div style={{display:'flex',gap:4,marginBottom:8}}>
-              {NOTE_COLORS.map(([c,l])=><div key={c} onClick={()=>setEditNote(p=>({...p,color:c}))} style={{width:20,height:20,borderRadius:'50%',background:c,border:`2px solid ${editNote.color===c?'#fff':'transparent'}`,cursor:'pointer'}} title={l}/>)}
+              {NOTE_COLORS.map(([c,l])=><div key={c} onClick={()=>setEditNote(p=>({...p,color:c}))} style={{width:22,height:22,borderRadius:'50%',background:c,border:`2.5px solid ${editNote.color===c?'#fff':'transparent'}`,cursor:'pointer'}} title={l}/>)}
             </div>
-            <div style={{display:'flex',gap:5,marginBottom:6}}>
-              {[['text','📄 Ghi chú'],['todos','☑️ Todo list']].map(([k,l])=><button key={k} onClick={()=>setEditNote(p=>({...p,noteType:k}))} style={{padding:'3px 8px',borderRadius:5,border:`1px solid ${editNote.noteType===k?'rgba(255,255,255,.5)':'rgba(255,255,255,.15)'}`,background:editNote.noteType===k?'rgba(255,255,255,.1)':'transparent',color:editNote.noteType===k?'#fff':'rgba(255,255,255,.5)',cursor:'pointer',fontSize:10}}>{l}</button>)}
+            <div style={{display:'flex',gap:5,marginBottom:8}}>
+              {[['text','📄 Ghi chú'],['todos','☑️ Todo list']].map(([k,l])=><button key={k} onClick={()=>setEditNote(p=>({...p,noteType:k}))} style={{padding:'3px 9px',borderRadius:5,border:`1px solid ${editNote.noteType===k?'rgba(255,255,255,.5)':'rgba(255,255,255,.15)'}`,background:editNote.noteType===k?'rgba(255,255,255,.12)':'transparent',color:editNote.noteType===k?'#fff':'rgba(255,255,255,.45)',cursor:'pointer',fontSize:10}}>{l}</button>)}
             </div>
             {editNote.noteType==='todos'
-              ?<div>{(editNote.todos||[]).map((td,i)=><div key={i} style={{display:'flex',gap:5,marginBottom:3}}>
-                  <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid rgba(255,255,255,.4)',background:td.done?'rgba(255,255,255,.4)':'transparent',cursor:'pointer',flexShrink:0,marginTop:1}} onClick={()=>setEditNote(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,done:!t.done}:t)}))}/>
-                  <input value={td.text} onChange={e=>setEditNote(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,text:e.target.value}:t)}))} style={{flex:1,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.15)',color:'#fff',fontSize:12,padding:'1px 0',textDecoration:td.done?'line-through':'none',opacity:td.done?.6:1}}/>
-                  <button onClick={()=>setEditNote(p=>({...p,todos:p.todos.filter((_,j)=>j!==i)}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:12}}>×</button>
+              ?<div>{(editNote.todos||[]).map((td,i)=><div key={i} style={{display:'flex',gap:6,marginBottom:4,alignItems:'center'}}>
+                  <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid rgba(255,255,255,.4)',background:td.done?'rgba(255,255,255,.4)':'transparent',cursor:'pointer',flexShrink:0}} onClick={()=>setEditNote(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,done:!t.done}:t)}))}/>
+                  <input value={td.text} onChange={e=>setEditNote(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,text:e.target.value}:t)}))} style={{flex:1,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.15)',color:'#fff',fontSize:12,padding:'2px 0',outline:'none',textDecoration:td.done?'line-through':'none',opacity:td.done?.6:1}}/>
+                  <button onClick={()=>setEditNote(p=>({...p,todos:p.todos.filter((_,j)=>j!==i)}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:13}}>×</button>
                 </div>)}
                 <button onClick={()=>setEditNote(p=>({...p,todos:[...(p.todos||[]),{id:uid(),text:'',done:false}]}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.5)',cursor:'pointer',fontSize:11,marginTop:4}}>+ Thêm item</button>
               </div>
-              :<textarea value={editNote.content||''} onChange={e=>setEditNote(p=>({...p,content:e.target.value}))} placeholder="Nội dung ghi chú..." style={{width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:6,color:'#fff',fontSize:12,padding:'7px',resize:'vertical',minHeight:80,boxSizing:'border-box'}}/>}
+              :<textarea value={editNote.content||''} onChange={e=>setEditNote(p=>({...p,content:e.target.value}))} placeholder="Nội dung ghi chú..." style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:6,color:'#fff',fontSize:12,padding:'7px',resize:'vertical',minHeight:80,boxSizing:'border-box',outline:'none'}}/>}
+            <button onClick={()=>setEditNote(null)} style={{marginTop:8,background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:11}}>Đóng</button>
           </div>;
           return<div key={note.id} className="note-card" style={{background:bg,cursor:'pointer'}} onClick={()=>setEditNote({...note})}>
             <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:5}}>
               {note.title&&<div style={{fontSize:13,fontWeight:700,color:'#fff',flex:1,marginRight:4,lineHeight:1.3}}>{note.title}</div>}
-              <button className="note-del" onClick={e=>{e.stopPropagation();delNote(note.id);}} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,.5)',fontSize:13,flexShrink:0}}>×</button>
+              <button className="note-del" onClick={e=>{e.stopPropagation();delNote(note.id);}} style={{background:'none',border:'none',cursor:'pointer',color:'rgba(255,255,255,.5)',fontSize:14,flexShrink:0,lineHeight:1}}>×</button>
             </div>
             {note.noteType==='todos'
-              ?<div>{(note.todos||[]).slice(0,5).map((td,i)=><div key={i} style={{display:'flex',gap:5,alignItems:'center',marginBottom:3}}>
+              ?<div>{(note.todos||[]).slice(0,5).map((td,i)=><div key={i} style={{display:'flex',gap:5,alignItems:'center',marginBottom:3}}
+                  onClick={e=>{e.stopPropagation();togNoteTodo(note.id,i);}}>
                   <div style={{width:12,height:12,borderRadius:3,border:'1.5px solid rgba(255,255,255,.35)',background:td.done?'rgba(255,255,255,.35)':'transparent',flexShrink:0}}/>
-                  <span style={{fontSize:11,color:td.done?'rgba(255,255,255,.45)':'rgba(255,255,255,.8)',textDecoration:td.done?'line-through':'none'}}>{td.text}</span>
+                  <span style={{fontSize:11,color:td.done?'rgba(255,255,255,.4)':'rgba(255,255,255,.8)',textDecoration:td.done?'line-through':'none'}}>{td.text}</span>
                 </div>)}
-                {(note.todos||[]).length>5&&<div style={{fontSize:10,color:'rgba(255,255,255,.4)',marginTop:2}}>+{note.todos.length-5} items nữa...</div>}
+                {(note.todos||[]).length>5&&<div style={{fontSize:10,color:'rgba(255,255,255,.35)',marginTop:2}}>+{note.todos.length-5} items nữa…</div>}
               </div>
               :<div style={{fontSize:12,color:'rgba(255,255,255,.75)',lineHeight:1.5,whiteSpace:'pre-wrap',overflow:'hidden',display:'-webkit-box',WebkitLineClamp:5,WebkitBoxOrient:'vertical'}}>{note.content}</div>}
-            <div style={{fontSize:9,color:'rgba(255,255,255,.3)',marginTop:7}}>{fmt(note.date)}</div>
+            <div style={{fontSize:9,color:'rgba(255,255,255,.28)',marginTop:7}}>{fmt(note.date)}</div>
           </div>;})}
       </div>
     </div>}
 
+    {/* Add Task Modal */}
     {showAddTask&&<div className="ov" onClick={()=>setShowAddTask(false)}><div className="modal" style={{maxWidth:380}} onClick={e=>e.stopPropagation()}>
       <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>+ Task mới</span><button className="btn-g btn-sm" onClick={()=>setShowAddTask(false)}>✕</button></div>
-      {(()=>{const [ft,setFt]=useState({text:'',category:cats[0]||'Khác',deadline:''});return<div>
-        <input className="inp" value={ft.text} onChange={e=>setFt(p=>({...p,text:e.target.value}))} placeholder="Nội dung task..." style={{marginBottom:8}} autoFocus/>
-        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:12}}>
-          <div><div className="tx-dm" style={{marginBottom:2}}>Category</div>
-            <select className="sel" value={ft.category} onChange={e=>setFt(p=>({...p,category:e.target.value}))}>
-              {cats.map(c=><option key={c} value={c}>{c}</option>)}
-            </select></div>
-          <div><div className="tx-dm" style={{marginBottom:2}}>Deadline</div>
-            <input type="date" className="inp" value={ft.deadline} onChange={e=>setFt(p=>({...p,deadline:e.target.value}))}/></div>
-        </div>
-        <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>ft.text.trim()&&addTask(ft)}>Thêm</button><button className="btn-g" onClick={()=>setShowAddTask(false)}>Huỷ</button></div>
-      </div>;})()}
+      <input className="inp" value={taskForm.text} onChange={e=>tf('text',e.target.value)} placeholder="Nội dung task..." style={{marginBottom:8}} autoFocus onKeyDown={e=>e.key==='Enter'&&addTask()}/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Category</div>
+          <select className="sel" value={taskForm.category} onChange={e=>tf('category',e.target.value)}>
+            {cats.map(c=><option key={c} value={c}>{c}</option>)}
+          </select></div>
+        <div><div className="tx-dm" style={{marginBottom:2}}>Deadline</div>
+          <input type="date" className="inp" value={taskForm.deadline} onChange={e=>tf('deadline',e.target.value)}/></div>
+      </div>
+      <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={addTask}>Thêm</button><button className="btn-g" onClick={()=>setShowAddTask(false)}>Huỷ</button></div>
     </div></div>}
 
-    {showAddNote&&<div className="ov" onClick={()=>setShowAddNote(false)}><div className="modal" style={{maxWidth:380,background:'#1A2038'}} onClick={e=>e.stopPropagation()}>
-      {(()=>{const [fn,setFn]=useState({title:'',content:'',color:'#1A2038',noteType:'text',todos:[]});return<div>
-        <div className="flex-sb" style={{marginBottom:10}}><span style={{fontSize:14,fontWeight:500,color:'#fff'}}>📝 Ghi chú mới</span><button onClick={()=>setShowAddNote(false)} style={{background:'none',border:'none',color:'rgba(255,255,255,.6)',cursor:'pointer',fontSize:16}}>✕</button></div>
-        <input className="inp" value={fn.title} onChange={e=>setFn(p=>({...p,title:e.target.value}))} placeholder="Tiêu đề (tùy chọn)..." style={{marginBottom:8,background:'rgba(255,255,255,.05)',borderColor:'rgba(255,255,255,.15)',color:'#fff'}} autoFocus/>
-        <div style={{display:'flex',gap:4,marginBottom:8}}>
-          {NOTE_COLORS.map(([c,l])=><div key={c} onClick={()=>setFn(p=>({...p,color:c}))} style={{width:22,height:22,borderRadius:'50%',background:c,border:`2.5px solid ${fn.color===c?'#fff':'transparent'}`,cursor:'pointer'}} title={l}/>)}
+    {/* Add Note Modal */}
+    {showAddNote&&<div className="ov" onClick={()=>setShowAddNote(false)}><div className="modal" style={{maxWidth:380,background:'#151C32',border:'1px solid rgba(255,255,255,.1)'}} onClick={e=>e.stopPropagation()}>
+      <div className="flex-sb" style={{marginBottom:10}}><span style={{fontSize:14,fontWeight:500,color:'#fff'}}>📝 Ghi chú mới</span><button onClick={()=>setShowAddNote(false)} style={{background:'none',border:'none',color:'rgba(255,255,255,.5)',cursor:'pointer',fontSize:18,lineHeight:1}}>✕</button></div>
+      <input className="inp" value={noteForm.title} onChange={e=>nf('title',e.target.value)} placeholder="Tiêu đề (tùy chọn)..." style={{marginBottom:8,background:'rgba(255,255,255,.06)',borderColor:'rgba(255,255,255,.15)',color:'#fff'}} autoFocus/>
+      <div style={{display:'flex',gap:4,marginBottom:8}}>
+        {NOTE_COLORS.map(([c,l])=><div key={c} onClick={()=>nf('color',c)} style={{width:22,height:22,borderRadius:'50%',background:c,border:`2.5px solid ${noteForm.color===c?'#fff':'transparent'}`,cursor:'pointer'}} title={l}/>)}
+      </div>
+      <div style={{display:'flex',gap:5,marginBottom:8}}>
+        {[['text','📄 Ghi chú'],['todos','☑️ Todo list']].map(([k,l])=><button key={k} onClick={()=>nf('noteType',k)} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${noteForm.noteType===k?'rgba(255,255,255,.5)':'rgba(255,255,255,.15)'}`,background:noteForm.noteType===k?'rgba(255,255,255,.1)':'transparent',color:noteForm.noteType===k?'#fff':'rgba(255,255,255,.4)',cursor:'pointer',fontSize:11}}>{l}</button>)}
+      </div>
+      {noteForm.noteType==='todos'
+        ?<div style={{marginBottom:10}}>
+          {noteForm.todos.map((td,i)=><div key={td.id||i} style={{display:'flex',gap:5,marginBottom:4,alignItems:'center'}}>
+            <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid rgba(255,255,255,.4)',background:'transparent',flexShrink:0}}/>
+            <input value={td.text} onChange={e=>nf('todos',noteForm.todos.map((t,j)=>j===i?{...t,text:e.target.value}:t))} placeholder={`Item ${i+1}...`}
+              style={{flex:1,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.15)',color:'#fff',fontSize:12,padding:'2px 0',outline:'none'}} autoFocus={i===noteForm.todos.length-1&&noteForm.todos.length>0}/>
+            <button onClick={()=>nf('todos',noteForm.todos.filter((_,j)=>j!==i))} style={{background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer',fontSize:13}}>×</button>
+          </div>)}
+          <button onClick={()=>nf('todos',[...noteForm.todos,{id:uid(),text:'',done:false}])} style={{background:'none',border:'none',color:'rgba(255,255,255,.5)',cursor:'pointer',fontSize:11,marginTop:2}}>+ Thêm item</button>
         </div>
-        <div style={{display:'flex',gap:5,marginBottom:8}}>
-          {[['text','📄 Ghi chú'],['todos','☑️ Todo list']].map(([k,l])=><button key={k} onClick={()=>setFn(p=>({...p,noteType:k}))} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${fn.noteType===k?'rgba(255,255,255,.5)':'rgba(255,255,255,.15)'}`,background:fn.noteType===k?'rgba(255,255,255,.1)':'transparent',color:fn.noteType===k?'#fff':'rgba(255,255,255,.4)',cursor:'pointer',fontSize:11}}>{l}</button>)}
-        </div>
-        {fn.noteType==='todos'
-          ?<div style={{marginBottom:10}}>{(fn.todos||[]).map((td,i)=><div key={i} style={{display:'flex',gap:5,marginBottom:4}}>
-              <div style={{width:14,height:14,borderRadius:3,border:'1.5px solid rgba(255,255,255,.4)',background:'transparent',cursor:'pointer',flexShrink:0,marginTop:2}} onClick={()=>setFn(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,done:!t.done}:t)}))}/>
-              <input value={td.text} onChange={e=>setFn(p=>({...p,todos:p.todos.map((t,j)=>j===i?{...t,text:e.target.value}:t)}))} placeholder={`Item ${i+1}...`} style={{flex:1,background:'transparent',border:'none',borderBottom:'1px solid rgba(255,255,255,.15)',color:'#fff',fontSize:12,padding:'2px 0'}} autoFocus={i===fn.todos.length-1&&fn.todos.length>0}/>
-              <button onClick={()=>setFn(p=>({...p,todos:p.todos.filter((_,j)=>j!==i)}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.4)',cursor:'pointer'}}>×</button>
-            </div>)}
-            <button onClick={()=>setFn(p=>({...p,todos:[...(p.todos||[]),{id:uid(),text:'',done:false}]}))} style={{background:'none',border:'none',color:'rgba(255,255,255,.5)',cursor:'pointer',fontSize:11,padding:'2px 0'}}>+ Thêm item</button>
-          </div>
-          :<textarea value={fn.content} onChange={e=>setFn(p=>({...p,content:e.target.value}))} placeholder="Viết ghi chú..." style={{width:'100%',background:'rgba(255,255,255,.05)',border:'1px solid rgba(255,255,255,.1)',borderRadius:6,color:'#fff',fontSize:12,padding:'8px',resize:'vertical',minHeight:90,marginBottom:10,boxSizing:'border-box'}}/>}
-        <div style={{display:'flex',gap:8,marginTop:fn.noteType==='todos'?8:0}}><button style={{flex:1,padding:'9px',borderRadius:8,background:'var(--acc)',color:'#fff',border:'none',cursor:'pointer',fontSize:13,fontWeight:600}} onClick={()=>addNote(fn)}>Lưu ghi chú</button><button style={{padding:'9px 14px',borderRadius:8,background:'rgba(255,255,255,.08)',color:'rgba(255,255,255,.6)',border:'1px solid rgba(255,255,255,.15)',cursor:'pointer'}} onClick={()=>setShowAddNote(false)}>Huỷ</button></div>
-      </div>;})()}
+        :<textarea value={noteForm.content} onChange={e=>nf('content',e.target.value)} placeholder="Viết ghi chú..." style={{width:'100%',background:'rgba(255,255,255,.06)',border:'1px solid rgba(255,255,255,.12)',borderRadius:6,color:'#fff',fontSize:12,padding:'8px',resize:'vertical',minHeight:90,marginBottom:10,boxSizing:'border-box',outline:'none'}}/>}
+      <div style={{display:'flex',gap:8,marginTop:4}}>
+        <button style={{flex:1,padding:'9px',borderRadius:8,background:'var(--acc)',color:'#fff',border:'none',cursor:'pointer',fontSize:13,fontWeight:600}} onClick={addNote}>Lưu ghi chú</button>
+        <button style={{padding:'9px 14px',borderRadius:8,background:'rgba(255,255,255,.08)',color:'rgba(255,255,255,.6)',border:'1px solid rgba(255,255,255,.15)',cursor:'pointer'}} onClick={()=>setShowAddNote(false)}>Huỷ</button>
+      </div>
     </div></div>}
   </div>;}
 

@@ -170,14 +170,18 @@ if(FB_ON){try{firebase.initializeApp(FIREBASE_CONFIG);_db=firebase.firestore();_
 </script>
 <script type="text/babel">
 const {useState,useEffect,useRef,useMemo,useCallback}=React;
-const T=()=>new Date().toISOString().split('T')[0];
+const T=()=>toLocalDateStr(new Date());
+// ← V10c FIX: toISOString() converts to UTC, causing date misalignment in non-UTC timezones
+// (e.g. Germany UTC+1/+2: at 00:00-02:00 local time, UTC date is still yesterday).
+// This helper uses LOCAL date components instead.
+function toLocalDateStr(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
 function daysTo(ds){if(!ds)return null;return Math.ceil((new Date(ds)-new Date())/86400000);}
 function fmt(ds){if(!ds)return'';return new Date(ds).toLocaleDateString('vi-VN',{day:'numeric',month:'short'});}
 function fmtL(ds){if(!ds)return'';return new Date(ds).toLocaleDateString('vi-VN',{weekday:'short',day:'numeric',month:'long'});}
 function pct(a){if(!a?.length)return 0;return Math.round(a.filter(t=>t.done).length/a.length*100);}
 function uid(){return'i'+Date.now()+Math.random().toString(36).slice(2,5);}
-function weekDates(){const d=new Date();d.setHours(0,0,0,0);const dow=d.getDay();const m=new Date(d);m.setDate(d.getDate()-(dow===0?6:dow-1));return Array.from({length:7},(_,i)=>{const dd=new Date(m);dd.setDate(m.getDate()+i);return dd.toISOString().split('T')[0];});}
-function hStreak(comp){const d=new Date();let s=0;while(true){const k=d.toISOString().split('T')[0];if(!comp[k])break;s++;d.setDate(d.getDate()-1);}return s;}
+function weekDates(){const d=new Date();d.setHours(0,0,0,0);const dow=d.getDay();const m=new Date(d);m.setDate(d.getDate()-(dow===0?6:dow-1));return Array.from({length:7},(_,i)=>{const dd=new Date(m);dd.setDate(m.getDate()+i);return toLocalDateStr(dd);});}
+function hStreak(comp){const d=new Date();let s=0;while(true){const k=toLocalDateStr(d);if(!comp[k])break;s++;d.setDate(d.getDate()-1);}return s;}
 function fmtS(s){const h=Math.floor(s/3600);const m=Math.floor((s%3600)/60);const ss=s%60;return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
 const TODAY=T();
 const DV=['CN','T2','T3','T4','T5','T6','T7'];
@@ -404,7 +408,7 @@ function getEventsOnDate(events,date){
 }
 function getUpcomingEvts(events,days=45){
   const res=[];const seen=new Set();
-  for(let i=0;i<days;i++){const d=new Date(TODAY+'T12:00:00');d.setDate(d.getDate()+i);const ds=d.toISOString().split('T')[0];getEventsOnDate(events,ds).forEach(e=>{if(!seen.has(e.id)){seen.add(e.id);res.push(e);}});}
+  for(let i=0;i<days;i++){const d=new Date(TODAY+'T12:00:00');d.setDate(d.getDate()+i);const ds=toLocalDateStr(d);getEventsOnDate(events,ds).forEach(e=>{if(!seen.has(e.id)){seen.add(e.id);res.push(e);}});}
   return res;
 }
 
@@ -646,36 +650,44 @@ function CourseScheduleView({course,onNav}){
         </div>
         <div style={{fontSize:10,color:dotColor,fontWeight:600,whiteSpace:'nowrap',minWidth:80,textAlign:'right'}}>{dayLabel}</div>
       </div>;})}
-    <div style={{fontSize:9,color:'var(--dm)',marginTop:8,textAlign:'right'}}>Kết thúc: {fmt(endD.toISOString().split('T')[0])} · còn {daysTo(endD.toISOString().split('T')[0])} ngày</div>
+    <div style={{fontSize:9,color:'var(--dm)',marginTop:8,textAlign:'right'}}>Kết thúc: {fmt(toLocalDateStr(endD))} · còn {daysTo(toLocalDateStr(endD))} ngày</div>
   </div>;}
 
-/* ── V10b: COURSE ATTENDANCE & SESSION NOTES ── */
+/* ── V10b/c: COURSE ATTENDANCE & SESSION NOTES ── */
 function CourseAttendance({course,onUpdate}){
   const [weekOffset,setWeekOffset]=useState(0);
   const [expandDate,setExpandDate]=useState(null);
+  const [showDowPicker,setShowDowPicker]=useState(false);
   const wd=weekDates();
-  const baseWd=wd.map(d=>{const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+weekOffset*7);return dt.toISOString().split('T')[0];});
+  const baseWd=wd.map(d=>{const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+weekOffset*7);return toLocalDateStr(dt);});
   const weekLabel=weekOffset===0?'Tuần này':`${weekOffset<0?Math.abs(weekOffset)+' tuần trước':''}`;
   const att=course.attendance||{};
+  const scheduleDOW=course.scheduleDOW||[];
   const togAttend=(date)=>{const cur=att[date]||{attended:false,note:''};const na={...att,[date]:{...cur,attended:!cur.attended}};onUpdate({attendance:na});};
   const setNote=(date,note)=>onUpdate({attendance:{...att,[date]:{...(att[date]||{attended:false}),note}}});
-  const classDays=baseWd.filter(d=>{const dow=new Date(d+'T12:00:00').getDay();return course.scheduleDOW?.includes(dow);});
+  const togDow=(d)=>onUpdate({scheduleDOW:scheduleDOW.includes(d)?scheduleDOW.filter(x=>x!==d):[...scheduleDOW,d].sort()});
   const attendedCount=baseWd.filter(d=>att[d]?.attended).length;
-  const totalClass=classDays.length;
   return<div className="card" style={{marginBottom:10}}>
     <div className="flex-sb" style={{marginBottom:8}}>
       <div className="lbl" style={{margin:0}}>📋 ĐIỂM DANH</div>
       <div style={{display:'flex',gap:6,alignItems:'center'}}>
-        <span style={{fontSize:11,color:'var(--su)',fontWeight:600}}>{attendedCount}/{totalClass||baseWd.length}</span>
+        <span style={{fontSize:11,color:'var(--su)',fontWeight:600}}>{attendedCount}/7</span>
         <button className="btn-g btn-sm" onClick={()=>setWeekOffset(w=>w-1)}>‹</button>
         <span style={{fontSize:10,color:weekOffset===0?'var(--acc)':'var(--tx)',fontWeight:weekOffset===0?600:400}}>{weekLabel}</span>
         <button className="btn-g btn-sm" onClick={()=>setWeekOffset(w=>Math.min(0,w+1))} disabled={weekOffset>=0} style={{opacity:weekOffset>=0?.3:1}}>›</button>
+        <button className="btn-g btn-sm" onClick={()=>setShowDowPicker(s=>!s)} title="Cấu hình ngày học trong tuần">⚙️</button>
       </div>
     </div>
+    {showDowPicker&&<div style={{background:'var(--sur)',borderRadius:8,padding:'8px',marginBottom:8}}>
+      <div style={{fontSize:10,color:'var(--mu)',marginBottom:5}}>📅 Ngày học cố định trong tuần (để highlight) — bỏ chọn hết nếu đã kết thúc khóa trên lớp:</div>
+      <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+        {DV.map((d,i)=><button key={i} onClick={()=>togDow(i)} style={{width:30,height:30,borderRadius:6,border:`1.5px solid ${scheduleDOW.includes(i)?course.color:'var(--bdr)'}`,background:scheduleDOW.includes(i)?course.color+'22':'transparent',color:scheduleDOW.includes(i)?course.color:'var(--mu)',cursor:'pointer',fontSize:10,fontWeight:600}}>{d}</button>)}
+      </div>
+    </div>}
     <div style={{display:'grid',gridTemplateColumns:'repeat(7,1fr)',gap:4,marginBottom:8}}>
       {baseWd.map(date=>{
         const dow=new Date(date+'T12:00:00').getDay();
-        const isClassDay=course.scheduleDOW?.includes(dow);
+        const isClassDay=scheduleDOW.includes(dow);
         const a=att[date]||{};const isT=date===TODAY;
         return<div key={date} style={{textAlign:'center'}}>
           <div style={{fontSize:9,color:isT?'var(--acc)':'var(--dm)',fontWeight:isT?700:400,marginBottom:2}}>
@@ -684,24 +696,29 @@ function CourseAttendance({course,onUpdate}){
           <div style={{fontSize:9,color:isT?'var(--acc)':'var(--dm)',marginBottom:4}}>
             {new Date(date+'T12:00:00').getDate()}/{new Date(date+'T12:00:00').getMonth()+1}
           </div>
-          {isClassDay?<div onClick={()=>togAttend(date)} style={{width:28,height:28,borderRadius:6,border:`1.5px solid ${a.attended?course.color:'var(--bdr)'}`,background:a.attended?course.color+'33':'transparent',cursor:'pointer',margin:'auto',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12}}
-            title={a.attended?'Đã đi học — click để bỏ':'Chưa đi học — click để đánh dấu'}>
-            {a.attended?'✓':''}
-          </div>:<div style={{width:28,height:28,background:'var(--sur)',borderRadius:6,margin:'auto',opacity:.2}}/>}
-          {a.attended&&<div onClick={()=>setExpandDate(expandDate===date?null:date)}
-            style={{fontSize:8,color:a.note?course.color:'var(--dm)',cursor:'pointer',marginTop:2,textAlign:'center'}}>
+          {/* V10c: any day clickable, class days get colored ring to indicate expected schedule */}
+          <div onClick={()=>togAttend(date)} style={{width:28,height:28,borderRadius:6,
+            border:`1.5px solid ${a.attended?course.color:isClassDay?course.color+'88':'var(--bdr)'}`,
+            background:a.attended?course.color+'33':isClassDay?course.color+'10':'transparent',
+            cursor:'pointer',margin:'auto',display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,
+            boxShadow:isT?`0 0 0 1.5px ${course.color}55`:'none'}}
+            title={a.attended?'Đã đi học — click để bỏ':isClassDay?'Ngày học theo lịch — click để điểm danh':'Click để đánh dấu đi học'}>
+            {a.attended?'✓':isClassDay?'·':''}
+          </div>
+          <div onClick={()=>setExpandDate(expandDate===date?null:date)}
+            style={{fontSize:8,color:a.note?course.color:'var(--dm)',cursor:'pointer',marginTop:2,textAlign:'center',opacity:a.attended||a.note?1:.4}}>
             {a.note?'📝':'+ ghi'}
-          </div>}
+          </div>
         </div>;
       })}
     </div>
-    {expandDate&&att[expandDate]?.attended&&<div style={{background:'var(--sur)',borderRadius:8,padding:'8px',marginTop:4}}>
+    {expandDate&&<div style={{background:'var(--sur)',borderRadius:8,padding:'8px',marginTop:4}}>
       <div style={{fontSize:10,color:'var(--mu)',marginBottom:4}}>📝 Nội dung buổi học {fmt(expandDate)}:</div>
       <textarea value={att[expandDate]?.note||''} onChange={e=>setNote(expandDate,e.target.value)}
         placeholder="Hôm nay học về nội dung gì? Điểm cần nhớ? Bài tập về nhà?..."
         rows={2} style={{width:'100%',background:'var(--card)',border:'1px solid var(--bdr)',borderRadius:6,padding:'6px',color:'var(--tx)',fontSize:11,outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box'}}/>
     </div>}
-    {!course.scheduleDOW&&<div className="tx-dm" style={{fontSize:10,marginTop:4}}>💡 Tip: Thêm ngày học trong tuần (scheduleDOW) vào thông tin môn để highlight đúng buổi học</div>}
+    {scheduleDOW.length===0&&<div className="tx-dm" style={{fontSize:10,marginTop:4}}>💡 Nhấn ⚙️ để đặt ngày học cố định trong tuần — vẫn có thể điểm danh tự do bất kỳ ngày nào.</div>}
   </div>;}
 
 /* ── V6 NEW: COURSE NOTES & Q&A BLOCK ── */
@@ -891,8 +908,8 @@ function DashboardPage({data,upd,nav,awardXP}){
   const togMustDo=()=>{const nfd={...fd,mustDo:{...(fd.mustDo||{text:''}),done:!fd.mustDo?.done}};upd({dailyFocus:{...(data.dailyFocus||{}),[focusDate]:nfd}});};
   const togTop3=(id)=>{const nfd={...fd,top3:(fd.top3||[]).map(t=>t.id===id?{...t,done:!t.done}:t)};upd({dailyFocus:{...(data.dailyFocus||{}),[focusDate]:nfd}});};
   const fmtDateNav=(ds)=>{if(ds===TODAY)return'Hôm nay';const d=new Date(ds+'T12:00:00');const diff=Math.round((d-new Date(TODAY+'T12:00:00'))/(86400000));if(diff===1)return'Ngày mai';if(diff===-1)return'Hôm qua';if(diff>0)return`+${diff} ngày`;return`${Math.abs(diff)} ngày trước`;};
-  const navFocus=(dir)=>{const d=new Date(focusDate+'T12:00:00');d.setDate(d.getDate()+dir);setFocusDate(d.toISOString().split('T')[0]);};
-  const navAdmin=(dir)=>{const d=new Date(adminDate+'T12:00:00');d.setDate(d.getDate()+dir);setAdminDate(d.toISOString().split('T')[0]);};
+  const navFocus=(dir)=>{const d=new Date(focusDate+'T12:00:00');d.setDate(d.getDate()+dir);setFocusDate(toLocalDateStr(d));};
+  const navAdmin=(dir)=>{const d=new Date(adminDate+'T12:00:00');d.setDate(d.getDate()+dir);setAdminDate(toLocalDateStr(d));};
   const adminDow=new Date(adminDate+'T12:00:00').getDay();
   const wd=weekDates();
   const weekH=data.studyLog.filter(l=>wd.includes(l.date)).reduce((s,l)=>s+l.hours,0);
@@ -905,7 +922,7 @@ function DashboardPage({data,upd,nav,awardXP}){
   const isAdminDone=(item)=>{if(item.src==='rec'){const d=data.adminTasks.daily[adminDate]||[];return d.find(t=>t.id===`rec_${item.id}`)?.done||false;}return item.done||false;};
   const togAdmin=(item)=>{const at={...data.adminTasks,daily:{...data.adminTasks.daily}};const existing=at.daily[adminDate]||[];if(item.src==='rec'){const key=`rec_${item.id}`;const idx=existing.findIndex(t=>t.id===key);if(idx>=0)at.daily[adminDate]=existing.map(t=>t.id===key?{...t,done:!t.done}:t);else at.daily[adminDate]=[...existing,{id:key,title:item.title,done:true}];}else{at.daily[adminDate]=existing.map(t=>t.id===item.id?{...t,done:!t.done}:t);}upd({adminTasks:at});};
   const saveRating=(r)=>{const dp={...data.dailyPerf,[perfDate]:{...(data.dailyPerf[perfDate]||{}),rating:r}};upd({dailyPerf:dp});};
-  const navPerf=(d)=>{const nd=new Date(perfDate);nd.setDate(nd.getDate()+d);const s=nd.toISOString().split('T')[0];if(s<=TODAY)setPerfDate(s);};
+  const navPerf=(d)=>{const nd=new Date(perfDate);nd.setDate(nd.getDate()+d);const s=toLocalDateStr(nd);if(s<=TODAY)setPerfDate(s);};
   const sorted=[...data.courses].filter(c=>!c.archived).sort((a,b)=>{const o={critical:0,watch:1,medium:2,good:3};return(o[a.risk]??2)-(o[b.risk]??2);});
 
   const saveAdminEdit=(f)=>{
@@ -938,7 +955,7 @@ function DashboardPage({data,upd,nav,awardXP}){
         onClick={()=>nav('courses',{courseId:c.id})} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:4}}>
           <span style={{fontSize:15}}>{c.emoji}</span>
-          {d!==null&&<div style={{textAlign:'right',background:ringColor+'18',borderRadius:6,padding:'2px 6px',border:`1.5px solid ${ringColor}44`}}>
+          {d!==null&&<div style={{textAlign:'right',background:ringColor+'18',borderRadius:6,padding:'2px 6px'}}>
             <div style={{fontSize:19,fontWeight:900,color:ringColor,lineHeight:1}}>{d}</div>
             <div style={{fontSize:7,color:ringColor,fontWeight:700,opacity:.8}}>NGÀY</div>
           </div>}
@@ -1411,6 +1428,14 @@ function TimerPage({data,upd,awardXP,nav}){
   const addCat=()=>{if(!newCatName.trim())return;upd({timerCategories:[...(data.timerCategories||[]),{id:uid(),name:newCatName.trim(),emoji:newCatEmoji}]});setNewCatName('');setNewCatEmoji('📌');setShowAddCat(false);};
   const delCat=(id)=>upd({timerCategories:(data.timerCategories||[]).filter(c=>c.id!==id)});
   useEffect(()=>{return()=>{if(intRef.current)clearInterval(intRef.current);};},[]);
+  // ← V10c: resync display instantly when tab becomes visible again (browsers throttle
+  // setInterval in background tabs, so the number may "freeze" while hidden — this fixes
+  // the visual lag immediately on return. The underlying wall-clock math was already accurate.)
+  useEffect(()=>{
+    const onVis=()=>{if(document.visibilityState==='visible'&&startRef.current&&mode==='stopwatch'){setElapsed(getRealElapsed());}};
+    document.addEventListener('visibilitychange',onVis);
+    return()=>document.removeEventListener('visibilitychange',onVis);
+  },[mode]);
   const getRealElapsed=()=>baseRef.current+(startRef.current?Math.floor((Date.now()-startRef.current)/1000):0);
   const startStop=()=>{
     if(running){
@@ -1745,6 +1770,8 @@ function CourseDetail({course,onBack,onUpdate,onDelete}){
 
 function LanguagePage({data,upd}){
   const [weekOffset,setWeekOffset]=useState(0);
+  const [editLang,setEditLang]=useState(null);  // ← V10c: language settings editor
+  const [viewMode,setViewMode]=useState({});     // ← V10c: per-language 'active' | 'completed' view
   const updateLang=(lid,changes)=>upd({languages:data.languages.map(l=>l.id!==lid?l:{...l,...changes})});
 
   const getWeekDates=(offset)=>{
@@ -1754,7 +1781,7 @@ function LanguagePage({data,upd}){
   };
 
   const weekObjs=getWeekDates(weekOffset);
-  const wd=weekObjs.map(d=>d.toISOString().split('T')[0]);
+  const wd=weekObjs.map(d=>toLocalDateStr(d));
   const weekLabel=`${weekObjs[0].toLocaleDateString('vi-VN',{day:'numeric',month:'numeric'})} – ${weekObjs[6].toLocaleDateString('vi-VN',{day:'numeric',month:'numeric',year:'numeric'})}`;
 
   const tog=(lid,date,type)=>upd({languages:data.languages.map(l=>l.id!==lid?l:{...l,log:{...l.log,[`${date}_${type}`]:!l.log[`${date}_${type}`]}})});
@@ -1779,7 +1806,10 @@ function LanguagePage({data,upd}){
       return<div key={lang.id} className="card" style={{marginBottom:14}}>
         <div className="flex-sb" style={{marginBottom:10}}>
           <div style={{display:'flex',gap:9,alignItems:'center'}}><span style={{fontSize:24}}>{lang.emoji}</span><div><div style={{fontSize:14,fontWeight:600}}>{lang.name}</div><div className="tx-dm">{lang.level} → {lang.target}</div></div></div>
-          <div style={{textAlign:'right'}}><div style={{fontSize:15,fontWeight:600,color:lang.color}}>{pv}%</div><div className="tx-dm">tuần {weekOffset===0?'này':weekOffset===-1?'trước':weekOffset<0?`${-weekOffset} tuần trước`:''}</div></div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}>
+            <div style={{textAlign:'right'}}><div style={{fontSize:15,fontWeight:600,color:lang.color}}>{pv}%</div><div className="tx-dm">tuần {weekOffset===0?'này':weekOffset===-1?'trước':weekOffset<0?`${-weekOffset} tuần trước`:''}</div></div>
+            <button className="btn-g btn-sm" onClick={()=>setEditLang({...lang})} title="Sửa lịch học / mục tiêu">✏️</button>
+          </div>
         </div>
         {/* Stats row */}
         <div style={{display:'flex',gap:8,marginBottom:10,flexWrap:'wrap'}}>
@@ -1843,34 +1873,65 @@ function LanguagePage({data,upd}){
           </div>
         </div>
         {/* Grammar (with CEFR level chips), Speaking, Writing (with link) */}
+        <div style={{display:'flex',gap:6,marginBottom:8}}>
+          {[['active','📋 Đang học'],['completed','✅ Đã hoàn thành']].map(([k,l])=>{
+            const vm=viewMode[lang.id]||'active';
+            return<button key={k} onClick={()=>setViewMode(p=>({...p,[lang.id]:k}))} style={{padding:'4px 10px',borderRadius:6,border:`1px solid ${vm===k?lang.color:'var(--bdr)'}`,background:vm===k?lang.color+'1c':'transparent',color:vm===k?lang.color:'var(--mu)',cursor:'pointer',fontSize:11,fontWeight:vm===k?600:400}}>{l}</button>;})}
+        </div>
         {[['grammar','📖','Ngữ pháp'],['speaking','🗣️','Nói'],['writing','✍️','Viết']].map(([catKey,emoji,label])=>{
-          const catData=cats[catKey]||{items:[]};const items=catData.items||[];
-          const done2=items.filter(i=>i.done).length;
-          const [open,setOpen2]=[true,()=>{}]; // always open
+          const catData=cats[catKey]||{items:[]};const allItems=catData.items||[];
+          const vm=viewMode[lang.id]||'active';
+          const items=vm==='active'?allItems.filter(i=>!i.done):allItems.filter(i=>i.done);
+          const done2=allItems.filter(i=>i.done).length;
           const addItem=(text,level,link)=>{
             const ni={id:uid(),text:text.trim(),done:false};
             if(catKey==='grammar')ni.level=level||'';
             if(catKey==='writing')ni.link=link||'';
-            updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:[...items,ni]}}});
+            updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:[...allItems,ni]}}});
           };
-          const togItem=(id)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:items.map(i=>i.id===id?{...i,done:!i.done}:i)}}});
-          const delItem=(id)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:items.filter(i=>i.id!==id)}}});
-          const setItemLink=(id,link)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:items.map(i=>i.id===id?{...i,link}:i)}}});
-          return<InlineCatSection key={catKey} catKey={catKey} emoji={emoji} label={label} lang={lang} items={items} done={done2} onToggle={togItem} onDelete={delItem} onAdd={addItem} onSetLink={setItemLink}/>;
+          const togItem=(id)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:allItems.map(i=>i.id===id?{...i,done:!i.done}:i)}}});
+          const delItem=(id)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:allItems.filter(i=>i.id!==id)}}});
+          const setItemLink=(id,link)=>updateLang(lang.id,{categories:{...cats,[catKey]:{...catData,items:allItems.map(i=>i.id===id?{...i,link}:i)}}});
+          return<InlineCatSection key={catKey+vm} catKey={catKey} emoji={emoji} label={label} lang={lang} items={items} done={done2} total={allItems.length} viewMode={vm} onToggle={togItem} onDelete={delItem} onAdd={addItem} onSetLink={setItemLink}/>;
         })}
         <div style={{marginTop:10,fontSize:11,color:'var(--mu)'}}>📅 <strong style={{color:'var(--tx)'}}>{lang.schedule}</strong> · {lang.resources.join(' · ')}</div>
       </div>;})}
+    {editLang&&<LangEditorModal lang={editLang} onSave={ch=>{updateLang(editLang.id,ch);setEditLang(null);}} onClose={()=>setEditLang(null)}/>}
   </div>;}
 
-function InlineCatSection({catKey,emoji,label,lang,items,done,onToggle,onDelete,onAdd,onSetLink}){
+function LangEditorModal({lang,onSave,onClose}){
+  const [f,setF]=useState({name:lang.name,level:lang.level,target:lang.target,schedule:lang.schedule,classDOW:lang.classDOW||[],selfMin:lang.selfMin||20});
+  const s=(k,v)=>setF(p=>({...p,[k]:v}));
+  const togDow=(d)=>setF(p=>({...p,classDOW:p.classDOW.includes(d)?p.classDOW.filter(x=>x!==d):[...p.classDOW,d].sort()}));
+  return<div className="ov" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>{lang.emoji} Sửa {lang.name}</span><button className="btn-g btn-sm" onClick={onClose}>✕</button></div>
+    <div className="tx-dm" style={{marginBottom:2}}>Trình độ hiện tại</div>
+    <input className="inp" value={f.level} onChange={e=>s('level',e.target.value)} style={{marginBottom:8}}/>
+    <div className="tx-dm" style={{marginBottom:2}}>Mục tiêu</div>
+    <input className="inp" value={f.target} onChange={e=>s('target',e.target.value)} style={{marginBottom:8}}/>
+    <div className="tx-dm" style={{marginBottom:2}}>Mô tả lịch học (hiển thị ở cuối card)</div>
+    <input className="inp" value={f.schedule} onChange={e=>s('schedule',e.target.value)} placeholder="VD: T4 & T6, 12:00–13:30 (hoặc để trống nếu đã kết thúc khóa)" style={{marginBottom:10}}/>
+    <div className="tx-dm" style={{marginBottom:4}}>📅 Ngày học trên lớp (dùng để highlight điểm danh)</div>
+    <div style={{display:'flex',gap:5,flexWrap:'wrap',marginBottom:4}}>
+      {DV.map((d,i)=><button key={i} onClick={()=>togDow(i)} style={{width:36,height:36,borderRadius:7,border:`1.5px solid ${f.classDOW.includes(i)?lang.color:'var(--bdr)'}`,background:f.classDOW.includes(i)?lang.color+'22':'transparent',color:f.classDOW.includes(i)?lang.color:'var(--mu)',cursor:'pointer',fontSize:11,fontWeight:600}}>{d}</button>)}
+    </div>
+    {f.classDOW.length===0&&<div style={{fontSize:10,color:'var(--wa)',marginBottom:8}}>⚠️ Không chọn ngày nào — sẽ không có buổi lớp nào được highlight (phù hợp nếu đã hoàn thành khóa học trên lớp)</div>}
+    <div className="tx-dm" style={{margin:'8px 0 2px'}}>Mục tiêu tự học mỗi ngày (phút)</div>
+    <input type="number" className="inp" value={f.selfMin} onChange={e=>s('selfMin',+e.target.value)} style={{marginBottom:14}}/>
+    <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={()=>onSave(f)}>Lưu</button><button className="btn-g" onClick={onClose}>Huỷ</button></div>
+  </div></div>;}
+
+function InlineCatSection({catKey,emoji,label,lang,items,done,total,viewMode,onToggle,onDelete,onAdd,onSetLink}){
   const [open,setOpen]=useState(true);const [newText,setNewText]=useState('');const [newLevel,setNewLevel]=useState('B1');const [newLink,setNewLink]=useState('');
   const doAdd=()=>{if(!newText.trim())return;onAdd(newText,newLevel,newLink);setNewText('');setNewLink('');};
   return<div className="lang-cat">
     <div className="lang-cat-hd flex-sb" style={{marginBottom:open?8:0}} onClick={()=>setOpen(o=>!o)}>
-      <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:15}}>{emoji}</span><span style={{fontSize:13,fontWeight:600,color:'var(--tx)'}}>{label}</span><span className="tx-dm">({done}/{items.length} ✓)</span></div>
+      <div style={{display:'flex',alignItems:'center',gap:6}}><span style={{fontSize:15}}>{emoji}</span><span style={{fontSize:13,fontWeight:600,color:'var(--tx)'}}>{label}</span><span className="tx-dm">({done}/{total} ✓)</span></div>
       <span style={{fontSize:10,color:'var(--dm)'}}>{open?'▲':'▼'}</span>
     </div>
     {open&&<div>
+      {items.length===0&&viewMode==='completed'&&<div className="tx-dm" style={{padding:'8px 0',textAlign:'center'}}>Chưa hoàn thành mục nào trong {label.toLowerCase()}</div>}
+      {items.length===0&&viewMode==='active'&&<div className="tx-dm" style={{padding:'8px 0',textAlign:'center'}}>🎉 Đã hoàn thành hết! Thêm mục mới bên dưới</div>}
       {items.map((item,i)=><div key={item.id} style={{padding:'5px 0',borderBottom:i<items.length-1?'1px solid rgba(37,45,74,.3)':'none'}}>
         <div style={{display:'flex',alignItems:'center',gap:7}}>
           <Tick done={item.done} color={lang.color} onClick={()=>onToggle(item.id)}/>
@@ -1881,13 +1942,13 @@ function InlineCatSection({catKey,emoji,label,lang,items,done,onToggle,onDelete,
         </div>
         {catKey==='writing'&&item.link&&<div style={{fontSize:10,color:lang.color,paddingLeft:24,marginTop:2,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}><a href={item.link} target="_blank" rel="noreferrer" style={{color:lang.color}}>{item.link}</a></div>}
       </div>)}
-      <div style={{display:'flex',gap:5,marginTop:7,flexWrap:'wrap'}}>
+      {viewMode==='active'&&<div style={{display:'flex',gap:5,marginTop:7,flexWrap:'wrap'}}>
         {catKey==='grammar'&&<select value={newLevel} onChange={e=>setNewLevel(e.target.value)} style={{background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:6,color:'var(--tx)',fontSize:11,padding:'4px 6px',outline:'none'}}>{CEFR_LEVELS.map(l=><option key={l} value={l}>{l}</option>)}</select>}
         <input className="inp" value={newText} onChange={e=>setNewText(e.target.value)} placeholder={catKey==='speaking'?'Topic đã luyện nói...':catKey==='writing'?'Tên bài viết...':'Điểm ngữ pháp...'}
           onKeyDown={e=>e.key==='Enter'&&doAdd()} style={{flex:1,fontSize:11,padding:'5px 8px'}}/>
         {catKey==='writing'&&<input className="inp" value={newLink} onChange={e=>setNewLink(e.target.value)} placeholder="Link (optional)..." style={{flex:1,fontSize:11,padding:'5px 8px'}}/>}
         <button className="btn-p btn-sm" onClick={doAdd}>+</button>
-      </div>
+      </div>}
     </div>}
   </div>;}
 
@@ -1898,7 +1959,7 @@ function HabitsPage({data,upd}){
   const tog=(hid,date)=>upd({habits:data.habits.map(h=>h.id===hid?{...h,completions:{...h.completions,[date]:!h.completions[date]}}:h)});
   const active=data.habits.filter(h=>!h.archived);const archived=data.habits.filter(h=>h.archived);
   const done=active.filter(h=>h.completions[TODAY]).length;
-  const last30=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return d.toISOString().split('T')[0];});
+  const last30=Array.from({length:30},(_,i)=>{const d=new Date();d.setDate(d.getDate()-i);return toLocalDateStr(d);});
   const overall=active.length>0?Math.round(last30.reduce((s,d)=>s+active.filter(h=>h.completions[d]).length,0)/(active.length*30)*100):0;
   return<div>
     <div className="flex-sb" style={{marginBottom:3}}><div className="h1">✅ Habits</div>
@@ -2011,10 +2072,10 @@ function StudyLogPage({data,upd}){
     <div className="card" style={{marginTop:12}}>
       <div className="lbl" style={{marginBottom:8}}>📋 BÁO CÁO TUẦN NÀY</div>
       {(()=>{
-        const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return d.toISOString().split('T')[0];});
+        const last7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return toLocalDateStr(d);});
         const dailyH=last7.map(ds=>({ds,h:data.studyLog.filter(l=>l.date===ds).reduce((s,l)=>s+l.hours,0),d:new Date(ds)}));
         const totalH=dailyH.reduce((s,d)=>s+d.h,0);
-        const prevWeek=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-13+i);return d.toISOString().split('T')[0];});
+        const prevWeek=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-13+i);return toLocalDateStr(d);});
         const prevH=data.studyLog.filter(l=>prevWeek.includes(l.date)).reduce((s,l)=>s+l.hours,0);
         const activH=data.habits.filter(h=>!h.archived);
         const habPct=activH.length>0?Math.round(last7.reduce((s,d)=>s+activH.filter(h=>h.completions[d]).length,0)/(activH.length*7)*100):0;
@@ -2367,6 +2428,12 @@ function StudyJournalPage({data,upd}){
   const [tElapsed,setTElapsed]=useState(0);
   const tIntRef=useRef(null);const tStartRef=useRef(null);const tBaseRef=useRef(0);
   useEffect(()=>{return()=>{if(tIntRef.current)clearInterval(tIntRef.current);};},[]);
+  // ← V10c: resync display instantly on tab visibility change (same fix as TimerPage)
+  useEffect(()=>{
+    const onVis=()=>{if(document.visibilityState==='visible'&&tStartRef.current){setTElapsed(tBaseRef.current+Math.floor((Date.now()-tStartRef.current)/1000));}};
+    document.addEventListener('visibilitychange',onVis);
+    return()=>document.removeEventListener('visibilitychange',onVis);
+  },[]);
   const tGetReal=()=>tBaseRef.current+(tStartRef.current?Math.floor((Date.now()-tStartRef.current)/1000):0);
   const tToggle=()=>{
     if(tRunning){clearInterval(tIntRef.current);tIntRef.current=null;tBaseRef.current=tGetReal();tStartRef.current=null;setTElapsed(tBaseRef.current);setTRunning(false);}

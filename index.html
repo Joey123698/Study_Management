@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StudyOS ⚡ v9</title>
+<title>StudyOS ⚡ v10</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -131,6 +131,25 @@ body{background:var(--bg);color:var(--tx);font-family:var(--font,-apple-system,B
 .note-card:hover .note-del{opacity:.7}
 .note-del{opacity:0;transition:opacity .15s}
 .ptask-row{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid rgba(37,45,74,.3)}
+/* V10: Collapsible sidebar */
+.app{display:flex;height:100vh;overflow:hidden}
+.sb{width:220px;min-width:220px;transition:width .2s,min-width .2s;overflow:hidden;display:flex;flex-direction:column;height:100vh;border-right:1px solid var(--bdr);background:var(--sb)}
+.sb.collapsed{width:52px;min-width:52px}
+.sb.collapsed .sb-label,.sb.collapsed .sb-sec,.sb.collapsed .xp-bar,.sb.collapsed .xp-info,.sb.collapsed .sb-ver,.sb.collapsed .sb-user{display:none}
+.sb.collapsed .sb-title{font-size:0}
+.sb.collapsed .nav{justify-content:center;padding:10px 0}
+.sb.collapsed .nav-badge{display:none}
+.sb-toggle{background:none;border:none;cursor:pointer;color:var(--dm);font-size:14px;padding:2px 4px;border-radius:4px;line-height:1;flex-shrink:0}
+.sb-toggle:hover{background:var(--ch);color:var(--tx)}
+.nav-sub{display:block;padding:5px 12px 5px 38px;font-size:11px;color:var(--mu);background:none;border:none;cursor:pointer;width:100%;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-sub:hover,.nav-sub.on{background:var(--ch);color:var(--acc)}
+.nav-sub.on{color:var(--acc);font-weight:600}
+/* V10: Compact course card (4-col) */
+.course-mini{background:var(--card);border:1px solid var(--bdr);border-radius:10px;padding:10px 10px 8px;cursor:pointer;position:relative;overflow:hidden;transition:background .15s}
+.course-mini:hover{background:var(--ch)}
+/* V10: Journal */
+.jitem{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(37,45,74,.2)}
+.jstatus{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;flex-shrink:0}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--dm);border-radius:3px}
@@ -139,8 +158,8 @@ body{background:var(--bg);color:var(--tx);font-family:var(--font,-apple-system,B
 <body>
 <div id="loading" style="position:fixed;inset:0;background:#0C0F1A;display:flex;align-items:center;justify-content:center;z-index:9999">
   <div style="text-align:center"><div style="font-size:42px;margin-bottom:12px">⚡</div>
-  <div style="color:#7C6EF5;font-size:15px;font-family:system-ui">StudyOS v9 — Đang tải...</div>
-  <div style="color:#353D60;font-size:11px;margin-top:5px;font-family:system-ui">v9: EmojiPicker · Recurring Events · ParkingLot 2.0 · SubTask DDL</div></div>
+  <div style="color:#7C6EF5;font-size:15px;font-family:system-ui">StudyOS v10 — Đang tải...</div>
+  <div style="color:#353D60;font-size:11px;margin-top:5px;font-family:system-ui">v10: Timer Fix · Sidebar Collapse · Study Journal · Course mini cards</div></div>
 </div>
 <div id="root"></div>
 <script>
@@ -254,6 +273,7 @@ function migrateToV6(d){
   if(!d.parkingCategories)d.parkingCategories=['Ý tưởng','Cần làm','Học tập','Công việc','Khác'];
   if(d.events)d.events=d.events.map(e=>({...e,shortLabel:e.shortLabel||'',recurring:e.recurring||false,recurringDow:e.recurringDow||[],recurringEndDate:e.recurringEndDate||''}));
   if(d.courses)d.courses=d.courses.map(c=>({...c,topics:(c.topics||[]).map(t=>({...t,subtasks:(t.subtasks||[]).map(s=>({...s,dueDate:s.dueDate||''}))}))}));
+  if(!d.studyJournal)d.studyJournal=[];
   return d;
 }
 
@@ -317,6 +337,7 @@ parkingLot:[{id:'p1',text:'Tìm công cụ AI hỗ trợ học Econometrics',dat
 parkingTasks:[{id:'pt1',text:'Tìm công cụ AI hỗ trợ học Econometrics',category:'Học tập',deadline:'',done:false,date:TODAY},{id:'pt2',text:'Cập nhật CV cho Phase 2',category:'Công việc',deadline:'2026-08-01',done:false,date:TODAY}],
 parkingNotes:[],
 parkingCategories:['Ý tưởng','Cần làm','Học tập','Công việc','Khác'],
+studyJournal:[],
 dailyFocus:{}
 };}
 
@@ -339,8 +360,8 @@ function Tick({done,color,onClick}){return<div className="tick" style={{borderCo
 
 function SignInPage({onSignIn}){return<div className="signin-wrap"><div style={{textAlign:'center',maxWidth:380,padding:'40px 32px',background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:20}}>
   <div style={{fontSize:46,marginBottom:14}}>⚡</div>
-  <div style={{fontSize:21,fontWeight:700,color:'var(--acc)',marginBottom:6}}>StudyOS v9</div>
-  <p style={{color:'var(--mu)',marginBottom:22,lineHeight:1.7,fontSize:13}}>EmojiPicker · Recurring Events · ParkingLot 2.0<br/><strong style={{color:'var(--tx)'}}>Sync real-time tất cả thiết bị</strong></p>
+  <div style={{fontSize:21,fontWeight:700,color:'var(--acc)',marginBottom:6}}>StudyOS v10</div>
+  <p style={{color:'var(--mu)',marginBottom:22,lineHeight:1.7,fontSize:13}}>Timer Fix · Sidebar · Study Journal · Mini Cards<br/><strong style={{color:'var(--tx)'}}>Sync real-time tất cả thiết bị</strong></p>
   <button className="g-btn" onClick={onSignIn}>
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
     Đăng nhập bằng Google
@@ -585,33 +606,47 @@ function TopicRow({topic,courseColor,onToggle,onDelete,onEdit,onToggleSub,onAddS
   </div>;}
 
 /* ── V5 NEW: COURSE SCHEDULE VIEW ── */
-function CourseScheduleView({course}){
+function CourseScheduleView({course,onNav}){
   const topicsWithDue=course.topics.filter(t=>t.dueDate).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
-  if(topicsWithDue.length===0)return<div className="card"><div className="tx-dm" style={{textAlign:'center',padding:'14px'}}>Chưa có topic nào có deadline. Thêm dueDate khi sửa môn để dùng tính năng này.</div></div>;
-  const start=new Date();start.setHours(0,0,0,0);
-  const endD=new Date(course.examDate||course.endDate||'2026-07-31');
-  const totalMs=endD-start;
+  if(topicsWithDue.length===0)return<div className="card"><div className="tx-dm" style={{textAlign:'center',padding:'14px'}}>Chưa có topic nào có deadline. Thêm dueDate khi sửa topic để dùng tính năng này.</div></div>;
+  const start=topicsWithDue[0]?new Date(topicsWithDue[0].dueDate):new Date();start.setHours(0,0,0,0);
+  const startAct=new Date(Math.min(start.getTime(),new Date().getTime()));startAct.setHours(0,0,0,0);
+  const endD=new Date(course.examDate||course.endDate||topicsWithDue[topicsWithDue.length-1]?.dueDate||'2026-07-31');endD.setHours(0,0,0,0);
+  const totalMs=Math.max(1,endD-startAct);
+  const todayPct=Math.max(0,Math.min(100,(new Date()-startAct)/totalMs*100));
   return<div className="card" style={{marginBottom:10}}>
-    <div className="flex-sb" style={{marginBottom:10}}>
+    <div className="flex-sb" style={{marginBottom:6}}>
       <div className="lbl" style={{margin:0}}>📅 LỊCH HỌC THEO TOPIC</div>
       <div style={{display:'flex',gap:8,fontSize:10,color:'var(--mu)'}}><span style={{color:'var(--su)'}}>● Xong</span><span style={{color:course.color}}>● Đúng hạn</span><span style={{color:'var(--cr)'}}>● Quá hạn</span></div>
     </div>
+    {/* Today indicator */}
+    <div style={{position:'relative',height:22,marginBottom:8,marginLeft:24,marginRight:70}}>
+      <div style={{position:'absolute',inset:'9px 0',background:'var(--dm)',borderRadius:2,opacity:.4}}/>
+      <div style={{position:'absolute',left:`${todayPct}%`,top:0,bottom:0,width:2,background:'var(--acc)',borderRadius:1,transform:'translateX(-1px)'}}/>
+      <div style={{position:'absolute',left:`${todayPct}%`,top:'-2px',transform:'translateX(-50%)',background:'var(--acc)',color:'#fff',fontSize:8,fontWeight:700,borderRadius:3,padding:'1px 4px',whiteSpace:'nowrap'}}>Hôm nay</div>
+    </div>
     {topicsWithDue.map((t,i)=>{
       const d=new Date(t.dueDate);d.setHours(0,0,0,0);
-      const pctPos=Math.max(0,Math.min(100,(d-start)/totalMs*100));
+      const pctPos=Math.max(0,Math.min(100,(d-startAct)/totalMs*100));
       const days=daysTo(t.dueDate);
       const dotColor=t.done?'var(--su)':days<=0?'var(--cr)':days<=3?'var(--wa)':course.color;
+      const dayLabel=t.done?'✓ Xong':days<=0?`Quá hạn ${Math.abs(days)}N`:days===1?'Ngày mai':days<=7?`${days} ngày nữa`:fmt(t.dueDate);
       return<div key={t.id} className="sched-row">
         <div style={{width:16,height:16,borderRadius:3,border:`2px solid ${dotColor}`,background:t.done?dotColor:'transparent',flexShrink:0,display:'flex',alignItems:'center',justifyContent:'center'}}>{t.done&&<span style={{color:'#fff',fontSize:9,fontWeight:700}}>✓</span>}</div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{fontSize:11,color:t.done?'var(--mu)':'var(--tx)',textDecoration:t.done?'line-through':'none',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{t.label}</div>
-          <div style={{position:'relative',height:3,background:'var(--dm)',borderRadius:2,marginTop:3}}>
-            <div style={{position:'absolute',left:0,width:`${pctPos}%`,height:'100%',background:'var(--bdr)',borderRadius:2}}/>
-            <div style={{position:'absolute',left:`${pctPos}%`,width:7,height:7,background:dotColor,borderRadius:'50%',top:-2,transform:'translateX(-3px)',border:'1px solid var(--bg)'}}/>
+          <div style={{position:'relative',height:4,background:'var(--dm)',borderRadius:2,marginTop:3}}>
+            {/* filled bar from start to deadline */}
+            <div style={{position:'absolute',left:0,width:`${pctPos}%`,height:'100%',background:t.done?'var(--su)':days<=0?'var(--cr)':days<=3?'var(--wa)':'var(--bdr)',borderRadius:2,opacity:.6}}/>
+            {/* today line on bar */}
+            <div style={{position:'absolute',left:`${todayPct}%`,width:2,top:-2,bottom:-2,background:'var(--acc)',borderRadius:1,opacity:.8}}/>
+            {/* deadline dot */}
+            <div style={{position:'absolute',left:`${pctPos}%`,width:8,height:8,background:dotColor,borderRadius:'50%',top:-2,transform:'translateX(-4px)',border:'1.5px solid var(--bg)'}}/>
           </div>
         </div>
-        <div style={{fontSize:10,color:dotColor,fontWeight:600,whiteSpace:'nowrap',minWidth:60,textAlign:'right'}}>{t.done?'✓ Xong':days<=0?'Quá hạn!':days<=3?`${days}N ⚠️`:fmt(t.dueDate)}</div>
+        <div style={{fontSize:10,color:dotColor,fontWeight:600,whiteSpace:'nowrap',minWidth:80,textAlign:'right'}}>{dayLabel}</div>
       </div>;})}
+    <div style={{fontSize:9,color:'var(--dm)',marginTop:8,textAlign:'right'}}>Kết thúc: {fmt(endD.toISOString().split('T')[0])} · còn {daysTo(endD.toISOString().split('T')[0])} ngày</div>
   </div>;}
 
 /* ── V6 NEW: COURSE NOTES & Q&A BLOCK ── */
@@ -835,11 +870,33 @@ function DashboardPage({data,upd,nav,awardXP}){
   const upcomingDeadlines=allDeadlines.filter(d=>d.date>=TODAY).slice(0,6);
   const overdueDeadlines=allDeadlines.filter(d=>d.date<TODAY);
 
+  // Compact course row (4 per row) - top of dashboard
+  const courseTop=<div style={{marginBottom:10}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:5}}>
+      <div className="lbl" style={{margin:0}}>📚 MÔN HỌC</div>
+      <button className="btn-g btn-sm" onClick={()=>nav('courses')}>Tất cả →</button>
+    </div>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:6}}>
+      {sorted.map(c=>{const p=pct(c.topics);const d=daysTo(c.examDate||c.endDate);const r=RISK[c.risk]||RISK.medium;
+      const ringColor=d!==null?(d<=7?'#E24B4A':d<=14?'#BA7517':d<=28?'#F5A623':c.color):c.color;
+      return<div key={c.id} className="course-mini" style={{borderLeft:`3px solid ${c.color}`,borderRadius:9,cursor:'pointer'}}
+        onClick={()=>nav('courses',{courseId:c.id})} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
+        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:4}}>
+          <span style={{fontSize:15}}>{c.emoji}</span>
+          {d!==null&&<div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:800,color:ringColor,lineHeight:1}}>{d}</div><div style={{fontSize:7,color:'var(--dm)',fontWeight:700}}>N</div></div>}
+        </div>
+        <div style={{fontSize:10,fontWeight:600,lineHeight:1.2,marginBottom:4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.name}</div>
+        <Bar v={p} color={c.color}/><div style={{fontSize:8,color:c.color,fontWeight:600,marginTop:1}}>{p}%</div>
+      </div>;})}
+    </div>
+  </div>;
+
   // Exam countdown
   const nextExam=data.courses.filter(c=>!c.archived&&c.examDate&&c.examDate>=TODAY).sort((a,b)=>a.examDate.localeCompare(b.examDate))[0];
   const daysToExam=nextExam?daysTo(nextExam.examDate):null;
 
   return<div>
+    {courseTop}
     {data.settings?.bannerUrl&&<div style={{width:'100%',height:120,borderRadius:10,marginBottom:12,overflow:'hidden',position:'relative',flexShrink:0}}>
       <img src={data.settings.bannerUrl} alt="banner" style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center',display:'block'}} onError={e=>{e.target.style.display='none';e.target.parentElement.style.background='var(--sur)';}}/>
       <div style={{position:'absolute',inset:0,background:'linear-gradient(to bottom,transparent 30%,rgba(0,0,0,.6))'}}/>
@@ -965,29 +1022,6 @@ function DashboardPage({data,upd,nav,awardXP}){
         <span style={{fontSize:10,color:days<=2?'var(--cr)':days<=5?'var(--wa)':'var(--mu)',fontWeight:700,whiteSpace:'nowrap'}}>{days}N</span>
       </div>;})}
     </div>}
-    </div>
-    <div className="lbl" style={{marginBottom:7}}>MÔN HỌC</div>
-    <div className="g2" style={{marginBottom:10}}>
-      {sorted.map(c=>{const p=pct(c.topics);const r=RISK[c.risk]||RISK.medium;const d=daysTo(c.examDate||c.endDate);
-      const ringColor=d!==null?(d<=7?'#E24B4A':d<=14?'#BA7517':d<=28?'#F5A623':c.color):c.color;
-      return<div key={c.id} className="card" style={{borderColor:r.cls.includes('cr')?'var(--crBdr)':r.cls.includes('wa')?'var(--waBdr)':'var(--bdr)',cursor:'pointer',position:'relative',overflow:'hidden',padding:'12px'}}
-        onClick={()=>nav('courses',{courseId:c.id})} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
-        <div className="link-strip" style={{background:c.color}}/>
-        <div style={{paddingLeft:7,display:'flex',gap:10}}>
-          <div style={{flex:1,minWidth:0}}>
-            <div className="flex-sb" style={{marginBottom:5}}>
-              <div><div style={{fontSize:15}}>{c.emoji}</div><div style={{fontSize:12,fontWeight:500,marginTop:1}}>{c.name}</div></div>
-              <Badge risk={c.risk}/>
-            </div>
-            <div style={{marginBottom:5}}><div className="flex-sb" style={{marginBottom:2}}><span className="tx-dm">{c.topics.filter(t=>t.done).length}/{c.topics.length}</span><span style={{fontSize:10,color:c.color,fontWeight:600}}>{p}%</span></div><Bar v={p} color={c.color}/></div>
-            <div style={{background:'var(--sur)',borderRadius:4,padding:'4px 7px',fontSize:10,color:'var(--mu)'}}>→ {c.nextAction}</div>
-          </div>
-          {d!==null&&<div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',flexShrink:0}}>
-            <div className="cd-big" style={{color:ringColor}}>{d}</div>
-            <div style={{fontSize:9,color:'var(--dm)',fontWeight:600,marginTop:-2}}>NGÀY{c.examDate?' ĐẾN THI':''}</div>
-          </div>}
-        </div>
-      </div>;})}
     </div>
     <div className="card" style={{marginBottom:10}}>
       <div className="flex-sb" style={{marginBottom:7}}><div className="lbl" style={{margin:0}}>✅ HABITS HÔM NAY</div>
@@ -1300,11 +1334,11 @@ function TimelinePage({data}){
     </div>
   </div>;}
 
-function TimerPage({data,upd,awardXP}){
+function TimerPage({data,upd,awardXP,nav}){
   const [mode,setMode]=useState('stopwatch');
   const [running,setRunning]=useState(false);
-  const [elapsed,setElapsed]=useState(0);
-  const [subj,setSubj]=useState(data.courses[0]?.id||'micro');
+  const [elapsed,setElapsed]=useState(0); // display seconds
+  const [subj,setSubj]=useState(data.courses[0]?.id||'other');
   const [pomoDur,setPomoDur]=useState(25*60);
   const [pomoLeft,setPomoLeft]=useState(25*60);
   const [isBreak,setIsBreak]=useState(false);
@@ -1312,23 +1346,39 @@ function TimerPage({data,upd,awardXP}){
   const [showAddCat,setShowAddCat]=useState(false);
   const [newCatName,setNewCatName]=useState('');const [newCatEmoji,setNewCatEmoji]=useState('📌');
   const intRef=useRef(null);
+  const startRef=useRef(null);   // ← V10 FIX: wall clock start time
+  const baseRef=useRef(0);       // ← V10 FIX: accumulated secs before last pause
   const customCats=(data.timerCategories||[]).map(c=>({id:`custom_${c.id}`,name:c.name,emoji:c.emoji}));
   const allS=[...data.courses.filter(c=>!c.archived).map(c=>({id:c.id,name:c.name,emoji:c.emoji})),{id:'de',name:'Tiếng Đức',emoji:'🇩🇪'},{id:'en',name:'Tiếng Anh',emoji:'🇬🇧'},...customCats,{id:'other',name:'Khác',emoji:'📌'}];
   const addCat=()=>{if(!newCatName.trim())return;upd({timerCategories:[...(data.timerCategories||[]),{id:uid(),name:newCatName.trim(),emoji:newCatEmoji}]});setNewCatName('');setNewCatEmoji('📌');setShowAddCat(false);};
   const delCat=(id)=>upd({timerCategories:(data.timerCategories||[]).filter(c=>c.id!==id)});
   useEffect(()=>{return()=>{if(intRef.current)clearInterval(intRef.current);};},[]);
+  const getRealElapsed=()=>baseRef.current+(startRef.current?Math.floor((Date.now()-startRef.current)/1000):0);
   const startStop=()=>{
-    if(running){clearInterval(intRef.current);intRef.current=null;setRunning(false);}
-    else{setRunning(true);intRef.current=setInterval(()=>{
-      if(mode==='stopwatch')setElapsed(e=>e+1);
-      else setPomoLeft(p=>{if(p<=1){clearInterval(intRef.current);intRef.current=null;setRunning(false);if(!isBreak)setIsBreak(true);return isBreak?pomoDur:5*60;}return p-1;});
-    },1000);}
+    if(running){
+      // Pause: commit real wall-clock time
+      clearInterval(intRef.current);intRef.current=null;
+      baseRef.current=getRealElapsed();
+      setElapsed(baseRef.current);
+      setRunning(false);
+    } else {
+      startRef.current=Date.now();
+      setRunning(true);
+      intRef.current=setInterval(()=>{
+        if(mode==='stopwatch'){
+          const real=Math.floor((Date.now()-startRef.current)/1000)+baseRef.current;
+          setElapsed(real);
+        } else {
+          setPomoLeft(p=>{if(p<=1){clearInterval(intRef.current);intRef.current=null;setRunning(false);if(!isBreak)setIsBreak(true);return isBreak?pomoDur:5*60;}return p-1;});
+        }
+      },1000);
+    }
   };
-  const reset=()=>{if(intRef.current)clearInterval(intRef.current);intRef.current=null;setRunning(false);setElapsed(0);setPomoLeft(pomoDur);setIsBreak(false);};
+  const reset=()=>{if(intRef.current)clearInterval(intRef.current);intRef.current=null;startRef.current=null;baseRef.current=0;setRunning(false);setElapsed(0);setPomoLeft(pomoDur);setIsBreak(false);};
   const logSession=()=>{
-    const secs=mode==='stopwatch'?elapsed:(pomoDur-pomoLeft);
+    const secs=mode==='stopwatch'?getRealElapsed():(pomoDur-pomoLeft);
     const h=Math.round(secs/3600*4)/4;
-    if(h<0.08){reset();return;}
+    if(h<0.05){reset();return;}
     const s=allS.find(x=>x.id===subj);
     const entry={id:uid(),date:TODAY,subjectId:subj,hours:h,subjectName:s?.name||'',note:`⏱️ ${fmtS(secs)} (${mode})`};
     upd({studyLog:[entry,...data.studyLog]});
@@ -2045,7 +2095,7 @@ function SettingsPage({data,upd}){
     <div className="card">
       <div className="lbl" style={{marginBottom:8}}>ℹ️ THÔNG TIN</div>
       <div style={{fontSize:12,color:'var(--mu)',lineHeight:1.7}}>
-        StudyOS v9 · React 18 + Firebase<br/>
+        StudyOS v10 · React 18 + Firebase<br/>
         Bochum, Đức 🇩🇪 · GSE Program<br/>
         <span style={{color:'var(--dm)',fontSize:10}}>Data lưu trên Firebase — sync real-time mọi thiết bị</span>
       </div>
@@ -2236,11 +2286,94 @@ function ParkingLotPage({data,upd}){
     </div></div>}
   </div>;}
 
+/* ── V10: STUDY JOURNAL ── */
+function StudyJournalPage({data,upd,nav}){
+  const [showNew,setShowNew]=useState(false);
+  const [newSubj,setNewSubj]=useState(data.courses[0]?.id||'other');
+  const [planItems,setPlanItems]=useState([{id:uid(),text:'',status:'todo',src:'manual'}]);
+  const [expandId,setExpandId]=useState(null);
+  const allS=[...data.courses.filter(c=>!c.archived).map(c=>({id:c.id,name:c.name,emoji:c.emoji})),{id:'de',name:'Tiếng Đức',emoji:'🇩🇪'},{id:'en',name:'Tiếng Anh',emoji:'🇬🇧'},{id:'other',name:'Khác',emoji:'📌'}];
+  const journal=data.studyJournal||[];
+  const createSession=()=>{
+    const s=allS.find(x=>x.id===newSubj);
+    const entry={id:uid(),date:TODAY,subjectId:newSubj,subjectName:s?.name||'',subjectEmoji:s?.emoji||'📚',planItems:planItems.filter(p=>p.text.trim()),notes:'',hours:0};
+    upd({studyJournal:[entry,...journal]});
+    setShowNew(false);setPlanItems([{id:uid(),text:'',status:'todo',src:'manual'}]);setExpandId(entry.id);
+  };
+  const updEntry=(id,ch)=>upd({studyJournal:journal.map(e=>e.id===id?{...e,...ch}:e)});
+  const updItem=(entryId,itemId,ch)=>updEntry(entryId,{planItems:journal.find(e=>e.id===entryId)?.planItems.map(p=>p.id===itemId?{...p,...ch}:p)||[]});
+  const STATUS_CYCLE={'todo':'doing','doing':'done','done':'todo'};
+  const STATUS_ICON={'todo':'○','doing':'◑','done':'✓'};
+  const STATUS_COLOR={'todo':'var(--bdr)','doing':'var(--wa)','done':'var(--su)'};
+  const pullTopics=(courseId)=>{const c=data.courses.find(x=>x.id===courseId);if(!c)return;const undone=c.topics.filter(t=>!t.done).slice(0,5).map(t=>({id:uid(),text:t.label,status:'todo',src:'topic',topicId:t.id}));setPlanItems(p=>[...p.filter(x=>x.src==='manual'&&x.text),...undone]);};
+  return<div>
+    <div className="flex-sb" style={{marginBottom:4}}><div className="h1">📓 Nhật ký tự học</div>
+      <button className="btn-p btn-sm" onClick={()=>setShowNew(true)}>+ Phiên học mới</button>
+    </div>
+    <p className="tx-mu" style={{marginBottom:14}}>Lên kế hoạch trước khi học, ghi lại sau khi xong. Kết hợp với Timer để log giờ.</p>
+    {journal.length===0&&<div style={{textAlign:'center',padding:'30px 0',color:'var(--dm)'}}>
+      <div style={{fontSize:30,marginBottom:8}}>📓</div><div style={{fontSize:13}}>Chưa có phiên học nào. Nhấn "Phiên học mới" để bắt đầu!</div>
+    </div>}
+    {journal.map(entry=>{
+      const isOpen=expandId===entry.id;
+      const doneCount=(entry.planItems||[]).filter(p=>p.status==='done').length;
+      const total=(entry.planItems||[]).length;
+      return<div key={entry.id} className="card" style={{marginBottom:8}}>
+        <div style={{display:'flex',gap:8,alignItems:'center',cursor:'pointer'}} onClick={()=>setExpandId(isOpen?null:entry.id)}>
+          <span style={{fontSize:16}}>{entry.subjectEmoji||'📚'}</span>
+          <div style={{flex:1}}>
+            <div style={{fontSize:13,fontWeight:500}}>{entry.subjectName}</div>
+            <div className="tx-dm">{fmtL(entry.date)} {entry.hours>0&&`· ${entry.hours.toFixed(1)}h`} · {doneCount}/{total} tasks</div>
+          </div>
+          <div style={{display:'flex',gap:4,alignItems:'center'}}>
+            {total>0&&<div style={{width:48,height:5,background:'var(--dm)',borderRadius:3,overflow:'hidden'}}><div style={{width:`${Math.round(doneCount/total*100)}%`,height:'100%',background:'var(--su)',borderRadius:3}}/></div>}
+            <span style={{color:'var(--dm)',fontSize:12}}>{isOpen?'▲':'▼'}</span>
+          </div>
+        </div>
+        {isOpen&&<div style={{marginTop:10,paddingTop:10,borderTop:'1px solid var(--bdr)'}}>
+          <div className="lbl" style={{marginBottom:6}}>📋 KẾ HOẠCH / KẾT QUẢ</div>
+          {(entry.planItems||[]).map(item=><div key={item.id} className="jitem">
+            <div className="jstatus" style={{borderColor:STATUS_COLOR[item.status],background:item.status==='done'?'var(--su)':item.status==='doing'?'var(--wa)':'transparent',color:item.status!=='todo'?'#fff':'var(--dm)'}}
+              onClick={()=>updItem(entry.id,item.id,{status:STATUS_CYCLE[item.status]})} title={item.status==='todo'?'Chưa làm':item.status==='doing'?'Đang làm':'Đã xong'}>
+              {STATUS_ICON[item.status]}
+            </div>
+            <span style={{flex:1,fontSize:12,textDecoration:item.status==='done'?'line-through':'none',opacity:item.status==='done'?.6:1}}>{item.text}</span>
+            {item.src==='topic'&&<span style={{fontSize:9,color:'var(--dm)',background:'var(--sur)',borderRadius:4,padding:'1px 4px'}}>📚</span>}
+          </div>)}
+          <div className="lbl" style={{margin:'10px 0 5px'}}>📝 GHI CHÚ SAU BUỔI HỌC</div>
+          <textarea value={entry.notes||''} onChange={e=>updEntry(entry.id,{notes:e.target.value})} placeholder="Đã làm được gì? Vướng mắc ở đâu? Next steps là gì?..." rows={3}
+            style={{width:'100%',background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:7,padding:'7px',color:'var(--tx)',fontSize:12,outline:'none',fontFamily:'inherit',resize:'vertical',boxSizing:'border-box'}}/>
+          <div style={{display:'flex',gap:6,marginTop:8}}>
+            <button className="btn-p btn-sm" onClick={()=>nav('timer')}>⏱️ Mở Timer</button>
+            <button className="btn-g btn-sm" onClick={()=>upd({studyJournal:journal.filter(e=>e.id!==entry.id)})}>Xoá phiên</button>
+          </div>
+        </div>}
+      </div>;})}
+    {showNew&&<div className="ov" onClick={()=>setShowNew(false)}><div className="modal" onClick={e=>e.stopPropagation()}>
+      <div className="flex-sb" style={{marginBottom:12}}><span style={{fontSize:14,fontWeight:500}}>📓 Phiên học mới</span><button className="btn-g btn-sm" onClick={()=>setShowNew(false)}>✕</button></div>
+      <div className="tx-dm" style={{marginBottom:3}}>Môn học</div>
+      <select className="sel" value={newSubj} onChange={e=>{setNewSubj(e.target.value);pullTopics(e.target.value);}} style={{marginBottom:10}}>
+        {allS.map(s=><option key={s.id} value={s.id}>{s.emoji} {s.name}</option>)}
+      </select>
+      <div className="flex-sb" style={{marginBottom:6}}><div className="tx-dm">Kế hoạch cho buổi học</div>
+        <button className="btn-g btn-sm" onClick={()=>pullTopics(newSubj)} style={{fontSize:10}}>📚 Lấy từ môn học</button>
+      </div>
+      {planItems.map((item,i)=><div key={item.id} style={{display:'flex',gap:5,marginBottom:5}}>
+        <input className="inp" value={item.text} onChange={e=>setPlanItems(p=>p.map((x,j)=>j===i?{...x,text:e.target.value}:x))} placeholder={`Task ${i+1}...`} style={{flex:1,fontSize:12}}
+          onKeyDown={e=>e.key==='Enter'&&setPlanItems(p=>[...p,{id:uid(),text:'',status:'todo',src:'manual'}])}/>
+        <button style={{background:'none',border:'none',cursor:'pointer',color:'var(--dm)',fontSize:13}} onClick={()=>setPlanItems(p=>p.filter((_,j)=>j!==i))}>×</button>
+      </div>)}
+      <button className="btn-g btn-sm" style={{marginBottom:12}} onClick={()=>setPlanItems(p=>[...p,{id:uid(),text:'',status:'todo',src:'manual'}])}>+ Thêm task</button>
+      <div style={{display:'flex',gap:8}}><button className="btn-p" style={{flex:1,justifyContent:'center'}} onClick={createSession}>Tạo phiên học</button><button className="btn-g" onClick={()=>setShowNew(false)}>Huỷ</button></div>
+    </div></div>}
+  </div>;}
+
 const PAGES=[
   {id:'dashboard',label:'Dashboard',emoji:'🏠',sec:'TỔNG QUAN'},
   {id:'phase',label:'Phase Plan',emoji:'🗺️',sec:'TỔNG QUAN'},
   {id:'timeline',label:'Timeline',emoji:'📅',sec:'TỔNG QUAN'},
   {id:'timer',label:'Timer / Pomodoro',emoji:'⏱️',sec:'HỌC TẬP'},
+  {id:'journal',label:'Nhật ký học',emoji:'📓',sec:'HỌC TẬP'},
   {id:'courses',label:'Môn học',emoji:'📚',sec:'HỌC TẬP'},
   {id:'language',label:'Ngôn ngữ',emoji:'🌐',sec:'HỌC TẬP'},
   {id:'studylog',label:'Study Log',emoji:'📊',sec:'HỌC TẬP'},
@@ -2256,6 +2389,8 @@ function App(){
   const [authLoading,setAuthLoading]=useState(true);
   const [syncing,setSyncing]=useState(false);const [syncErr,setSyncErr]=useState(false);const [lastSync,setLastSync]=useState(null);
   const [page,setPage]=useState('dashboard');const [pageParams,setPageParams]=useState({});
+  const [sbOpen,setSbOpen]=useState(true);         // ← V10: collapsible sidebar
+  const [expandedNav,setExpandedNav]=useState({}); // ← V10: tree nav expanded state
   const saveTimer=useRef(null);const saving=useRef(false);const unsubRef=useRef(null);
 
   useEffect(()=>{
@@ -2266,14 +2401,12 @@ function App(){
 
   const loadFB=async(uid)=>{try{const ref=_db.collection('users').doc(uid);const doc=await ref.get();let init=doc.exists&&doc.data().appData?JSON.parse(doc.data().appData):buildInit();init=migrateToV6(init);setData(init);applyTheme(init.settings);if(!doc.exists)await ref.set({appData:JSON.stringify(init),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});setLastSync(new Date());if(unsubRef.current)unsubRef.current();unsubRef.current=ref.onSnapshot(snap=>{if(!snap.exists||saving.current)return;try{const nd=migrateToV6(JSON.parse(snap.data().appData));setData(nd);applyTheme(nd.settings);setLastSync(new Date());setSyncErr(false);}catch(e){}});}catch(e){setSyncErr(true);console.error(e);}};
   const doSave=async(uid,d)=>{saving.current=true;setSyncing(true);setSyncErr(false);try{await _db.collection('users').doc(uid).set({appData:JSON.stringify(d),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});setLastSync(new Date());}catch(e){setSyncErr(true);}finally{setTimeout(()=>{saving.current=false;},2500);setSyncing(false);}};
-
   const upd=useCallback((changes)=>{setData(d=>{const nd={...d,...changes};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
-
   const awardXP=useCallback((amount,label)=>{showXpPop(amount);setData(d=>{const g={...d.gamification,xp:(d.gamification?.xp||0)+amount};const achs=[...(g.achievements||[])];if(!achs.includes('first_log')&&label?.includes('⏱️')){achs.push('first_log');showAch(ACH.find(a=>a.id==='first_log'));}const nd={...d,gamification:{...g,achievements:achs}};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
-
   const signIn=()=>{const p=new firebase.auth.GoogleAuthProvider();_auth.signInWithPopup(p).catch(e=>console.error(e));};
   const signOut=()=>{if(unsubRef.current)unsubRef.current();_auth.signOut();setUser(null);setData(null);};
   const nav=(pg,params={})=>{setPage(pg);setPageParams(params);};
+  const togNav=(id)=>setExpandedNav(p=>({...p,[id]:!p[id]}));
 
   if(authLoading)return null;
   if(FB_ON&&!user)return<SignInPage onSignIn={signIn}/>;
@@ -2286,12 +2419,14 @@ function App(){
   const xpP=Math.min(100,Math.round((xp-lv.min)/(nlv.min-lv.min)*100));
   const critCount=data.courses.filter(c=>c.risk==='critical').length;
   const hMissed=data.habits.filter(h=>!h.archived&&!h.completions[TODAY]).length;
+  const activeCourses=data.courses.filter(c=>!c.archived);
 
   function renderPage(){
     if(page==='dashboard')return<DashboardPage data={data} upd={upd} nav={nav} awardXP={awardXP}/>;
     if(page==='phase')return<PhasePage data={data} upd={upd}/>;
     if(page==='timeline')return<TimelinePage data={data}/>;
-    if(page==='timer')return<TimerPage data={data} upd={upd} awardXP={awardXP}/>;
+    if(page==='timer')return<TimerPage data={data} upd={upd} awardXP={awardXP} nav={nav}/>;
+    if(page==='journal')return<StudyJournalPage data={data} upd={upd} nav={nav}/>;
     if(page==='courses')return<CoursesPage data={data} upd={upd} initCourseId={pageParams.courseId}/>;
     if(page==='language')return<LanguagePage data={data} upd={upd}/>;
     if(page==='studylog')return<StudyLogPage data={data} upd={upd}/>;
@@ -2303,49 +2438,66 @@ function App(){
   }
 
   return<div className="app">
-    <div className="sb">
+    <div className={`sb${sbOpen?'':' collapsed'}`}>
       <div className="sb-logo">
-        <div className="sb-title">⚡ StudyOS <span style={{fontSize:9,background:'var(--acc2)',color:'var(--acc)',borderRadius:3,padding:'1px 4px'}}>v9</span></div>
-        <div style={{marginTop:7}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+          <div className="sb-title">⚡<span className="sb-ver"> StudyOS <span style={{fontSize:9,background:'var(--acc2)',color:'var(--acc)',borderRadius:3,padding:'1px 4px'}}>v10</span></span></div>
+          <button className="sb-toggle" onClick={()=>setSbOpen(o=>!o)} title={sbOpen?'Thu gọn sidebar':'Mở rộng sidebar'}>{sbOpen?'◀':'▶'}</button>
+        </div>
+        {sbOpen&&<div style={{marginTop:7}}>
           <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:3}}><span style={{fontSize:13}}>{lv.emoji}</span><span style={{fontSize:11,fontWeight:600,color:'var(--tx)'}}>Lv.{lv.level} {lv.name}</span><span style={{fontSize:10,color:'var(--mu)',marginLeft:'auto'}}>{xp} XP</span></div>
           <div className="xp-bar"><div className="xp-fill" style={{width:`${xpP}%`,background:'linear-gradient(90deg,var(--acc),#B06EF5)'}}/></div>
           <div className="xp-info"><span>{xp-lv.min}</span><span>/{nlv.min-lv.min}</span></div>
-        </div>
+        </div>}
       </div>
-      <div style={{flex:1,paddingBottom:8}}>
+      <div style={{flex:1,paddingBottom:8,overflowY:'auto'}}>
         {Object.entries(sections).map(([sec,pages])=><div key={sec}>
-          <div className="sb-sec">{sec}</div>
-          {pages.map(p=>{let badge=null;
-            if(p.id==='courses'&&critCount>0)badge=<span style={{marginLeft:'auto',background:'var(--cr)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{critCount}</span>;
-            if(p.id==='habits'&&hMissed>0)badge=<span style={{marginLeft:'auto',background:'var(--wa)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{hMissed}</span>;
-            if(p.id==='events'){const up=data.events.filter(e=>e.date>=TODAY).length;if(up>0)badge=<span style={{marginLeft:'auto',color:'var(--mu)',fontSize:10}}>{up}</span>;}
-            if(p.id==='parking'){const total=(data.parkingTasks||[]).filter(t=>!t.done).length+(data.parkingNotes||[]).length;if(total>0)badge=<span style={{marginLeft:'auto',color:'var(--dm)',fontSize:10}}>{total}</span>;}
-            return<button key={p.id} className={`nav ${page===p.id?'on':''}`} onClick={()=>nav(p.id)}>
-              <span style={{fontSize:14,width:18,textAlign:'center',flexShrink:0}}>{p.emoji}</span>{p.label}{badge}
-            </button>;})}
+          {sbOpen&&<div className="sb-sec">{sec}</div>}
+          {pages.map(p=>{
+            let badge=null;
+            if(p.id==='courses'&&critCount>0)badge=<span className="nav-badge" style={{marginLeft:'auto',background:'var(--cr)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{critCount}</span>;
+            if(p.id==='habits'&&hMissed>0)badge=<span className="nav-badge" style={{marginLeft:'auto',background:'var(--wa)',color:'#fff',borderRadius:9,padding:'1px 5px',fontSize:9,fontWeight:700}}>{hMissed}</span>;
+            if(p.id==='events'){const up=getUpcomingEvts(data.events,14).length;if(up>0)badge=<span className="nav-badge" style={{marginLeft:'auto',color:'var(--mu)',fontSize:10}}>{up}</span>;}
+            if(p.id==='parking'){const total=(data.parkingTasks||[]).filter(t=>!t.done).length+(data.parkingNotes||[]).length;if(total>0)badge=<span className="nav-badge" style={{marginLeft:'auto',color:'var(--dm)',fontSize:10}}>{total}</span>;}
+            const isCoursesExpanded=expandedNav['courses'];
+            return<div key={p.id}>
+              <button className={`nav ${page===p.id?'on':''}`} onClick={()=>{nav(p.id);if(p.id==='courses'&&sbOpen)togNav('courses');}}>
+                <span style={{fontSize:14,width:18,textAlign:'center',flexShrink:0}}>{p.emoji}</span>
+                <span className="sb-label">{p.label}</span>{badge}
+                {p.id==='courses'&&sbOpen&&activeCourses.length>0&&<span style={{marginLeft:'auto',fontSize:10,color:'var(--dm)',opacity:.6}}>{isCoursesExpanded?'▲':'▼'}</span>}
+              </button>
+              {/* Tree sub-links for active courses */}
+              {p.id==='courses'&&sbOpen&&isCoursesExpanded&&activeCourses.map(c=>
+                <button key={c.id} className={`nav-sub${pageParams.courseId===c.id&&page==='courses'?' on':''}`}
+                  onClick={()=>nav('courses',{courseId:c.id})}>
+                  {c.emoji} {c.name}
+                </button>)}
+            </div>;})}
         </div>)}
       </div>
       <div style={{padding:'8px 12px',borderTop:'1px solid var(--bdr)'}}>
         {FB_ON&&user&&<div>
-          <div style={{fontSize:10,color:'var(--mu)',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>👤 {user.displayName||user.email}</div>
+          {sbOpen&&<div className="sb-user" style={{fontSize:10,color:'var(--mu)',marginBottom:3,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>👤 {user.displayName||user.email}</div>}
           <div style={{display:'flex',alignItems:'center',fontSize:10,color:'var(--mu)',marginBottom:5}}>
             <div className={`sync-dot ${syncing?'pulsing':''}`} style={{background:syncErr?'var(--cr)':syncing?'var(--wa)':'var(--su)'}}/>
-            {syncErr?'Lỗi sync':syncing?'Đang sync...':lastSync?`${lastSync.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}`:''}
-          </div>
-          <button className="btn-g" style={{padding:'3px 8px',fontSize:10,width:'100%',justifyContent:'center'}} onClick={signOut}>Đăng xuất</button>
+            {sbOpen&&(syncErr?'Lỗi sync':syncing?'Đang sync...':lastSync?`${lastSync.toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'})}`:'')}</div>
+          {sbOpen&&<button className="btn-g" style={{padding:'3px 8px',fontSize:10,width:'100%',justifyContent:'center'}} onClick={signOut}>Đăng xuất</button>}
         </div>}
-        {!FB_ON&&<div style={{fontSize:10,color:'var(--dm)'}}>⚠️ Chưa cấu hình Firebase</div>}
+        {!FB_ON&&sbOpen&&<div style={{fontSize:10,color:'var(--dm)'}}>⚠️ Chưa cấu hình Firebase</div>}
       </div>
     </div>
     <div className="main">
       <div className="mhd">
-        <div style={{fontSize:14,fontWeight:500}}>{cp?.emoji} {cp?.label}</div>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          {!sbOpen&&<button className="sb-toggle" onClick={()=>setSbOpen(true)} style={{fontSize:16}}>☰</button>}
+          <div style={{fontSize:14,fontWeight:500}}>{cp?.emoji} {cp?.label}</div>
+          {page==='courses'&&pageParams.courseId&&<button className="btn-g btn-sm" onClick={()=>nav('courses')} style={{marginLeft:4}}>← Danh sách môn</button>}
+        </div>
         <div style={{fontSize:11,color:'var(--mu)'}}>{new Date().toLocaleDateString('vi-VN',{day:'numeric',month:'numeric',year:'numeric'})}</div>
       </div>
       <div className="scroll"><div className="content">{renderPage()}</div></div>
     </div>
   </div>;}
-
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>

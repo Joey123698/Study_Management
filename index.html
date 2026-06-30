@@ -784,7 +784,7 @@ function MiniCalendar({events,onDateSelect,selectedDate}){
   const [vy,setVy]=useState(new Date().getFullYear());
   const [vm,setVm]=useState(new Date().getMonth());
   const sel=selectedDate||TODAY;
-  const firstDay=new Date(vy,vm,1).getDay();
+  const firstDay=(new Date(vy,vm,1).getDay()+6)%7; // Mon=0, Tue=1, ... Sun=6
   const dim=new Date(vy,vm+1,0).getDate();
   const dip=new Date(vy,vm,0).getDate();
   const cells=[];
@@ -883,7 +883,10 @@ function DashboardPage({data,upd,nav,awardXP}){
         onClick={()=>nav('courses',{courseId:c.id})} onMouseEnter={e=>e.currentTarget.style.background='var(--ch)'} onMouseLeave={e=>e.currentTarget.style.background='var(--card)'}>
         <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',marginBottom:4}}>
           <span style={{fontSize:15}}>{c.emoji}</span>
-          {d!==null&&<div style={{textAlign:'right'}}><div style={{fontSize:13,fontWeight:800,color:ringColor,lineHeight:1}}>{d}</div><div style={{fontSize:7,color:'var(--dm)',fontWeight:700}}>N</div></div>}
+          {d!==null&&<div style={{textAlign:'right',background:ringColor+'18',borderRadius:6,padding:'2px 6px',border:`1.5px solid ${ringColor}44`}}>
+            <div style={{fontSize:19,fontWeight:900,color:ringColor,lineHeight:1}}>{d}</div>
+            <div style={{fontSize:7,color:ringColor,fontWeight:700,opacity:.8}}>NGÀY</div>
+          </div>}
         </div>
         <div style={{fontSize:10,fontWeight:600,lineHeight:1.2,marginBottom:4,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{c.name}</div>
         <Bar v={p} color={c.color}/><div style={{fontSize:8,color:c.color,fontWeight:600,marginTop:1}}>{p}%</div>

@@ -151,6 +151,7 @@ body{background:var(--bg);color:var(--tx);font-family:var(--font,-apple-system,B
 .jitem{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--bdr)}
 .jstatus{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--bdr);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:10px;flex-shrink:0}
 ::-webkit-scrollbar{width:5px;height:5px}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
 /* V11: Light "Cozy Sage" mode soft elevation */
 .light-mode .card{box-shadow:0 1px 2px rgba(61,59,51,.05),0 3px 10px rgba(61,59,51,.045)}
 .light-mode .modal{box-shadow:0 12px 40px rgba(61,59,51,.18)}
@@ -278,7 +279,7 @@ function migrateToV6(d){
     return{...l,categories:{...cats,grammar,vocabulary:vocab,writing,speaking:cats.speaking||{items:[]}}};
   });
   if(!d.timerCategories)d.timerCategories=[];
-  if(!d.settings)d.settings={theme:'purple',radius:'rounded',fontFamily:'system',bannerUrl:''};
+  if(!d.settings)d.settings={theme:'purple',radius:'rounded',fontFamily:'system',bannerUrl:'',userName:''};
   if(!d.settings.fontFamily)d.settings.fontFamily='system';
   if(!d.settings.bannerUrl)d.settings.bannerUrl='';
   // Migrate todayFocus → dailyFocus
@@ -371,7 +372,7 @@ adminTasks:{
 dailyPerf:{},
 gamification:{xp:0,achievements:[]},
 timerCategories:[],
-settings:{theme:'purple',radius:'rounded',fontFamily:'system',bannerUrl:''},
+settings:{theme:'purple',radius:'rounded',fontFamily:'system',bannerUrl:'',userName:''},
 parkingLot:[{id:'p1',text:'Tìm công cụ AI hỗ trợ học Econometrics',date:TODAY},{id:'p2',text:'Cập nhật CV cho Phase 2',date:TODAY}],
 parkingTasks:[{id:'pt1',text:'Tìm công cụ AI hỗ trợ học Econometrics',category:'Học tập',deadline:'',done:false,date:TODAY},{id:'pt2',text:'Cập nhật CV cho Phase 2',category:'Công việc',deadline:'2026-08-01',done:false,date:TODAY}],
 parkingNotes:[],
@@ -406,6 +407,36 @@ function SignInPage({onSignIn}){return<div className="signin-wrap"><div style={{
     Đăng nhập bằng Google
   </button>
 </div></div>;}
+
+/* ── V11d: Firebase init failure — visible error instead of hanging forever ── */
+function FirebaseErrorScreen(){return<div className="signin-wrap"><div style={{textAlign:'center',maxWidth:420,padding:'36px 32px',background:'var(--sur)',border:'1px solid var(--crBdr)',borderRadius:20}}>
+  <div style={{fontSize:40,marginBottom:12}}>⚠️</div>
+  <div style={{fontSize:17,fontWeight:700,color:'var(--cr)',marginBottom:8}}>Không kết nối được Firebase</div>
+  <p style={{color:'var(--mu)',fontSize:12.5,lineHeight:1.7,marginBottom:16,textAlign:'left'}}>
+    SDK Firebase không tải được. Nguyên nhân thường gặp:
+    <br/>• Mạng chặn <code style={{background:'var(--ch)',padding:'1px 4px',borderRadius:3}}>gstatic.com</code> (CDN Google)
+    <br/>• Trình duyệt/extension chặn quảng cáo can thiệp
+    <br/>• Đang mở file trực tiếp (file://) thay vì qua server/GitHub Pages
+  </p>
+  <button className="btn-p" style={{width:'100%',justifyContent:'center'}} onClick={()=>window.location.reload()}>🔄 Tải lại trang</button>
+</div></div>;}
+
+/* ── V11d: Personalized welcome screen shown right after login/data-load, before Dashboard ── */
+function WelcomeScreen({data,user,onContinue}){
+  const name=user?.displayName?.split(' ')[0]||data.settings?.userName||'bạn';
+  const bannerUrl=data.settings?.bannerUrl;
+  useEffect(()=>{const t=setTimeout(onContinue,2200);return()=>clearTimeout(t);},[]);
+  const hour=new Date().getHours();
+  const greeting=hour<11?'Chào buổi sáng':hour<14?'Chào buổi trưa':hour<18?'Chào buổi chiều':'Chào buổi tối';
+  return<div onClick={onContinue} style={{position:'fixed',inset:0,zIndex:9998,cursor:'pointer',background:bannerUrl?'#000':'var(--bg)',display:'flex',alignItems:'flex-end',overflow:'hidden'}}>
+    {bannerUrl&&<img src={bannerUrl} alt="" style={{position:'absolute',inset:0,width:'100%',height:'100%',objectFit:'cover',opacity:.75}} onError={e=>{e.target.style.display='none';}}/>}
+    <div style={{position:'absolute',inset:0,background:bannerUrl?'linear-gradient(180deg,rgba(0,0,0,.15) 0%,rgba(0,0,0,.35) 55%,rgba(0,0,0,.8) 100%)':'radial-gradient(circle at 50% 40%,var(--acc2),var(--bg) 70%)'}}/>
+    <div style={{position:'relative',width:'100%',padding:'0 0 56px',textAlign:'center'}}>
+      <div style={{fontSize:13,color:bannerUrl?'rgba(255,255,255,.75)':'var(--mu)',fontWeight:600,letterSpacing:'.06em',marginBottom:8,animation:'fadeInUp .6s ease both'}}>{greeting.toUpperCase()}</div>
+      <div style={{fontSize:36,fontWeight:800,color:bannerUrl?'#fff':'var(--tx)',textShadow:bannerUrl?'0 2px 20px rgba(0,0,0,.4)':'none',marginBottom:10,animation:'fadeInUp .6s ease .1s both'}}>Welcome back, {name} 👋</div>
+      <div style={{fontSize:13,color:bannerUrl?'rgba(255,255,255,.65)':'var(--dm)',animation:'fadeInUp .6s ease .2s both'}}>Nhấn để vào Dashboard →</div>
+    </div>
+  </div>;}
 
 /* ── V9: EMOJI PICKER ── */
 const EMOJI_LIST={'📚 Học tập':['📚','📖','✏️','📝','🎓','🔬','📊','📈','💻','🧮','📐','🔭','💡','🗒️','📋'],'📅 Deadline':['📅','⏰','⌛','🗓️','⏱️','🎯','📌','🔔','✅','☑️','🚨','🔥','⚡','🏁','🎪'],'🌍 Sự kiện':['🌍','🎤','🏆','🎉','🤝','💼','🗣️','🏫','🌱','💰','🤔','🎭','🏅','🎊','🌐'],'🏠 Cuộc sống':['🏠','🍳','🛒','👕','🏊','💧','😴','🍎','☕','🎵','🌞','🌙','❤️','🐾','🎨']};
@@ -2295,8 +2326,14 @@ function SettingsPage({data,upd}){
       </div>
     </div>
     <div className="card" style={{marginBottom:12}}>
+      <div className="lbl" style={{marginBottom:8}}>👋 TÊN HIỂN THỊ</div>
+      <input className="inp" value={s.userName||''} onChange={e=>setS('userName',e.target.value)} placeholder="Tên bạn (hiện ở màn hình Welcome)..."/>
+      <div className="tx-dm" style={{marginTop:5,fontSize:10}}>Dùng khi chưa đăng nhập Google, hoặc muốn hiển thị tên khác trên màn hình chào.</div>
+    </div>
+    <div className="card" style={{marginBottom:12}}>
       <div className="lbl" style={{marginBottom:8}}>🖼️ BANNER DASHBOARD</div>
       <input className="inp" value={s.bannerUrl||''} onChange={e=>setS('bannerUrl',toDirectImageUrl(e.target.value))} placeholder="Dán URL hình ảnh hoặc link chia sẻ Google Drive..." style={{marginBottom:6}}/>
+      <div className="tx-dm" style={{marginBottom:6,fontSize:10}}>💡 Ảnh này cũng được dùng làm nền cho màn hình "Welcome back" khi mở app.</div>
       <div style={{background:'var(--acc2)',border:'1px solid var(--acc3)',borderRadius:7,padding:'7px 9px',marginBottom:10,fontSize:10,color:'var(--mu)',lineHeight:1.6}}>
         💡 <strong style={{color:'var(--tx)'}}>Dùng ảnh từ Google Drive:</strong><br/>
         1. Chuột phải ảnh trên Drive → <strong>Chia sẻ</strong> → đổi thành <strong>"Bất kỳ ai có đường liên kết"</strong><br/>
@@ -2699,6 +2736,8 @@ const PAGES=[
 function App(){
   const [user,setUser]=useState(null);const [data,setData]=useState(null);
   const [authLoading,setAuthLoading]=useState(true);
+  const [fbInitFailed,setFbInitFailed]=useState(false);
+  const [showWelcome,setShowWelcome]=useState(true); // ← V11d: personalized welcome screen before dashboard
   const [syncing,setSyncing]=useState(false);const [syncErr,setSyncErr]=useState(false);const [lastSync,setLastSync]=useState(null);
   const [page,setPage]=useState('dashboard');const [pageParams,setPageParams]=useState({});
   const [sbOpen,setSbOpen]=useState(true);         // ← V10: collapsible sidebar
@@ -2706,7 +2745,16 @@ function App(){
   const saveTimer=useRef(null);const saving=useRef(false);const unsubRef=useRef(null);
 
   useEffect(()=>{
-    if(!FB_ON){let saved=loadLocal();if(saved)saved=migrateToV6(saved);const d=saved||buildInit();setData(d);applyTheme(d.settings);setAuthLoading(false);setTimeout(()=>{const el=document.getElementById('loading');if(el)el.style.display='none';},300);return;}
+    // ← V11d FIX: previously, if Firebase SDK failed to load/init (CDN blocked, network
+    // issue, ad-blocker, etc.), `_auth` stayed null but the code still called
+    // `_auth.onAuthStateChanged(...)` unconditionally — an uncaught TypeError that crashed
+    // the app silently, leaving the boot loading-screen frozen forever. Now we check first
+    // and fall back to local-storage mode with a visible warning instead of hanging.
+    if(!FB_ON||!_auth||!_db){
+      if(FB_ON&&(!_auth||!_db)){console.error('Firebase SDK failed to initialize — falling back to local storage.');setFbInitFailed(true);}
+      let saved=loadLocal();if(saved)saved=migrateToV6(saved);const d=saved||buildInit();setData(d);applyTheme(d.settings);setAuthLoading(false);
+      setTimeout(()=>{const el=document.getElementById('loading');if(el)el.style.display='none';},300);return;
+    }
     const unsub=_auth.onAuthStateChanged(async u=>{setUser(u);if(u){await loadFB(u.uid);}else{setData(null);}setAuthLoading(false);setTimeout(()=>{const el=document.getElementById('loading');if(el)el.style.display='none';},300);});
     return()=>unsub();
   },[]);
@@ -2715,14 +2763,16 @@ function App(){
   const doSave=async(uid,d)=>{saving.current=true;setSyncing(true);setSyncErr(false);try{await _db.collection('users').doc(uid).set({appData:JSON.stringify(d),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});setLastSync(new Date());}catch(e){setSyncErr(true);}finally{setTimeout(()=>{saving.current=false;},2500);setSyncing(false);}};
   const upd=useCallback((changes)=>{setData(d=>{const nd={...d,...changes};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
   const awardXP=useCallback((amount,label)=>{showXpPop(amount);setData(d=>{const g={...d.gamification,xp:(d.gamification?.xp||0)+amount};const achs=[...(g.achievements||[])];if(!achs.includes('first_log')&&label?.includes('⏱️')){achs.push('first_log');showAch(ACH.find(a=>a.id==='first_log'));}const nd={...d,gamification:{...g,achievements:achs}};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
-  const signIn=()=>{const p=new firebase.auth.GoogleAuthProvider();_auth.signInWithPopup(p).catch(e=>console.error(e));};
-  const signOut=()=>{if(unsubRef.current)unsubRef.current();_auth.signOut();setUser(null);setData(null);};
+  const signIn=()=>{if(!_auth)return;const p=new firebase.auth.GoogleAuthProvider();_auth.signInWithPopup(p).catch(e=>console.error(e));};
+  const signOut=()=>{if(unsubRef.current)unsubRef.current();if(_auth)_auth.signOut();setUser(null);setData(null);};
   const nav=(pg,params={})=>{setPage(pg);setPageParams(params);};
   const togNav=(id)=>setExpandedNav(p=>({...p,[id]:!p[id]}));
 
   if(authLoading)return null;
+  if(FB_ON&&fbInitFailed)return<FirebaseErrorScreen/>;
   if(FB_ON&&!user)return<SignInPage onSignIn={signIn}/>;
   if(!data)return null;
+  if(showWelcome)return<WelcomeScreen data={data} user={user} onContinue={()=>setShowWelcome(false)}/>;
 
   const sections={};PAGES.forEach(p=>{if(!sections[p.sec])sections[p.sec]=[];sections[p.sec].push(p);});
   const cp=PAGES.find(p=>p.id===page);

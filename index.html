@@ -182,6 +182,26 @@ const T=()=>toLocalDateStr(new Date());
 // (e.g. Germany UTC+1/+2: at 00:00-02:00 local time, UTC date is still yesterday).
 // This helper uses LOCAL date components instead.
 function toLocalDateStr(d){const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,'0');const day=String(d.getDate()).padStart(2,'0');return `${y}-${m}-${day}`;}
+/* ── V11e: Translate Firebase Auth error codes into actionable Vietnamese messages ── */
+function authErrMsg(e){
+  const c=e?.code||'';
+  const M={
+    'auth/unauthorized-domain':'⚠️ Domain hiện tại chưa được Firebase cho phép đăng nhập. Vào Firebase Console → Authentication → Settings → Authorized domains → thêm domain đang chạy app này.',
+    'auth/popup-blocked':'Trình duyệt đã chặn popup đăng nhập. Hãy cho phép popup cho trang này rồi thử lại.',
+    'auth/popup-closed-by-user':'Popup đăng nhập đã bị đóng trước khi hoàn tất. Thử lại nhé.',
+    'auth/cancelled-popup-request':'', // silent — happens when user double-clicks, no need to show
+    'auth/network-request-failed':'Lỗi mạng — kiểm tra kết nối internet rồi thử lại.',
+    'auth/email-already-in-use':'Email này đã được đăng ký. Thử đăng nhập thay vì đăng ký.',
+    'auth/invalid-email':'Email không hợp lệ.',
+    'auth/weak-password':'Mật khẩu quá yếu — cần ít nhất 6 ký tự.',
+    'auth/user-not-found':'Không tìm thấy tài khoản với email này.',
+    'auth/wrong-password':'Sai mật khẩu.',
+    'auth/invalid-credential':'Email hoặc mật khẩu không đúng.',
+    'auth/too-many-requests':'Thử sai quá nhiều lần — đợi một lát rồi thử lại.',
+  };
+  if(c in M)return M[c];
+  return e?.message||'Có lỗi xảy ra, thử lại nhé.';
+}
 function daysTo(ds){if(!ds)return null;return Math.ceil((new Date(ds)-new Date())/86400000);}
 function fmt(ds){if(!ds)return'';return new Date(ds).toLocaleDateString('vi-VN',{day:'numeric',month:'short'});}
 /* ── V11c: Auto-convert Google Drive share links to direct-viewable image URLs ──
@@ -398,15 +418,64 @@ function Badge({risk}){const r=RISK[risk]||RISK.medium;return<span className={`b
 function Bar({v,color,h=5}){return<div className="bar-w" style={{height:h}}><div className="bar-f" style={{width:`${Math.max(0,Math.min(100,v||0))}%`,height:'100%',background:color||'#7C6EF5'}}/></div>;}
 function Tick({done,color,onClick}){return<div className="tick" style={{borderColor:done?(color||'#7C6EF5'):'var(--bdr)',background:done?(color||'#7C6EF5'):'transparent'}} onClick={onClick}>{done&&<span style={{color:'#fff',fontSize:10,fontWeight:700}}>✓</span>}</div>;}
 
-function SignInPage({onSignIn}){return<div className="signin-wrap"><div style={{textAlign:'center',maxWidth:380,padding:'40px 32px',background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:20}}>
-  <div style={{fontSize:46,marginBottom:14}}>⚡</div>
-  <div style={{fontSize:21,fontWeight:700,color:'var(--acc)',marginBottom:6}}>StudyOS v11</div>
-  <p style={{color:'var(--mu)',marginBottom:22,lineHeight:1.7,fontSize:13}}>Timer Fix · Sidebar · Study Journal · Mini Cards<br/><strong style={{color:'var(--tx)'}}>Sync real-time tất cả thiết bị</strong></p>
-  <button className="g-btn" onClick={onSignIn}>
-    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-    Đăng nhập bằng Google
-  </button>
-</div></div>;}
+function SignInPage({onSignIn,onSignInEmail,onSignUpEmail,onResetPassword,authErr}){
+  const [mode,setMode]=useState('signin'); // 'signin' | 'signup' | 'reset'
+  const [email,setEmail]=useState('');const [pass,setPass]=useState('');const [pass2,setPass2]=useState('');
+  const [loading,setLoading]=useState(false);const [localErr,setLocalErr]=useState('');const [resetSent,setResetSent]=useState(false);
+  const err=localErr||authErr;
+  const submit=async(e)=>{
+    e.preventDefault();setLocalErr('');setResetSent(false);
+    if(!email.trim()){setLocalErr('Nhập email trước đã.');return;}
+    if(mode==='reset'){
+      setLoading(true);
+      try{await onResetPassword(email.trim());setResetSent(true);}catch(_){}
+      setLoading(false);return;
+    }
+    if(!pass){setLocalErr('Nhập mật khẩu.');return;}
+    if(mode==='signup'&&pass!==pass2){setLocalErr('Hai mật khẩu không khớp.');return;}
+    if(mode==='signup'&&pass.length<6){setLocalErr('Mật khẩu cần ít nhất 6 ký tự.');return;}
+    setLoading(true);
+    try{if(mode==='signup')await onSignUpEmail(email.trim(),pass);else await onSignInEmail(email.trim(),pass);}catch(_){}
+    setLoading(false);
+  };
+  return<div className="signin-wrap"><div style={{textAlign:'center',maxWidth:380,width:'100%',padding:'36px 32px',background:'var(--sur)',border:'1px solid var(--bdr)',borderRadius:20}}>
+    <div style={{fontSize:46,marginBottom:14}}>⚡</div>
+    <div style={{fontSize:21,fontWeight:700,color:'var(--acc)',marginBottom:6}}>StudyOS v11</div>
+    <p style={{color:'var(--mu)',marginBottom:20,lineHeight:1.7,fontSize:13}}>Timer Fix · Sidebar · Study Journal · Mini Cards<br/><strong style={{color:'var(--tx)'}}>Sync real-time tất cả thiết bị</strong></p>
+
+    <button className="g-btn" onClick={onSignIn} type="button">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Đăng nhập bằng Google
+    </button>
+
+    <div style={{display:'flex',alignItems:'center',gap:10,margin:'18px 0'}}>
+      <div style={{flex:1,height:1,background:'var(--bdr)'}}/>
+      <span style={{fontSize:11,color:'var(--dm)'}}>hoặc dùng email</span>
+      <div style={{flex:1,height:1,background:'var(--bdr)'}}/>
+    </div>
+
+    <form onSubmit={submit} style={{textAlign:'left'}}>
+      <input type="email" className="inp" value={email} onChange={e=>setEmail(e.target.value)} placeholder="Email của bạn" autoComplete="email" style={{marginBottom:8,width:'100%',boxSizing:'border-box'}}/>
+      {mode!=='reset'&&<input type="password" className="inp" value={pass} onChange={e=>setPass(e.target.value)} placeholder="Mật khẩu" autoComplete={mode==='signup'?'new-password':'current-password'} style={{marginBottom:8,width:'100%',boxSizing:'border-box'}}/>}
+      {mode==='signup'&&<input type="password" className="inp" value={pass2} onChange={e=>setPass2(e.target.value)} placeholder="Nhập lại mật khẩu" autoComplete="new-password" style={{marginBottom:8,width:'100%',boxSizing:'border-box'}}/>}
+
+      {resetSent&&mode==='reset'&&<div style={{background:'var(--sub)',border:'1px solid var(--suBdr)',borderRadius:7,padding:'8px 10px',marginBottom:10,fontSize:11,color:'var(--su)'}}>✓ Đã gửi email đặt lại mật khẩu — kiểm tra hộp thư của bạn.</div>}
+      {err&&<div style={{background:'var(--crb)',border:'1px solid var(--crBdr)',borderRadius:7,padding:'8px 10px',marginBottom:10,fontSize:11,color:'var(--cr)',lineHeight:1.5,textAlign:'left'}}>{err}</div>}
+
+      <button type="submit" disabled={loading} className="btn-p" style={{width:'100%',justifyContent:'center',padding:'10px',opacity:loading?.6:1}}>
+        {loading?'Đang xử lý...':mode==='signup'?'Tạo tài khoản':mode==='reset'?'Gửi email đặt lại mật khẩu':'Đăng nhập'}
+      </button>
+    </form>
+
+    <div style={{marginTop:14,fontSize:11,color:'var(--mu)',display:'flex',justifyContent:'center',gap:14}}>
+      {mode==='signin'&&<>
+        <span style={{cursor:'pointer',color:'var(--acc)'}} onClick={()=>{setMode('signup');setLocalErr('');}}>Chưa có tài khoản? Đăng ký</span>
+        <span style={{cursor:'pointer'}} onClick={()=>{setMode('reset');setLocalErr('');setResetSent(false);}}>Quên mật khẩu?</span>
+      </>}
+      {mode==='signup'&&<span style={{cursor:'pointer',color:'var(--acc)'}} onClick={()=>{setMode('signin');setLocalErr('');}}>Đã có tài khoản? Đăng nhập</span>}
+      {mode==='reset'&&<span style={{cursor:'pointer',color:'var(--acc)'}} onClick={()=>{setMode('signin');setLocalErr('');setResetSent(false);}}>← Quay lại đăng nhập</span>}
+    </div>
+  </div></div>;}
 
 /* ── V11d: Firebase init failure — visible error instead of hanging forever ── */
 function FirebaseErrorScreen(){return<div className="signin-wrap"><div style={{textAlign:'center',maxWidth:420,padding:'36px 32px',background:'var(--sur)',border:'1px solid var(--crBdr)',borderRadius:20}}>
@@ -2763,14 +2832,27 @@ function App(){
   const doSave=async(uid,d)=>{saving.current=true;setSyncing(true);setSyncErr(false);try{await _db.collection('users').doc(uid).set({appData:JSON.stringify(d),updatedAt:firebase.firestore.FieldValue.serverTimestamp()});setLastSync(new Date());}catch(e){setSyncErr(true);}finally{setTimeout(()=>{saving.current=false;},2500);setSyncing(false);}};
   const upd=useCallback((changes)=>{setData(d=>{const nd={...d,...changes};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
   const awardXP=useCallback((amount,label)=>{showXpPop(amount);setData(d=>{const g={...d.gamification,xp:(d.gamification?.xp||0)+amount};const achs=[...(g.achievements||[])];if(!achs.includes('first_log')&&label?.includes('⏱️')){achs.push('first_log');showAch(ACH.find(a=>a.id==='first_log'));}const nd={...d,gamification:{...g,achievements:achs}};if(FB_ON&&user){if(saveTimer.current)clearTimeout(saveTimer.current);saveTimer.current=setTimeout(()=>doSave(user.uid,nd),1500);}else saveLocal(nd);return nd;});},[user]);
-  const signIn=()=>{if(!_auth)return;const p=new firebase.auth.GoogleAuthProvider();_auth.signInWithPopup(p).catch(e=>console.error(e));};
+  const [authErr,setAuthErr]=useState('');
+  const signIn=()=>{
+    if(!_auth)return;
+    setAuthErr('');
+    const p=new firebase.auth.GoogleAuthProvider();
+    _auth.signInWithPopup(p).catch(e=>{
+      console.error(e);
+      const msg=authErrMsg(e);
+      if(msg)setAuthErr(msg); // empty msg = silent (e.g. user double-clicked / closed intentionally)
+    });
+  };
+  const signInEmail=(email,pass)=>{if(!_auth)return;setAuthErr('');return _auth.signInWithEmailAndPassword(email,pass).catch(e=>{console.error(e);setAuthErr(authErrMsg(e));throw e;});};
+  const signUpEmail=(email,pass)=>{if(!_auth)return;setAuthErr('');return _auth.createUserWithEmailAndPassword(email,pass).catch(e=>{console.error(e);setAuthErr(authErrMsg(e));throw e;});};
+  const resetPassword=(email)=>{if(!_auth)return;setAuthErr('');return _auth.sendPasswordResetEmail(email).catch(e=>{console.error(e);setAuthErr(authErrMsg(e));throw e;});};
   const signOut=()=>{if(unsubRef.current)unsubRef.current();if(_auth)_auth.signOut();setUser(null);setData(null);};
   const nav=(pg,params={})=>{setPage(pg);setPageParams(params);};
   const togNav=(id)=>setExpandedNav(p=>({...p,[id]:!p[id]}));
 
   if(authLoading)return null;
   if(FB_ON&&fbInitFailed)return<FirebaseErrorScreen/>;
-  if(FB_ON&&!user)return<SignInPage onSignIn={signIn}/>;
+  if(FB_ON&&!user)return<SignInPage onSignIn={signIn} onSignInEmail={signInEmail} onSignUpEmail={signUpEmail} onResetPassword={resetPassword} authErr={authErr}/>;
   if(!data)return null;
   if(showWelcome)return<WelcomeScreen data={data} user={user} onContinue={()=>setShowWelcome(false)}/>;
 
